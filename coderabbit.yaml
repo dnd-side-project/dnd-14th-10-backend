@@ -1,0 +1,102 @@
+language: ko-KR
+early_access: false
+enable_free_tier: true
+
+tone_instructions: >     
+  당신은 동료 개발자를 돕는 Java 백엔드 리뷰어입니다.
+  이 PR에서 명확한 문제이거나
+  바로 수정 가능한 개선점이 있을 때만 코멘트하세요.
+  논쟁의 여지가 있는 설계 선택이나
+  장기적인 리팩토링 제안은 생략합니다.
+
+reviews:
+  profile: chill
+  request_changes_workflow: false
+
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+
+  review_status: true
+  review_details: true
+
+  commit_status: true
+  fail_commit_status: false
+
+  collapse_walkthrough: true
+  changed_files_summary: false
+  estimate_code_review_effort: false
+
+  path_filters:
+    - "src/**"
+    - "build.gradle"
+    - "settings.gradle"
+    - "!**/*.md"
+    - "!build/**"
+    - "!out/**"
+    - "!bin/**"
+
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - main
+      - develop
+
+  path_instructions:
+    - path: "src/main/java/**"
+      instructions: |
+        1. Google Java Style Guide 준수 여부
+        2. 불필요한 Setter 사용 지양
+        3. null 처리 명확성, Optional 남용 방지
+        4. Stream API 가독성 유지 여부
+
+    - path: "src/main/java/**/controller/**"
+      instructions: |
+        1. RESTful URI 및 HTTP 메서드 사용 적절성
+        2. Controller는 요청/응답 변환만 담당
+        3. 예외 처리는 Global Exception Handler 위임
+
+    - path: "src/main/java/**/service/**"
+      instructions: |
+        1. 비즈니스 로직 명확성
+        2. @Transactional 범위 과도 여부
+        3. readOnly=true 사용 여부
+
+    - path: "src/main/java/**/repository/**"
+      instructions: |
+        1. N+1 문제 발생 가능성 체크 (Fetch Join 등 활용)
+        2. 쿼리 효율성 및 인덱스 활용 고려
+
+    - path: "src/main/java/**/domain/**"
+      instructions: |
+        1. setter 대신 도메인 행위 메서드 사용
+        2. equals/hashCode 식별자 기준 구현
+        3. 연관관계 최소화 및 방향성 검토
+
+    - path: "src/test/java/**"
+      instructions: |
+        1. 테스트 명세(Display Name)의 명확성
+        2. Given-When-Then 구조 준수 여부
+        3. Mock 객체 사용의 적절성
+
+    - path: "src/main/resources/**/*.yml"
+      instructions: |
+        1. 비밀 정보 하드코딩 여부
+
+tools:
+  pmd:
+    enabled: true
+
+chat:
+  auto_reply: true
+
+knowledge_base:
+  web_search:
+    enabled: true
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
