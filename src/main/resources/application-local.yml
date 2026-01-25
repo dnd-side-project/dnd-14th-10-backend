@@ -10,7 +10,7 @@ spring:
 
     hikari:
       pool-name: goyo-hikari-pool
-      minimum-idle: 5
+      minimum-idle: 10
       maximum-pool-size: 10
       idle-timeout: 30000
       max-lifetime: 1800000
