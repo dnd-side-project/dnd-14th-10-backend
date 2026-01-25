@@ -1,3 +1,27 @@
 spring:
   application:
     name: goyo
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/goyodb
+    username: goyo
+    password: goyo1234
+    driver-class-name: org.postgresql.Driver
+
+    hikari:
+      pool-name: goyo-hikari-pool
+      minimum-idle: 5
+      maximum-pool-size: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      validation-timeout: 5000
+      keepalive-time: 300000
+
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
