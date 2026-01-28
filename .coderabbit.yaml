@@ -84,10 +84,6 @@ reviews:
       instructions: |
         1. 비밀 정보 하드코딩 여부
 
-tools:
-  pmd:
-    enabled: true
-
 chat:
   auto_reply: true
 
