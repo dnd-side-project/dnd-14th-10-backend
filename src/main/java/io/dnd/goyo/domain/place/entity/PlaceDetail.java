@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 public class PlaceDetail {
 
     @Id
-    private Long placeDetailId;
+    private Long placeId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @MapsId
