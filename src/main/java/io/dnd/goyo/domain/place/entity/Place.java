@@ -61,6 +61,8 @@ public class Place {
     @Column(nullable = false)
     private Long userId;
 
+    // TODO: [Tag 엔티티 머지 후] 태그 추가
+
     @Builder
     private Place(
             String name,

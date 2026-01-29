@@ -25,7 +25,7 @@ public record RegionCode(
 
     private static void validateCodeRange(Integer value) {
         if (value < MIN_VALUE || value > MAX_VALUE) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("행정구역 코드는 %d자리여야  합니다.", CODE_LENGTH));
+            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("행정구역 코드는 %d자리여야 합니다.", CODE_LENGTH));
         }
     }
 }
