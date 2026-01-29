@@ -23,7 +23,8 @@ public class PlaceImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long placeImageId;
+    @Column(name = "place_image_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id")

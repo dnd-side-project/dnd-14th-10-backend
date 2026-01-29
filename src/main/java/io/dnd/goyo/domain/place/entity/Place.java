@@ -27,7 +27,8 @@ public class Place {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long placeId;
+    @Column(name = "place_id")
+    private Long id;
 
     @Embedded
     @AttributeOverride(name = "value", column = @Column(name = "name", length = 50, nullable = false))
