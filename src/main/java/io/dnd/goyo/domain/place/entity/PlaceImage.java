@@ -1,5 +1,7 @@
 package io.dnd.goyo.domain.place.entity;
 
+import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -28,7 +30,52 @@ public class PlaceImage {
     @Column(nullable = false)
     private String imageUrl;
 
-    private Boolean representativeFlag;
+    @Column(nullable = false)
+    private boolean representativeFlag;
 
-    private Integer sequence;
+    @Column(nullable = false)
+    private int sequence;
+
+    public static PlaceImage of(
+            Place place,
+            String imageUrl,
+            boolean representativeFlag,
+            int sequence
+    ) {
+        return new PlaceImage(place, imageUrl, representativeFlag, sequence);
+    }
+
+    private PlaceImage(
+            Place place,
+            String imageUrl,
+            boolean representativeFlag,
+            int sequence
+    ) {
+        validatePlace(place);
+        validateImageUrl(imageUrl);
+        validateSequence(sequence);
+
+        this.place = place;
+        this.imageUrl = imageUrl;
+        this.representativeFlag = representativeFlag;
+        this.sequence = sequence;
+    }
+
+    private void validatePlace(Place place) {
+        if (place == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
+        }
+    }
+
+    private void validateImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 URL은 필수입니다.");
+        }
+    }
+
+    private void validateSequence(int sequence) {
+        if (sequence < 0) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 순서는 0 이상이어야 합니다.");
+        }
+    }
 }

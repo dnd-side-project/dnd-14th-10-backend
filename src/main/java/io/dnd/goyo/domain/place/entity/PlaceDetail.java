@@ -1,5 +1,7 @@
 package io.dnd.goyo.domain.place.entity;
 
+import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
@@ -30,7 +32,7 @@ public class PlaceDetail {
     private Place place;
 
     @Column(nullable = false)
-    private Double rating;
+    private double rating;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -45,5 +47,69 @@ public class PlaceDetail {
     private SpaceSize spaceSize;
 
     @Column(nullable = false)
-    private Integer wishCount;
+    private int wishCount;
+
+    public static PlaceDetail of(
+            Place place,
+            double rating,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize
+    ) {
+        return new PlaceDetail(place, rating, outletScore, crowdStatus, spaceSize);
+    }
+
+    private PlaceDetail(
+            Place place,
+            double rating,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize
+    ) {
+        validatePlace(place);
+        validateRating(rating);
+        validateOutletScore(outletScore);
+        validateCrowdStatus(crowdStatus);
+        validateSpaceSize(spaceSize);
+
+        this.place = place;
+        this.rating = rating;
+        this.outletScore = outletScore;
+        this.crowdStatus = crowdStatus;
+        this.spaceSize = spaceSize;
+        this.wishCount = 0;
+    }
+
+    private static final double MIN_RATING = 0.0;
+    private static final double MAX_RATING = 5.0;
+
+    private void validatePlace(Place place) {
+        if (place == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
+        }
+    }
+
+    private void validateRating(double rating) {
+        if (rating < MIN_RATING || rating > MAX_RATING) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("평점은 %.1f ~ %.1f 사이여야 합니다.", MIN_RATING, MAX_RATING));
+        }
+    }
+
+    private void validateOutletScore(OutletScore outletScore) {
+        if (outletScore == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "콘센트 점수는 필수입니다.");
+        }
+    }
+
+    private void validateCrowdStatus(CrowdStatus crowdStatus) {
+        if (crowdStatus == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "혼잡도는 필수입니다.");
+        }
+    }
+
+    private void validateSpaceSize(SpaceSize spaceSize) {
+        if (spaceSize == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 크기는 필수입니다.");
+        }
+    }
 }
