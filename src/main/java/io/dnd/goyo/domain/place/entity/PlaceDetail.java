@@ -16,10 +16,12 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "place_details")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlaceDetail {
 
