@@ -24,7 +24,6 @@ public class Wishlist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "wishlist_id")
     private Long id;
 
     // TODO: [User 엔티티 머지 후] User로 변경

@@ -15,7 +15,6 @@ import lombok.NoArgsConstructor;
 public class Region {
 
     @Id
-    @Column(name = "region_code")
     private Integer id;
 
     @Column(nullable = false)

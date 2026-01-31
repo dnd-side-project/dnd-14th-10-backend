@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
 public class PlaceDetail {
 
     @Id
-    @Column(name = "place_id")
     private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
