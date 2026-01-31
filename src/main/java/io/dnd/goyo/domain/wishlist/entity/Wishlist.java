@@ -1,5 +1,7 @@
 package io.dnd.goyo.domain.wishlist.entity;
 
+import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,4 +34,28 @@ public class Wishlist {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
+
+    public static Wishlist of(Long userId, Place place) {
+        return new Wishlist(userId, place);
+    }
+
+    private Wishlist(Long userId, Place place) {
+        validateUserId(userId);
+        validatePlace(place);
+
+        this.userId = userId;
+        this.place = place;
+    }
+
+    private void validateUserId(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "사용자 정보가 누락되었습니다.");
+        }
+    }
+
+    private void validatePlace(Place place) {
+        if (place == null) {
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 정보가 누락되었습니다.");
+        }
+    }
 }
