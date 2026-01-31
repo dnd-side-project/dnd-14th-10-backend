@@ -29,9 +29,8 @@ public class Place {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Embedded
-    @AttributeOverride(name = "value", column = @Column(name = "name", length = 50, nullable = false))
-    private PlaceName name;
+    @Column(length = 50, nullable = false)
+    private String name;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -75,13 +74,14 @@ public class Place {
             LocalTime openTime,
             LocalTime closeTime
     ) {
+        validateName(name);
         validateCategory(category);
         validateLocation(location);
         validateAddressDetail(addressDetail);
         validateUserId(userId);
         validateOperatingHours(openTime, closeTime);
 
-        this.name = new PlaceName(name);
+        this.name = name;
         this.category = category;
         this.location = location;
         this.regionCode = new RegionCode(regionCode);
@@ -93,19 +93,29 @@ public class Place {
         this.status = PlaceStatus.ACTIVE;
     }
 
+    private static final int NAME_MAX_LENGTH = 50;
     private static final int ADDRESS_DETAIL_MAX_LENGTH = 50;
     private static final double MIN_LATITUDE = 33.0;
     private static final double MAX_LATITUDE = 43.0;
     private static final double MIN_LONGITUDE = 124.0;
     private static final double MAX_LONGITUDE = 132.0;
 
-    private void validateCategory(PlaceCategory category) {
+    private static void validateName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 이름은 필수입니다.");
+        }
+        if (name.length() > NAME_MAX_LENGTH) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("장소 이름은 %d자 이내여야 합니다.", NAME_MAX_LENGTH));
+        }
+    }
+
+    private static void validateCategory(PlaceCategory category) {
         if (category == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "카테고리는 필수입니다.");
         }
     }
 
-    private void validateLocation(Point location) {
+    private static void validateLocation(Point location) {
         if (location == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "위치 정보는 필수입니다.");
         }
@@ -118,7 +128,7 @@ public class Place {
         }
     }
 
-    private void validateAddressDetail(String addressDetail) {
+    private static void validateAddressDetail(String addressDetail) {
         if (addressDetail == null || addressDetail.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "상세 주소는 필수입니다.");
         }
@@ -127,13 +137,13 @@ public class Place {
         }
     }
 
-    private void validateUserId(Long userId) {
+    private static void validateUserId(Long userId) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "등록자 ID는 필수입니다.");
         }
     }
 
-    private void validateOperatingHours(LocalTime openTime, LocalTime closeTime) {
+    private static void validateOperatingHours(LocalTime openTime, LocalTime closeTime) {
         boolean hasOpenTime = (openTime != null);
         boolean hasCloseTime = (closeTime != null);
 

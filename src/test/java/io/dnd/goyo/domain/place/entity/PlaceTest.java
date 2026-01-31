@@ -41,6 +41,32 @@ class PlaceTest {
     @DisplayName("Place 생성 시")
     class CreatePlace {
 
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void 이름이_비어있으면_예외_발생(String name) {
+            // given
+            Place.PlaceBuilder builder = createValidPlaceBuilder()
+                    .name(name);
+
+            // when & then
+            assertThatThrownBy(builder::build)
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("장소 이름은 필수입니다");
+        }
+
+        @Test
+        void 이름이_50자를_초과하면_예외_발생() {
+            // given
+            Place.PlaceBuilder builder = createValidPlaceBuilder()
+                    .name("a".repeat(51));
+
+            // when & then
+            assertThatThrownBy(builder::build)
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("장소 이름은 50자 이내여야 합니다");
+        }
+
         @Test
         void 카테고리가_null이면_예외_발생() {
             // given
