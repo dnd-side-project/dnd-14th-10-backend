@@ -85,31 +85,31 @@ public class PlaceDetail {
     private static final double MIN_RATING = 0.0;
     private static final double MAX_RATING = 5.0;
 
-    private void validatePlace(Place place) {
+    private static void validatePlace(Place place) {
         if (place == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
         }
     }
 
-    private void validateRating(double rating) {
+    private static void validateRating(double rating) {
         if (rating < MIN_RATING || rating > MAX_RATING) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("평점은 %.1f ~ %.1f 사이여야 합니다.", MIN_RATING, MAX_RATING));
         }
     }
 
-    private void validateOutletScore(OutletScore outletScore) {
+    private static void validateOutletScore(OutletScore outletScore) {
         if (outletScore == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "콘센트 점수는 필수입니다.");
         }
     }
 
-    private void validateCrowdStatus(CrowdStatus crowdStatus) {
+    private static void validateCrowdStatus(CrowdStatus crowdStatus) {
         if (crowdStatus == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "혼잡도는 필수입니다.");
         }
     }
 
-    private void validateSpaceSize(SpaceSize spaceSize) {
+    private static void validateSpaceSize(SpaceSize spaceSize) {
         if (spaceSize == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 크기는 필수입니다.");
         }

@@ -46,13 +46,13 @@ public class Wishlist {
         this.place = place;
     }
 
-    private void validateUserId(Long userId) {
+    private static void validateUserId(Long userId) {
         if (userId == null) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "사용자 정보가 누락되었습니다.");
         }
     }
 
-    private void validatePlace(Place place) {
+    private static void validatePlace(Place place) {
         if (place == null) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 정보가 누락되었습니다.");
         }
