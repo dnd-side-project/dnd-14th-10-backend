@@ -68,14 +68,16 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_SSH_PORT }}
           script: |
+            set -e
+
             cd /home/${{ secrets.SERVER_USER }}/apps/gojak
 
             echo "배포 시작..."
 
             # 최신 이미지 Pull
-            sudo docker-compose -f docker-compose.dev.yml pull app
+            sudo docker compose -f docker-compose.dev.yml pull app
             
-            sudo docker-compose -f docker-compose.dev.yml up -d --no-deps app
+            sudo docker compose -f docker-compose.dev.yml up -d --no-deps app
 
             # 서버 시작 대기
             sleep 30
