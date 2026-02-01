@@ -1,4 +1,4 @@
-package io.dnd.goyo.domain.place.entity;
+package io.dnd.goyo.domain.review.entity;
 
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
@@ -17,56 +17,42 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "place_images")
+@Table(name = "review_images")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PlaceImage extends BaseEntity {
+public class ReviewImage extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id")
-    private Place place;
+    @JoinColumn(name = "review_id", nullable = false)
+    private Review review;
 
-    @Column(nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String imageUrl;
-
-    @Column(nullable = false)
-    private boolean representativeFlag;
 
     @Column(nullable = false)
     private int sequence;
 
-    public static PlaceImage of(
-            Place place,
-            String imageUrl,
-            boolean representativeFlag,
-            int sequence
-    ) {
-        return new PlaceImage(place, imageUrl, representativeFlag, sequence);
+    public static ReviewImage of(Review review, String imageUrl, int sequence) {
+        return new ReviewImage(review, imageUrl, sequence);
     }
 
-    private PlaceImage(
-            Place place,
-            String imageUrl,
-            boolean representativeFlag,
-            int sequence
-    ) {
-        validatePlace(place);
+    private ReviewImage(Review review, String imageUrl, int sequence) {
+        validateReview(review);
         validateImageUrl(imageUrl);
         validateSequence(sequence);
 
-        this.place = place;
+        this.review = review;
         this.imageUrl = imageUrl;
-        this.representativeFlag = representativeFlag;
         this.sequence = sequence;
     }
 
-    private static void validatePlace(Place place) {
-        if (place == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
+    private static void validateReview(Review review) {
+        if (review == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "리뷰 정보는 필수입니다.");
         }
     }
 

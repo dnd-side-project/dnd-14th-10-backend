@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.wishlist.entity;
 
+import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
@@ -20,7 +21,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "wishlists")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Wishlist {
+public class Wishlist extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

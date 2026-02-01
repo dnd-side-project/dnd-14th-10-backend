@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.entity;
 
+import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
@@ -23,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "place_details")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PlaceDetail {
+public class PlaceDetail extends BaseEntity {
 
     @Id
     private Long id;

@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.entity;
 
+import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
@@ -17,13 +18,15 @@ import jakarta.persistence.Table;
 import java.time.LocalTime;
 import lombok.AccessLevel;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 
 @Entity
 @Table(name = "places")
+@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Place {
+public class Place extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
