@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.history.entity;
 
+import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
@@ -13,16 +14,19 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "history")
+@Table(name = "history", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_history_user_place", columnNames = {"user_id", "place_id"})
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class History {
+public class History extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -37,6 +37,7 @@ public class Badge extends BaseEntity {
     private Badge(String code, String name, String description) {
         validateCode(code);
         validateName(name);
+        validateDescription(description);
 
         this.code = code;
         this.name = name;
@@ -45,6 +46,7 @@ public class Badge extends BaseEntity {
 
     private static final int CODE_MAX_LENGTH = 30;
     private static final int NAME_MAX_LENGTH = 30;
+    private static final int DESCRIPTION_MAX_LENGTH = 100;
 
     private static void validateCode(String code) {
         if (code == null || code.isBlank()) {
@@ -63,6 +65,13 @@ public class Badge extends BaseEntity {
         if (name.length() > NAME_MAX_LENGTH) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
                     String.format("뱃지 이름은 %d자 이내여야 합니다.", NAME_MAX_LENGTH));
+        }
+    }
+
+    private static void validateDescription(String description) {
+        if (description != null && description.length() > DESCRIPTION_MAX_LENGTH) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT,
+                    String.format("뱃지 설명은 %d자 이내여야 합니다.", DESCRIPTION_MAX_LENGTH));
         }
     }
 }

@@ -100,5 +100,17 @@ class BadgeTest {
             assertThat(badge).isNotNull();
             assertThat(badge.getDescription()).isNull();
         }
+
+        @Test
+        void 설명이_100자를_초과하면_예외_발생() {
+            // given
+            Badge.BadgeBuilder builder = createValidBadgeBuilder()
+                    .description("a".repeat(101));
+
+            // when & then
+            assertThatThrownBy(builder::build)
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("뱃지 설명은 100자 이내여야 합니다");
+        }
     }
 }
