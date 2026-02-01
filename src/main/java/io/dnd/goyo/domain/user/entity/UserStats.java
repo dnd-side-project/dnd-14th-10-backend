@@ -16,10 +16,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "user_info")
+@Table(name = "user_stats")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserInfo extends BaseEntity {
+public class UserStats extends BaseEntity {
 
     @Id
     private Long id;
@@ -38,11 +38,11 @@ public class UserInfo extends BaseEntity {
     @Column(nullable = false)
     private int badgeCount;
 
-    public static UserInfo of(User user) {
-        return new UserInfo(user);
+    public static UserStats of(User user) {
+        return new UserStats(user);
     }
 
-    private UserInfo(User user) {
+    private UserStats(User user) {
         validateUser(user);
 
         this.user = user;

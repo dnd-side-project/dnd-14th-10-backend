@@ -9,16 +9,16 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-class UserInfoTest {
+class UserStatsTest {
 
     @Nested
-    @DisplayName("UserInfo 생성 시")
-    class CreateUserInfo {
+    @DisplayName("UserStats 생성 시")
+    class CreateUserStats {
 
         @Test
         void 사용자_정보가_null이면_예외_발생() {
             // when & then
-            assertThatThrownBy(() -> UserInfo.of(null))
+            assertThatThrownBy(() -> UserStats.of(null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("사용자 정보는 필수입니다");
         }
@@ -29,12 +29,12 @@ class UserInfoTest {
             User user = mock(User.class);
 
             // when
-            UserInfo userInfo = UserInfo.of(user);
+            UserStats userStats = UserStats.of(user);
 
             // then
-            assertThat(userInfo.getReviewCount()).isEqualTo(0);
-            assertThat(userInfo.getPlaceCount()).isEqualTo(0);
-            assertThat(userInfo.getBadgeCount()).isEqualTo(0);
+            assertThat(userStats.getReviewCount()).isEqualTo(0);
+            assertThat(userStats.getPlaceCount()).isEqualTo(0);
+            assertThat(userStats.getBadgeCount()).isEqualTo(0);
         }
 
         @Test
@@ -43,11 +43,11 @@ class UserInfoTest {
             User user = mock(User.class);
 
             // when
-            UserInfo userInfo = UserInfo.of(user);
+            UserStats userStats = UserStats.of(user);
 
             // then
-            assertThat(userInfo).isNotNull();
-            assertThat(userInfo.getUser()).isEqualTo(user);
+            assertThat(userStats).isNotNull();
+            assertThat(userStats.getUser()).isEqualTo(user);
         }
     }
 
@@ -59,39 +59,39 @@ class UserInfoTest {
         void 리뷰_카운트_증가() {
             // given
             User user = mock(User.class);
-            UserInfo userInfo = UserInfo.of(user);
+            UserStats userStats = UserStats.of(user);
 
             // when
-            userInfo.incrementReviewCount();
+            userStats.incrementReviewCount();
 
             // then
-            assertThat(userInfo.getReviewCount()).isEqualTo(1);
+            assertThat(userStats.getReviewCount()).isEqualTo(1);
         }
 
         @Test
         void 장소_카운트_증가() {
             // given
             User user = mock(User.class);
-            UserInfo userInfo = UserInfo.of(user);
+            UserStats userStats = UserStats.of(user);
 
             // when
-            userInfo.incrementPlaceCount();
+            userStats.incrementPlaceCount();
 
             // then
-            assertThat(userInfo.getPlaceCount()).isEqualTo(1);
+            assertThat(userStats.getPlaceCount()).isEqualTo(1);
         }
 
         @Test
         void 뱃지_카운트_증가() {
             // given
             User user = mock(User.class);
-            UserInfo userInfo = UserInfo.of(user);
+            UserStats userStats = UserStats.of(user);
 
             // when
-            userInfo.incrementBadgeCount();
+            userStats.incrementBadgeCount();
 
             // then
-            assertThat(userInfo.getBadgeCount()).isEqualTo(1);
+            assertThat(userStats.getBadgeCount()).isEqualTo(1);
         }
     }
 }
