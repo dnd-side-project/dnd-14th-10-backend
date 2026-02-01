@@ -2,7 +2,7 @@ name: Backend Dev CD
 
 on:
   push:
-    branches: [ develop, chore/9-cicd-setup ]
+    branches: [ develop ]
 
 jobs:
   build:
@@ -77,7 +77,7 @@ jobs:
             # 최신 이미지 Pull
             sudo docker compose -f docker-compose.dev.yml pull app
             
-            sudo docker compose -f docker-compose.dev.yml up -d --no-deps app
+            sudo docker compose -f docker-compose.dev.yml up -d app
 
             # 서버 시작 대기
             sleep 30
