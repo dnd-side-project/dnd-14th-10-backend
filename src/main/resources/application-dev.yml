@@ -3,9 +3,9 @@ spring:
     name: gojak
 
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/gojakdb}
-    username: ${SPRING_DATASOURCE_USERNAME:gojak}
-    password: ${SPRING_DATASOURCE_PASSWORD:gojak1234}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
     hikari:
