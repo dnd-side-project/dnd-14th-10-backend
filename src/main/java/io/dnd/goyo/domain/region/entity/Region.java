@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.region.entity;
 
+import io.dnd.goyo.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "regions")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Region {
+public class Region extends BaseEntity {
 
     @Id
     private Integer id;
