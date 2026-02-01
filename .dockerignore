@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Gradle
+.gradle
+gradle
+gradlew
+gradlew.bat
+build.gradle
+settings.gradle
+
+# Source
+src
+
+# IDE
+.idea
+*.iml
+.vscode
+
+# Documentation
+*.md
+!README.md
+
+# Local files
+.env
+.env.*
+docker-compose.yml
+docker-compose.*.yml
+
+# GitHub
+.github
+
+# Scripts
+scripts
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
