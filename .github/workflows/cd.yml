@@ -2,7 +2,7 @@ name: Backend Dev CD
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, chore/9-cicd-setup ]
 
 jobs:
   build:
