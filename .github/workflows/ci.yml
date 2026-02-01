@@ -12,6 +12,21 @@ jobs:
       checks: write
       pull-requests: write
 
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4-alpine
+        env:
+          POSTGRES_DB: testdb
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -21,18 +36,18 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
-
-      - name: Gradle 설정
-        uses: gradle/actions/setup-gradle@v4
+          cache: 'gradle'
 
       - name: gradlew 실행 권한 부여
         run: chmod +x gradlew
 
-      - name: Gradle 빌드
-        run: ./gradlew build -x test
-
-      - name: 테스트 실행
-        run: ./gradlew test
+      - name: 빌드 및 테스트 실행
+        run: ./gradlew build
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
+          SPRING_DATASOURCE_USERNAME: test
+          SPRING_DATASOURCE_PASSWORD: test
+          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
       - name: 테스트 결과 리포트
         if: always()
@@ -43,4 +58,3 @@ jobs:
           reporter: java-junit
           fail-on-error: true
           token: ${{ secrets.GITHUB_TOKEN }}
-
