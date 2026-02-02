@@ -1,4 +1,4 @@
-package io.dnd.goyo.domain.place.service;
+package io.dnd.goyo.common.image;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
@@ -10,19 +10,15 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class PlaceImageService {
+public class ImageUploadService {
 
     private final FileStorage fileStorage;
-
-    private static final String PLACE_IMAGE_DIR = "place/";
     private static final List<String> ALLOWED_EXTENSIONS = List.of(".jpg", ".jpeg", ".png", ".webp");
 
-    public String createPresignedUrl(String originalFilename) {
+    public String createPresignedUrl(ImageType imageType, String originalFilename) {
         String extension = extractExtension(originalFilename);
         validateExtension(extension);
-
-        String objectName = PLACE_IMAGE_DIR + UUID.randomUUID() + extension;
-
+        String objectName = imageType.getPath() + "/" + UUID.randomUUID() + extension;
         return fileStorage.generatePresignedUrl(objectName);
     }
 
