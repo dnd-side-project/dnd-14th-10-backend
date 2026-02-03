@@ -16,10 +16,17 @@ public class ImageUploadService {
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp");
 
     public String createPresignedUrl(ImageType imageType, String originalFilename) {
+        validateFilename(originalFilename);
         String extension = extractExtension(originalFilename);
         validateExtension(extension);
         String objectName = imageType.getPath() + "/" + UUID.randomUUID() + extension;
         return fileStorage.generatePresignedUrl(objectName);
+    }
+
+    private void validateFilename(String originalFilename) {
+        if (originalFilename == null || originalFilename.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "파일명이 필요합니다.");
+        }
     }
 
     private String extractExtension(String originalFilename) {
