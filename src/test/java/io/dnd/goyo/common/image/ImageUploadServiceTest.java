@@ -4,11 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
-
+import static org.mockito.Mockito.verify;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.storage.FileStorage;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,6 +24,9 @@ class ImageUploadServiceTest {
     @InjectMocks
     private ImageUploadService imageUploadService;
 
+    @Captor
+    private ArgumentCaptor<String> objectNameCaptor;
+
     @Test
     void 정상적인_이미지_파일명으로_Presigned_URL을_생성() {
         // given
@@ -34,6 +39,10 @@ class ImageUploadServiceTest {
 
         // then
         assertThat(result).isEqualTo(expectedUrl);
+        verify(fileStorage).generatePresignedUrl(objectNameCaptor.capture());
+        String capturedObjectName = objectNameCaptor.getValue();
+        assertThat(capturedObjectName).startsWith("place/");
+        assertThat(capturedObjectName).endsWith(".jpg");
     }
 
     @Test
