@@ -2,9 +2,9 @@ package io.dnd.goyo.domain.place.controller;
 
 import io.dnd.goyo.common.image.ImageType;
 import io.dnd.goyo.common.image.ImageUploadService;
+import io.dnd.goyo.domain.place.dto.response.PresignedUrlResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,8 +22,8 @@ public class PlaceImageController {
 
     @Operation(summary = "이미지 업로드용 Presigned URL 발급", description = "장소 이미지를 업로드하기 위한 Presigned URL을 발급받습니다.")
     @GetMapping("/presigned-url")
-    public ResponseEntity<Map<String, String>> getPresignedUrl(@RequestParam String filename) {
+    public ResponseEntity<PresignedUrlResponse> getPresignedUrl(@RequestParam String filename) {
         String presignedUrl = imageUploadService.createPresignedUrl(ImageType.PLACE, filename);
-        return ResponseEntity.ok(Map.of("url", presignedUrl));
+        return ResponseEntity.ok(PresignedUrlResponse.from(presignedUrl));
     }
 }
