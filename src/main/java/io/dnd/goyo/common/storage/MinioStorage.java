@@ -24,6 +24,9 @@ public class MinioStorage implements FileStorage {
     @Value("${minio.bucket}")
     private String bucket;
 
+    @Value("${minio.presigned-url-expiry-minutes}")
+    private int expiryMinutes;
+
     @PostConstruct
     public void init() {
         try {
@@ -48,7 +51,7 @@ public class MinioStorage implements FileStorage {
                             .method(Method.PUT)
                             .bucket(bucket)
                             .object(objectName)
-                            .expiry(10, TimeUnit.MINUTES)
+                            .expiry(expiryMinutes, TimeUnit.MINUTES)
                             .build()
             );
         } catch (Exception e) {
