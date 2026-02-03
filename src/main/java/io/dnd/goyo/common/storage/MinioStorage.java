@@ -6,6 +6,7 @@ import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.errors.ErrorResponseException;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +33,17 @@ public class MinioStorage implements FileStorage {
         try {
             boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
             if (!found) {
-                minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-                log.info("MinIO 버킷 생성 완료: {}", bucket);
+                try {
+                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
+                    log.info("MinIO 버킷 생성 완료: {}", bucket);
+                } catch (ErrorResponseException e) {
+                    String code = e.errorResponse().code();
+                    if ("BucketAlreadyOwnedByYou".equals(code) || "BucketAlreadyExists".equals(code)) {
+                        log.info("MinIO 버킷 이미 존재함 (Race Condition 무시): {}", bucket);
+                    } else {
+                        throw e;
+                    }
+                }
             } else {
                 log.info("MinIO 버킷 이미 존재함: {}", bucket);
             }
