@@ -54,13 +54,13 @@ public class MinioStorage implements FileStorage {
     }
 
     @Override
-    public String generatePresignedUrl(String objectName) {
+    public String generatePresignedUrl(String objectKey) {
         try {
             return minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.PUT)
                             .bucket(bucket)
-                            .object(objectName)
+                            .object(objectKey)
                             .expiry(expiryMinutes, TimeUnit.MINUTES)
                             .build()
             );

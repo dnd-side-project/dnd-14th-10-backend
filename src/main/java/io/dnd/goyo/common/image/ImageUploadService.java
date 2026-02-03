@@ -2,9 +2,12 @@ package io.dnd.goyo.common.image;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.image.dto.response.PresignedUrlResponse.PresignedUrlItem;
 import io.dnd.goyo.common.storage.FileStorage;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -15,18 +18,20 @@ public class ImageUploadService {
     private final FileStorage fileStorage;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(".jpg", ".jpeg", ".png", ".webp");
 
-    public String createPresignedUrl(ImageType imageType, String originalFilename) {
-        validateFilename(originalFilename);
-        String extension = extractExtension(originalFilename);
-        validateExtension(extension);
-        String objectName = imageType.getPath() + "/" + UUID.randomUUID() + extension;
-        return fileStorage.generatePresignedUrl(objectName);
+    public List<PresignedUrlItem> createPresignedUrls(ImageType imageType, List<String> filenames) {
+        return filenames.stream()
+                .map(filename -> createPresignedUrlItem(imageType, filename))
+                .collect(Collectors.toList());
     }
 
-    private void validateFilename(String originalFilename) {
-        if (originalFilename == null || originalFilename.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "파일명이 필요합니다.");
-        }
+    private PresignedUrlItem createPresignedUrlItem(ImageType imageType, String originalFilename) {
+        String extension = extractExtension(originalFilename);
+        validateExtension(extension);
+        
+        String objectKey = imageType.getPath() + "/" + UUID.randomUUID() + extension;
+        String url = fileStorage.generatePresignedUrl(objectKey);
+
+        return PresignedUrlItem.of(originalFilename, url, objectKey);
     }
 
     private String extractExtension(String originalFilename) {
