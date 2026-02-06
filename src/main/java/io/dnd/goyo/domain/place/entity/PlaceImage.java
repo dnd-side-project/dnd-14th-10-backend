@@ -27,11 +27,11 @@ public class PlaceImage extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "place_id")
+    @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
     @Column(nullable = false)
-    private String imageUrl;
+    private String imageKey;
 
     @Column(nullable = false)
     private boolean representativeFlag;
@@ -40,39 +40,33 @@ public class PlaceImage extends BaseEntity {
     private int sequence;
 
     public static PlaceImage of(
-            Place place,
-            String imageUrl,
+            String imageKey,
             boolean representativeFlag,
             int sequence
     ) {
-        return new PlaceImage(place, imageUrl, representativeFlag, sequence);
+        return new PlaceImage(imageKey, representativeFlag, sequence);
     }
 
     private PlaceImage(
-            Place place,
-            String imageUrl,
+            String imageKey,
             boolean representativeFlag,
             int sequence
     ) {
-        validatePlace(place);
-        validateImageUrl(imageUrl);
+        validateImageKey(imageKey);
         validateSequence(sequence);
 
-        this.place = place;
-        this.imageUrl = imageUrl;
+        this.imageKey = imageKey;
         this.representativeFlag = representativeFlag;
         this.sequence = sequence;
     }
 
-    private static void validatePlace(Place place) {
-        if (place == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
-        }
+    void assignPlace(Place place) {
+        this.place = place;
     }
 
-    private static void validateImageUrl(String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 URL은 필수입니다.");
+    private static void validateImageKey(String imageKey) {
+        if (imageKey == null || imageKey.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 키는 필수입니다.");
         }
     }
 

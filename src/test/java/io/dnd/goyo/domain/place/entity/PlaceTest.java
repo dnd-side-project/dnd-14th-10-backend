@@ -1,9 +1,14 @@
 package io.dnd.goyo.domain.place.entity;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
+
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
+import io.dnd.goyo.domain.user.entity.User;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -34,12 +39,26 @@ class PlaceTest {
                 .location(DEFAULT_LOCATION)
                 .regionCode(11111)
                 .addressDetail("청계천로 100번길 31")
-                .userId(1L);
+                .user(mock(User.class));
     }
 
     @Nested
     @DisplayName("Place 생성 시")
     class CreatePlace {
+
+        @Test
+        void 정상적인_값으로_생성_가능() {
+            // given
+            Place.PlaceBuilder builder = createValidPlaceBuilder();
+
+            // when
+            Place place = builder.build();
+
+            // then
+            assertThat(place).isNotNull();
+            assertThat(place.getName()).isEqualTo("테스트 카페");
+            assertThat(place.getCategory()).isEqualTo(PlaceCategory.CAFE);
+        }
 
         @ParameterizedTest
         @NullAndEmptySource
@@ -140,14 +159,14 @@ class PlaceTest {
         }
 
         @Test
-        void 등록자_ID가_null이면_예외_발생() {
+        void 등록자_정보가_null이면_예외_발생() {
             // given
-            Place.PlaceBuilder builder = createValidPlaceBuilder().userId(null);
+            Place.PlaceBuilder builder = createValidPlaceBuilder().user(null);
 
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("등록자 ID는 필수입니다");
+                    .hasMessageContaining("등록자 정보는 필수입니다");
         }
 
         @ParameterizedTest
@@ -169,6 +188,74 @@ class PlaceTest {
                     Arguments.of(LocalTime.of(9, 0), null),
                     Arguments.of(null, LocalTime.of(22, 0))
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("이미지 추가 시")
+    class AddImages {
+
+        @Test
+        void 대표_이미지가_없으면_예외_발생() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+            List<PlaceImage> images = List.of(
+                    PlaceImage.of("place/1.jpg", false, 0),
+                    PlaceImage.of("place/2.jpg", false, 1)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> place.addImages(images))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("대표 이미지는 정확히 1개여야 합니다");
+        }
+
+        @Test
+        void 대표_이미지가_2개_이상이면_예외_발생() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+            List<PlaceImage> images = List.of(
+                    PlaceImage.of("place/1.jpg", true, 0),
+                    PlaceImage.of("place/2.jpg", true, 1)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> place.addImages(images))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("대표 이미지는 정확히 1개여야 합니다");
+        }
+
+        @Test
+        void 시퀀스가_중복이면_예외_발생() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+            List<PlaceImage> images = List.of(
+                    PlaceImage.of("place/1.jpg", true, 0),
+                    PlaceImage.of("place/2.jpg", false, 0)
+            );
+
+            // when & then
+            assertThatThrownBy(() -> place.addImages(images))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("이미지 순서는 중복될 수 없습니다");
+        }
+
+        @Test
+        void 정상_이미지_추가_성공() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+            List<PlaceImage> images = List.of(
+                    PlaceImage.of("place/1.jpg", true, 0),
+                    PlaceImage.of("place/2.jpg", false, 1)
+            );
+
+            // when
+            place.addImages(images);
+
+            // then
+            assertThat(place.getImages()).hasSize(2);
+            assertThat(place.getImages().getFirst().getImageKey()).isEqualTo("place/1.jpg");
+            assertThat(place.getImages().getFirst().isRepresentativeFlag()).isTrue();
         }
     }
 }
