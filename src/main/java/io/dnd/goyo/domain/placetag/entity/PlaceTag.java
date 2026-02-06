@@ -1,8 +1,9 @@
-package io.dnd.goyo.domain.place.entity;
+package io.dnd.goyo.domain.placetag.entity;
 
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
