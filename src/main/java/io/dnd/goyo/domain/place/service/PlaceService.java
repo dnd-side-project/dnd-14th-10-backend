@@ -25,7 +25,7 @@ public class PlaceService {
     private final GeometryUtils geometryUtils;
 
     @Transactional
-    public void registerPlace(Long userId, PlaceRegisterRequest request) {
+    public Long registerPlace(Long userId, PlaceRegisterRequest request) {
         User user = userReader.getUser(userId);
         Point location = geometryUtils.createPoint(request.latitude(), request.longitude());
 
@@ -36,5 +36,7 @@ public class PlaceService {
         PlaceDetail placeDetail = request.toPlaceDetailEntity(place);
         placeDetailService.registerPlaceDetail(placeDetail);
         placeTagService.registerPlaceTags(place, request.tagIds());
+
+        return place.getId();
     }
 }

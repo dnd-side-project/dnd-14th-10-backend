@@ -36,13 +36,6 @@ import org.locationtech.jts.geom.Point;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Place extends BaseEntity {
 
-    private static final int NAME_MAX_LENGTH = 50;
-    private static final int ADDRESS_DETAIL_MAX_LENGTH = 50;
-    private static final double MIN_LATITUDE = 33.0;
-    private static final double MAX_LATITUDE = 43.0;
-    private static final double MIN_LONGITUDE = 124.0;
-    private static final double MAX_LONGITUDE = 132.0;
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -117,15 +110,20 @@ public class Place extends BaseEntity {
         this.status = PlaceStatus.ACTIVE;
     }
 
+    private static final int NAME_MAX_LENGTH = 50;
+    private static final int ADDRESS_DETAIL_MAX_LENGTH = 50;
+    private static final double MIN_LATITUDE = 33.0;
+    private static final double MAX_LATITUDE = 43.0;
+    private static final double MIN_LONGITUDE = 124.0;
+    private static final double MAX_LONGITUDE = 132.0;
+
     public void addImage(PlaceImage image) {
         images.add(image);
         image.assignPlace(this);
     }
 
     public void addImages(List<PlaceImage> newImages) {
-        if (newImages == null || newImages.isEmpty()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 최소 1장 이상이어야 합니다.");
-        }
+        validateImagesNotEmpty(newImages);
 
         List<PlaceImage> allImages = mergeImages(newImages);
         validateRepresentativeImage(allImages);
@@ -138,6 +136,12 @@ public class Place extends BaseEntity {
         List<PlaceImage> allImages = new ArrayList<>(this.images);
         allImages.addAll(newImages);
         return allImages;
+    }
+
+    private void validateImagesNotEmpty(List<PlaceImage> images) {
+        if (images == null || images.isEmpty()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 최소 1장 이상이어야 합니다.");
+        }
     }
 
     private void validateRepresentativeImage(List<PlaceImage> allImages) {
