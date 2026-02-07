@@ -1,6 +1,7 @@
 package io.dnd.goyo.common.exception;
 
 import java.util.List;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -52,12 +53,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
-        String message = e.getMostSpecificCause().getMessage();
+        Throwable cause = e.getCause();
 
-        if (message != null && (message.contains("duplicate key") || message.contains("uk_"))) {
-            return ResponseEntity
-                .status(ErrorCode.DUPLICATE_RESOURCE.getStatus())
-                .body(ErrorResponse.of(ErrorCode.DUPLICATE_RESOURCE));
+        if (cause instanceof ConstraintViolationException cve) {
+            String constraintName = cve.getConstraintName();
+            if (constraintName != null && constraintName.startsWith("uk_")) {
+                return ResponseEntity
+                    .status(ErrorCode.DUPLICATE_RESOURCE.getStatus())
+                    .body(ErrorResponse.of(ErrorCode.DUPLICATE_RESOURCE));
+            }
         }
 
         return ResponseEntity
