@@ -25,7 +25,6 @@ import jakarta.persistence.UniqueConstraint;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -118,10 +117,7 @@ public class Place extends BaseEntity {
         this.status = PlaceStatus.ACTIVE;
     }
 
-    public void addImage(PlaceImage image) {
-        if (image == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 필수입니다.");
-        }
+    private void addImage(PlaceImage image) {
         images.add(image);
         image.assignPlace(this);
     }
@@ -145,9 +141,6 @@ public class Place extends BaseEntity {
     private void validateImagesNotEmpty(List<PlaceImage> images) {
         if (images == null || images.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 최소 1장 이상이어야 합니다.");
-        }
-        if (images.contains(null)) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 리스트에 null이 포함될 수 없습니다.");
         }
     }
 
