@@ -79,7 +79,7 @@ class PlaceControllerTest {
                         .content(request)
                         .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(100));
+                .andExpect(jsonPath("$.placeId").value(100));
 
         verify(placeService).registerPlace(eq(1L), any(PlaceRegisterRequest.class));
     }

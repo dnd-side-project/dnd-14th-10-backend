@@ -21,6 +21,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +32,12 @@ import lombok.NoArgsConstructor;
 import org.locationtech.jts.geom.Point;
 
 @Entity
-@Table(name = "places")
+@Table(name = "places", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_place_name_region_address",
+                columnNames = {"name", "region_code", "address_detail"}
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Place extends BaseEntity {
