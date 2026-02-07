@@ -57,7 +57,7 @@ public record PlaceRegisterRequest(
         @NotBlank(message = "상세 주소는 필수입니다")
         String addressDetail,
 
-        @Schema(description = "화장실 정보", example = "1층 로비 옆, 비밀번호 #1234")
+        @Schema(description = "화장실 정보", example = "1층 로비 옆")
         String restroomInfo,
 
         @Schema(description = "콘센트 만족도", example = "AVERAGE")

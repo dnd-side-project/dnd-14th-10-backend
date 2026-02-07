@@ -102,6 +102,7 @@ public class Place extends BaseEntity {
         validateAddressDetail(addressDetail);
         validateUser(user);
         validateOperatingHours(openTime, closeTime);
+        validateRestroomInfo(restroomInfo);
 
         this.name = name;
         this.category = category;
@@ -115,13 +116,6 @@ public class Place extends BaseEntity {
         this.restroomInfo = restroomInfo;
         this.status = PlaceStatus.ACTIVE;
     }
-
-    private static final int NAME_MAX_LENGTH = 50;
-    private static final int ADDRESS_DETAIL_MAX_LENGTH = 50;
-    private static final double MIN_LATITUDE = 33.0;
-    private static final double MAX_LATITUDE = 43.0;
-    private static final double MIN_LONGITUDE = 124.0;
-    private static final double MAX_LONGITUDE = 132.0;
 
     public void addImage(PlaceImage image) {
         images.add(image);
@@ -173,9 +167,10 @@ public class Place extends BaseEntity {
         if (name == null || name.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 이름은 필수입니다.");
         }
-        if (name.length() > NAME_MAX_LENGTH) {
+        int maxLength = 50;
+        if (name.length() > maxLength) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("장소 이름은 %d자 이내여야 합니다.", NAME_MAX_LENGTH));
+                    String.format("장소 이름은 %d자 이내여야 합니다.", maxLength));
         }
     }
 
@@ -191,7 +186,12 @@ public class Place extends BaseEntity {
         }
         double lat = location.getY();
         double lng = location.getX();
-        if (lat < MIN_LATITUDE || lat > MAX_LATITUDE || lng < MIN_LONGITUDE || lng > MAX_LONGITUDE) {
+        double minLat = 33.0;
+        double maxLat = 43.0;
+        double minLng = 124.0;
+        double maxLng = 132.0;
+
+        if (lat < minLat || lat > maxLat || lng < minLng || lng > maxLng) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "유효한 대한민국 좌표가 아닙니다.");
         }
     }
@@ -200,9 +200,10 @@ public class Place extends BaseEntity {
         if (addressDetail == null || addressDetail.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "상세 주소는 필수입니다.");
         }
-        if (addressDetail.length() > ADDRESS_DETAIL_MAX_LENGTH) {
+        int maxLength = 50;
+        if (addressDetail.length() > maxLength) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("상세 주소는 %d자 이내여야 합니다.", ADDRESS_DETAIL_MAX_LENGTH));
+                    String.format("상세 주소는 %d자 이내여야 합니다.", maxLength));
         }
     }
 
@@ -217,6 +218,13 @@ public class Place extends BaseEntity {
         boolean hasCloseTime = (closeTime != null);
         if (hasOpenTime != hasCloseTime) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "영업시간은 시작과 종료를 함께 입력해야 합니다.");
+        }
+    }
+
+    private static void validateRestroomInfo(String restroomInfo) {
+        int maxLength = 10;
+        if (restroomInfo != null && restroomInfo.length() > maxLength) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("화장실 정보는 %d자 이내여야 합니다.", maxLength));
         }
     }
 }
