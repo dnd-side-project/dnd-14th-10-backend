@@ -118,6 +118,9 @@ public class Place extends BaseEntity {
     }
 
     public void addImage(PlaceImage image) {
+        if (image == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 필수입니다.");
+        }
         images.add(image);
         image.assignPlace(this);
     }
