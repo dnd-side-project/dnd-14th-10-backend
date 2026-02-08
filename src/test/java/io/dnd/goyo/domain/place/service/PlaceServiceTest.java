@@ -89,14 +89,14 @@ class PlaceServiceTest {
         PlaceRegisterRequest request = createRegisterRequest();
 
         given(userReader.getUser(userId)).willReturn(user);
-        given(geometryUtils.createPoint(request.latitude(), request.longitude())).willReturn(location);
+        given(geometryUtils.createPoint(request.longitude(), request.latitude())).willReturn(location);
 
         // when
         placeService.registerPlace(userId, request);
 
         // then
         verify(userReader).getUser(userId);
-        verify(geometryUtils).createPoint(request.latitude(), request.longitude());
+        verify(geometryUtils).createPoint(request.longitude(), request.latitude());
         verify(placeRepository).save(any(Place.class));
         verify(placeDetailService).registerPlaceDetail(any(PlaceDetail.class));
         verify(placeTagService).registerPlaceTags(any(Place.class), eq(request.tagIds()));

@@ -12,7 +12,7 @@ public class GeometryUtils {
 
     private final GeometryFactory geometryFactory;
 
-    public Point createPoint(double latitude, double longitude) {
+    public Point createPoint(double longitude, double latitude) {
         return geometryFactory.createPoint(new Coordinate(longitude, latitude));
     }
 }

@@ -27,7 +27,7 @@ public class PlaceService {
     @Transactional
     public Long registerPlace(Long userId, PlaceRegisterRequest request) {
         User user = userReader.getUser(userId);
-        Point location = geometryUtils.createPoint(request.latitude(), request.longitude());
+        Point location = geometryUtils.createPoint(request.longitude(), request.latitude());
 
         Place place = request.toPlaceEntity(user, location);
         place.addImages(request.toImageEntities());
