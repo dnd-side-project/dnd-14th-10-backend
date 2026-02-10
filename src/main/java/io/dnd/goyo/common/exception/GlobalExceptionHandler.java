@@ -1,6 +1,8 @@
 package io.dnd.goyo.common.exception;
 
 import java.util.List;
+import org.hibernate.exception.ConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -47,6 +49,24 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(ErrorCode.INVALID_INPUT.getStatus())
             .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, fieldErrors));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        Throwable cause = e.getCause();
+
+        if (cause instanceof ConstraintViolationException cve) {
+            String constraintName = cve.getConstraintName();
+            if (constraintName != null && constraintName.startsWith("uk_")) {
+                return ResponseEntity
+                    .status(ErrorCode.DUPLICATE_RESOURCE.getStatus())
+                    .body(ErrorResponse.of(ErrorCode.DUPLICATE_RESOURCE));
+            }
+        }
+
+        return ResponseEntity
+            .status(ErrorCode.INVALID_INPUT.getStatus())
+            .body(ErrorResponse.of(ErrorCode.INVALID_INPUT));
     }
 
     @ExceptionHandler(Exception.class)

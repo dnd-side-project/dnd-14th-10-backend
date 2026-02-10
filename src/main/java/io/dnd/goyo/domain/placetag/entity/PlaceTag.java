@@ -1,8 +1,9 @@
-package io.dnd.goyo.domain.place.entity;
+package io.dnd.goyo.domain.placetag.entity;
 
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -12,12 +13,18 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "place_tags")
+@Table(name = "place_tags", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_place_tag_place_tag",
+                columnNames = {"place_id", "tag_id"}
+        )
+})
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PlaceTag extends BaseEntity {

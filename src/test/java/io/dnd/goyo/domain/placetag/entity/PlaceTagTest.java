@@ -1,10 +1,11 @@
-package io.dnd.goyo.domain.place.entity;
+package io.dnd.goyo.domain.placetag.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
