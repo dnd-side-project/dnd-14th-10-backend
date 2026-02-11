@@ -33,20 +33,11 @@ class RegionCodeTest {
             // when & then
             assertThatThrownBy(() -> new RegionCode(code))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("행정구역 코드는 5자리여야 합니다");
+                    .hasMessageContaining("행정구역 코드는 5~10자리여야 합니다");
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {100000, 999999, 1000000})
-        void 코드가_5자리_초과면_예외_발생(int code) {
-            // when & then
-            assertThatThrownBy(() -> new RegionCode(code))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("행정구역 코드는 5자리여야 합니다");
-        }
-
-        @ParameterizedTest
-        @ValueSource(ints = {10000, 99999})
+        @ValueSource(ints = {10000, 99999, 1000000000})
         void 경계값은_허용(int code) {
             // when
             RegionCode regionCode = new RegionCode(code);
