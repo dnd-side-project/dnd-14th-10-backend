@@ -182,3 +182,8 @@ build/
 
 ### IntelliJ IDEA ###
 .idea/
+
+### Environment ###
+.env
+.env.local
+.env.*.local
