@@ -4,7 +4,7 @@ import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
-import jakarta.persistence.Column;
+import io.dnd.goyo.domain.user.entity.User;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -27,28 +27,28 @@ public class Wishlist extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO: [User 엔티티 머지 후] User로 변경
-    @Column(nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
-    public static Wishlist of(Long userId, Place place) {
-        return new Wishlist(userId, place);
+    public static Wishlist of(User user, Place place) {
+        return new Wishlist(user, place);
     }
 
-    private Wishlist(Long userId, Place place) {
-        validateUserId(userId);
+    private Wishlist(User user, Place place) {
+        validateUser(user);
         validatePlace(place);
 
-        this.userId = userId;
+        this.user = user;
         this.place = place;
     }
 
-    private static void validateUserId(Long userId) {
-        if (userId == null) {
+    private static void validateUser(User user) {
+        if (user == null) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "사용자 정보가 누락되었습니다.");
         }
     }
