@@ -1,6 +1,9 @@
 package io.dnd.goyo.security.jwt;
 
+import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.security.CustomUserDetails;
+import io.dnd.goyo.security.jwt.JwtTokenProvider.AccessTokenInfo;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +25,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+    public static final String JWT_ERROR_ATTRIBUTE = "jwtError";
 
     private final JwtTokenProvider jwtTokenProvider;
 
@@ -35,18 +39,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (StringUtils.hasText(token)) {
             try {
-                jwtTokenProvider.validateToken(token);
-                Long userId = jwtTokenProvider.getUserIdFromToken(token);
-                String role = jwtTokenProvider.getRoleFromToken(token);
+                AccessTokenInfo tokenInfo = jwtTokenProvider.parseAccessToken(token);
 
-                CustomUserDetails userDetails = CustomUserDetails.of(userId, role);
+                CustomUserDetails userDetails = CustomUserDetails.of(tokenInfo.userId(), tokenInfo.role());
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
-            } catch (Exception e) {
+            } catch (BusinessException e) {
                 log.debug("JWT authentication failed: {}", e.getMessage());
+                request.setAttribute(JWT_ERROR_ATTRIBUTE, e.getErrorCode());
             }
         }
 

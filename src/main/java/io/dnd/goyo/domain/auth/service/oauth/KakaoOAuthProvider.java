@@ -12,6 +12,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
@@ -41,13 +43,12 @@ public class KakaoOAuthProvider implements OAuthProvider {
     }
 
     private String getAccessToken(String code) {
-        String body = String.format(
-                "grant_type=authorization_code&client_id=%s&client_secret=%s&redirect_uri=%s&code=%s",
-                properties.clientId(),
-                properties.clientSecret(),
-                properties.redirectUri(),
-                code
-        );
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", properties.clientId());
+        body.add("client_secret", properties.clientSecret());
+        body.add("redirect_uri", properties.redirectUri());
+        body.add("code", code);
 
         KakaoTokenResponse response = restClient.post()
                 .uri(properties.tokenUrl())

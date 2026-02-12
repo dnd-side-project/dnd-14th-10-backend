@@ -24,7 +24,8 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(name = "uk_users_provider_provider_id", columnNames = {"provider", "provider_id"})
+        @UniqueConstraint(name = "uk_users_provider_provider_id", columnNames = {"provider", "provider_id"}),
+        @UniqueConstraint(name = "uk_users_nickname", columnNames = {"nickname"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -37,7 +38,7 @@ public class User extends BaseEntity {
     @Column(length = 30, nullable = false)
     private String name;
 
-    @Column(length = 30, nullable = false, unique = true)
+    @Column(length = 30, nullable = false)
     private String nickname;
 
     private LocalDate birth;

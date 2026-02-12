@@ -99,6 +99,16 @@ public class JwtTokenProvider {
         return new SignupTokenInfo(provider, providerId);
     }
 
+    public record AccessTokenInfo(Long userId, String role) {
+    }
+
+    public AccessTokenInfo parseAccessToken(String token) {
+        Claims claims = getClaims(token);
+        Long userId = Long.parseLong(claims.getSubject());
+        String role = claims.get("role", String.class);
+        return new AccessTokenInfo(userId, role);
+    }
+
     public record SignupTokenInfo(Provider provider, String providerId) {
     }
 
