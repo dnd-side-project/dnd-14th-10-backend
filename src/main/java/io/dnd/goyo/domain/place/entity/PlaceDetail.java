@@ -3,6 +3,8 @@ package io.dnd.goyo.domain.place.entity;
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -11,6 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.MapsId;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.util.Arrays;
+import java.util.Comparator;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -93,5 +97,24 @@ public class PlaceDetail extends BaseEntity {
         if (score < 0 || score > 100) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, fieldName + "는 0~100 사이여야 합니다.");
         }
+    }
+
+    public Mood getMood() {
+        double averageScore = calculateAverageScore(this.totalQuietScore);
+        return Arrays.stream(Mood.values())
+                .min(Comparator.comparingDouble(m -> Math.abs(m.getScore() - averageScore)))
+                .orElse(Mood.CHATTING);
+    }
+
+    public SpaceSize getSpaceSize() {
+        double averageScore = calculateAverageScore(this.totalSpaceSizeScore);
+        return Arrays.stream(SpaceSize.values())
+                .min(Comparator.comparingDouble(s -> Math.abs(s.getScore() - averageScore)))
+                .orElse(SpaceSize.MEDIUM);
+    }
+
+    private double calculateAverageScore(int totalScore) {
+        int count = this.reviewCount + 1;
+        return (double) totalScore / count;
     }
 }
