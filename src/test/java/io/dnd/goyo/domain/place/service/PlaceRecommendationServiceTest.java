@@ -13,7 +13,7 @@ import io.dnd.goyo.domain.place.entity.PlaceImage;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.user.entity.User;
-import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
+import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import java.time.LocalTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class PlaceRecommendationServiceTest {
     private PlaceRepository placeRepository;
 
     @Mock
-    private WishlistRepository wishlistRepository;
+    private WishlistReader wishlistReader;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -58,7 +58,7 @@ class PlaceRecommendationServiceTest {
         )).willReturn(placeIds);
         given(placeRepository.findAllByIdWithDetails(placeIds))
                 .willReturn(List.of(place1, place2));
-        given(wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(userId, placeIds))
+        given(wishlistReader.getWishedPlaceIds(userId, placeIds))
                 .willReturn(List.of(10L));
 
         // when
@@ -128,7 +128,7 @@ class PlaceRecommendationServiceTest {
         )).willReturn(placeIds);
         given(placeRepository.findAllByIdWithDetails(placeIds))
                 .willReturn(List.of(place1, place2));
-        given(wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(userId, placeIds))
+        given(wishlistReader.getWishedPlaceIds(userId, placeIds))
                 .willReturn(List.of(10L));
 
         // when
@@ -174,7 +174,7 @@ class PlaceRecommendationServiceTest {
         )).willReturn(orderedIds);
         given(placeRepository.findAllByIdWithDetails(orderedIds))
                 .willReturn(List.of(place1, place2, place3));
-        given(wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(1L, orderedIds))
+        given(wishlistReader.getWishedPlaceIds(1L, orderedIds))
                 .willReturn(List.of());
 
         // when
@@ -200,7 +200,7 @@ class PlaceRecommendationServiceTest {
         )).willReturn(orderedIds);
         given(placeRepository.findAllByIdWithDetails(orderedIds))
                 .willReturn(List.of(place1, place2, place3));
-        given(wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(1L, orderedIds))
+        given(wishlistReader.getWishedPlaceIds(1L, orderedIds))
                 .willReturn(List.of());
 
         // when

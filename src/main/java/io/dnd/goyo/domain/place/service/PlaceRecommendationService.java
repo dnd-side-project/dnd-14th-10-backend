@@ -5,7 +5,7 @@ import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceImage;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
-import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
+import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class PlaceRecommendationService {
     private static final double BAYESIAN_PRIOR_RATING = 3.5;
 
     private final PlaceRepository placeRepository;
-    private final WishlistRepository wishlistRepository;
+    private final WishlistReader wishlistReader;
 
     public List<PlaceSummaryResponse> getNewPlaces(
             Long userId,
@@ -120,7 +120,7 @@ public class PlaceRecommendationService {
     }
 
     private Set<Long> findWishedPlaceIds(Long userId, List<Long> placeIds) {
-        return new HashSet<>(wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(userId, placeIds));
+        return new HashSet<>(wishlistReader.getWishedPlaceIds(userId, placeIds));
     }
 
     private PlaceSummaryResponse buildPlaceSummary(Place place, Set<Long> wishedPlaceIds) {
