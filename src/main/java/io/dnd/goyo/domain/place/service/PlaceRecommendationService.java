@@ -25,6 +25,8 @@ public class PlaceRecommendationService {
     private static final double DEFAULT_RADIUS_METERS = 3000.0;
     private static final int RECENT_DAYS = 30;
     private static final int LIMIT = 6;
+    private static final int BAYESIAN_MIN_REVIEWS = 2;
+    private static final double BAYESIAN_PRIOR_RATING = 3.5;
 
     private final PlaceRepository placeRepository;
     private final WishlistRepository wishlistRepository;
@@ -47,6 +49,41 @@ public class PlaceRecommendationService {
         Set<Long> wishedPlaceIds = findWishedPlaceIds(userId, placeIds);
 
         return createPlaceSummaries(placeIds, placeMap, wishedPlaceIds);
+    }
+
+    public List<PlaceSummaryResponse> getPopularPlaces(
+            Long userId,
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        List<Long> placeIds = findPopularPlaceIds(longitude, latitude, category, radiusMeters);
+
+        if (placeIds.isEmpty()) {
+            return List.of();
+        }
+
+        Map<Long, Place> placeMap = findPlacesMap(placeIds);
+        Set<Long> wishedPlaceIds = findWishedPlaceIds(userId, placeIds);
+
+        return createPlaceSummaries(placeIds, placeMap, wishedPlaceIds);
+    }
+
+    private List<Long> findPopularPlaceIds(
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = DEFAULT_RADIUS_METERS;
+        if (radiusMeters != null) {
+            radius = radiusMeters;
+        }
+        return placeRepository.findPopularPlaceIds(
+                longitude, latitude, radius, category.name(),
+                BAYESIAN_MIN_REVIEWS, BAYESIAN_PRIOR_RATING, LIMIT
+        );
     }
 
     private List<Long> findNewPlaceIds(

@@ -41,4 +41,31 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             @Param("recentDays") int recentDays,
             @Param("limit") int limit
     );
+
+    @Query(value = """
+            SELECT p.id FROM places p
+            JOIN place_details pd ON pd.place_id = p.id
+            WHERE ST_DWithin(
+                CAST(p.location AS geography),
+                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
+                :radiusMeters
+            )
+            AND p.category = :category
+            AND p.status = 'ACTIVE'
+            AND pd.total_rating >= (pd.review_count * 3.0)
+            ORDER BY (
+                ((pd.total_rating + :minReviews * :priorRating) / (pd.review_count + :minReviews)) * 0.7
+                + LN(pd.wish_count + 1) * 0.3
+            ) DESC, p.created_at DESC
+            LIMIT :limit
+            """, nativeQuery = true)
+    List<Long> findPopularPlaceIds(
+            @Param("longitude") double longitude,
+            @Param("latitude") double latitude,
+            @Param("radiusMeters") double radiusMeters,
+            @Param("category") String category,
+            @Param("minReviews") int minReviews,
+            @Param("priorRating") double priorRating,
+            @Param("limit") int limit
+    );
 }

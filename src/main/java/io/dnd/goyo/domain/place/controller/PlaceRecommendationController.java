@@ -41,4 +41,19 @@ public class PlaceRecommendationController {
         );
         return ResponseEntity.ok(places);
     }
+
+    @Operation(summary = "인기 공간 조회", description = "사용자 위치 기준, 반경 내 인기 순으로 공간을 조회합니다.")
+    @GetMapping("/popular")
+    public ResponseEntity<List<PlaceSummaryResponse>> getPopularPlaces(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam double longitude,
+            @RequestParam double latitude,
+            @RequestParam PlaceCategory category,
+            @RequestParam(required = false) Integer radiusMeters
+    ) {
+        List<PlaceSummaryResponse> places = placeRecommendationService.getPopularPlaces(
+                userPrincipal.getId(), longitude, latitude, category, radiusMeters
+        );
+        return ResponseEntity.ok(places);
+    }
 }
