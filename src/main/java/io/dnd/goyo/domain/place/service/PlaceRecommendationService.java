@@ -2,7 +2,6 @@ package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.entity.Place;
-import io.dnd.goyo.domain.place.entity.PlaceImage;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
@@ -127,16 +126,8 @@ public class PlaceRecommendationService {
         return PlaceSummaryResponse.of(
                 place,
                 place.getPlaceDetail(),
-                getRepresentativeImageUrl(place),
+                place.getRepresentativeImageKey(),
                 wishedPlaceIds.contains(place.getId())
         );
-    }
-
-    private String getRepresentativeImageUrl(Place place) {
-        return place.getImages().stream()
-                .filter(PlaceImage::isRepresentativeFlag)
-                .findFirst()
-                .map(PlaceImage::getImageKey)
-                .orElse(null);
     }
 }

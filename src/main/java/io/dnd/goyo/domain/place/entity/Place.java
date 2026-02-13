@@ -142,6 +142,14 @@ public class Place extends BaseEntity {
         return allImages;
     }
 
+    public String getRepresentativeImageKey() {
+        return images.stream()
+                .filter(PlaceImage::isRepresentativeFlag)
+                .findFirst()
+                .map(PlaceImage::getImageKey)
+                .orElse(null);
+    }
+
     private void validateImagesNotEmpty(List<PlaceImage> images) {
         if (images == null || images.isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지는 최소 1장 이상이어야 합니다.");
