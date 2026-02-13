@@ -31,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.annotation.Transactional;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -199,6 +200,123 @@ class PlaceRecommendationIntegrationTest {
 
         // then
         assertThat(result.getFirst().representativeImageUrl()).isEqualTo("places/test.jpg");
+    }
+
+    @Test
+    void 인기_공간_인기순_정렬() {
+        // given
+        savePlaceWithDetails("인기 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
+        savePlaceWithDetails("보통 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 10, 5, 20.0);
+        savePlaceWithDetails("핫플 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520, 100, 80, 320.0);
+
+        // when
+        List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
+                user.getId(), 126.978, 37.570, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result).hasSize(3);
+        assertThat(result).extracting(PlaceSummaryResponse::name)
+                .containsExactly("핫플 카페", "인기 카페", "보통 카페");
+    }
+
+    @Test
+    void 인기_공간_같은_카테고리만_조회() {
+        // given
+        savePlaceWithDetails("종로 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
+        savePlaceWithDetails("종로 도서관", PlaceCategory.PUBLIC, 126.9770, 37.5796, 110100220, 100, 80, 320.0);
+
+        // when
+        List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
+                user.getId(), 126.978, 37.570, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().name()).isEqualTo("종로 카페");
+    }
+
+    @Test
+    void 인기_공간_찜한_장소와_안_찜한_장소_구분() {
+        // given
+        Place wishedPlace = savePlaceWithDetails("찜한 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
+        savePlaceWithDetails("안찜한 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 30, 10, 40.0);
+        wishlistRepository.saveAndFlush(Wishlist.of(user, wishedPlace));
+
+        // when
+        List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
+                user.getId(), 126.978, 37.570, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result).hasSize(2);
+        PlaceSummaryResponse wished = result.stream()
+                .filter(r -> r.name().equals("찜한 카페")).findFirst().get();
+        PlaceSummaryResponse notWished = result.stream()
+                .filter(r -> r.name().equals("안찜한 카페")).findFirst().get();
+        assertThat(wished.isWished()).isTrue();
+        assertThat(notWished.isWished()).isFalse();
+    }
+
+    @Test
+    void 인기_공간_평균_별점_3점_미만_제외() {
+        // given
+        savePlaceWithDetails("좋은 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 10, 40.0);
+        savePlaceWithDetails("나쁜 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 100, 10, 20.0);
+
+        // when
+        List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
+                user.getId(), 126.978, 37.570, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().name()).isEqualTo("좋은 카페");
+    }
+
+    @Test
+    void 인기_공간_리뷰_없으면_필터_통과_별점_낮으면_제외() {
+        // given
+        savePlaceWithDetails("리뷰없는 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 30, 0, 0.0);
+        savePlaceWithDetails("별점높은 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 20, 10, 45.0);
+        savePlaceWithDetails("별점낮은 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520, 40, 10, 20.0);
+
+        // when
+        List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
+                user.getId(), 126.978, 37.570, PlaceCategory.CAFE, null
+        );
+
+        // then - 리뷰 0개는 통과, 평균 4.5 통과, 평균 2.0 제외
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(PlaceSummaryResponse::name)
+                .containsExactlyInAnyOrder("리뷰없는 카페", "별점높은 카페");
+    }
+
+    private Place savePlaceWithDetails(
+            String name, PlaceCategory category,
+            double longitude, double latitude, int regionCode,
+            int wishCount, int reviewCount, double totalRating
+    ) {
+        Place place = Place.builder()
+                .name(name)
+                .category(category)
+                .location(geometryFactory.createPoint(new Coordinate(longitude, latitude)))
+                .regionCode(regionCode)
+                .addressDetail("테스트 주소")
+                .user(user)
+                .openTime(LocalTime.of(9, 0))
+                .closeTime(LocalTime.of(22, 0))
+                .build();
+        place.addImages(List.of(PlaceImage.of("places/test.jpg", true, 0)));
+        placeRepository.saveAndFlush(place);
+        PlaceDetail detail = PlaceDetail.of(place, 50, 50, 50, 50);
+        ReflectionTestUtils.setField(detail, "wishCount", wishCount);
+        ReflectionTestUtils.setField(detail, "reviewCount", reviewCount);
+        ReflectionTestUtils.setField(detail, "totalRating", totalRating);
+        placeDetailRepository.saveAndFlush(detail);
+        entityManager.clear();
+
+        return place;
     }
 
     private Place savePlace(String name, PlaceCategory category,
