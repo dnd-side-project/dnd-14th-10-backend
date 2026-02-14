@@ -31,6 +31,12 @@ public record SignupRequest(
         LocalDate birth,
 
         @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
-        String profileImg
+        String profileImg,
+
+        @Schema(description = "위치 정보 동의 여부", example = "true")
+        Boolean locationConsent,
+
+        @Schema(description = "거주지 행정구역 코드 (5자리)", example = "11680")
+        Integer regionCode
 ) {
 }

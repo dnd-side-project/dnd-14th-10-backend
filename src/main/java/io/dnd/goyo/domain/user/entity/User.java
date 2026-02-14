@@ -67,6 +67,11 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private UserStatus status;
 
+    private Boolean locationConsent;
+
+    @Column(name = "region_code")
+    private Integer regionCode;
+
     @Builder
     private User(
             String name,
@@ -77,7 +82,9 @@ public class User extends BaseEntity {
             String profileImg,
             Provider provider,
             String providerId,
-            UserRole role
+            UserRole role,
+            Boolean locationConsent,
+            Integer regionCode
     ) {
         validateName(name);
         validateNickname(nickname);
@@ -95,6 +102,8 @@ public class User extends BaseEntity {
         this.providerId = providerId;
         this.role = role;
         this.status = UserStatus.ACTIVE;
+        this.locationConsent = locationConsent;
+        this.regionCode = regionCode;
     }
 
     private static final int NAME_MAX_LENGTH = 30;

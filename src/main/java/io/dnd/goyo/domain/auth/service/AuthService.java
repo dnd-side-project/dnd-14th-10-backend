@@ -78,6 +78,8 @@ public class AuthService {
                 .provider(provider)
                 .providerId(providerId)
                 .role(UserRole.USER)
+                .locationConsent(request.locationConsent())
+                .regionCode(request.regionCode())
                 .build();
 
         User savedUser = userRepository.save(user);
