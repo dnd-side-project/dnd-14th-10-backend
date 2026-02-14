@@ -88,7 +88,7 @@ public class AuthService {
     }
 
     public TokenResponse refresh(String refreshToken) {
-        Long userId = jwtTokenProvider.getUserIdFromToken(refreshToken);
+        Long userId = jwtTokenProvider.parseRefreshToken(refreshToken);
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));

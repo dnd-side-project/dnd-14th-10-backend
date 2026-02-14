@@ -51,10 +51,20 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
+                .claim("type", "refresh")
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
+    }
+
+    public Long parseRefreshToken(String token) {
+        Claims claims = getClaims(token);
+        String type = claims.get("type", String.class);
+        if (!"refresh".equals(type)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+        return Long.parseLong(claims.getSubject());
     }
 
     public String createSignupToken(Provider provider, String providerId) {

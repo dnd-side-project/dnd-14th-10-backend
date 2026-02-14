@@ -244,7 +244,7 @@ class AuthServiceTest {
             AuthService authService = createAuthService();
             User user = createActiveUser();
 
-            given(jwtTokenProvider.getUserIdFromToken("refresh_token")).willReturn(1L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(1L);
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("new_access_token");
             given(jwtTokenProvider.createRefreshToken(any())).willReturn("new_refresh_token");
@@ -264,7 +264,7 @@ class AuthServiceTest {
             // given
             AuthService authService = createAuthService();
 
-            given(jwtTokenProvider.getUserIdFromToken("refresh_token")).willReturn(999L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(999L);
             given(userRepository.findById(999L)).willReturn(Optional.empty());
 
             // when & then
@@ -280,13 +280,27 @@ class AuthServiceTest {
             User blockedUser = org.mockito.Mockito.mock(User.class);
             given(blockedUser.getStatus()).willReturn(UserStatus.BLOCKED);
 
-            given(jwtTokenProvider.getUserIdFromToken("refresh_token")).willReturn(1L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(1L);
             given(userRepository.findById(1L)).willReturn(Optional.of(blockedUser));
 
             // when & then
             assertThatThrownBy(() -> authService.refresh("refresh_token"))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_BLOCKED);
+        }
+
+        @Test
+        void 유효하지_않은_토큰이면_예외_발생() {
+            // given
+            AuthService authService = createAuthService();
+
+            given(jwtTokenProvider.parseRefreshToken("access_token_used_as_refresh"))
+                    .willThrow(new BusinessException(ErrorCode.INVALID_TOKEN));
+
+            // when & then
+            assertThatThrownBy(() -> authService.refresh("access_token_used_as_refresh"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
         }
     }
 }
