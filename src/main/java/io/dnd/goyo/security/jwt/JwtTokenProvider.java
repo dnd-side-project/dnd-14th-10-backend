@@ -38,6 +38,7 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
+                .claim("type", "access")
                 .claim("role", role.name())
                 .issuedAt(now)
                 .expiration(expiry)
@@ -116,6 +117,10 @@ public class JwtTokenProvider {
 
     public AccessTokenInfo parseAccessToken(String token) {
         Claims claims = getClaims(token);
+        String type = claims.get("type", String.class);
+        if (!"access".equals(type)) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
         Long userId = Long.parseLong(claims.getSubject());
         String role = claims.get("role", String.class);
         return new AccessTokenInfo(userId, role);
