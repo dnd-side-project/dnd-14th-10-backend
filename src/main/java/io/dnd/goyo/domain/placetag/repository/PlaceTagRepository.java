@@ -1,7 +1,33 @@
 package io.dnd.goyo.domain.placetag.repository;
 
 import io.dnd.goyo.domain.placetag.entity.PlaceTag;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
+
+    @Query(value = """
+            SELECT pt.place_id FROM place_tags pt
+            JOIN places p ON p.id = pt.place_id
+            WHERE pt.tag_id IN (:tagIds)
+              AND CAST(p.region_code AS TEXT) LIKE CAST(:regionCode AS TEXT) || '%'
+              AND p.category = :category
+              AND p.status = 'ACTIVE'
+              AND p.id NOT IN (:excludeIds)
+            GROUP BY pt.place_id
+            ORDER BY COUNT(pt.tag_id) DESC
+            LIMIT :candidateLimit
+            """, nativeQuery = true)
+    List<Long> findCandidatePlaceIds(
+            @Param("tagIds") List<Long> tagIds,
+            @Param("regionCode") int regionCode,
+            @Param("category") String category,
+            @Param("excludeIds") List<Long> excludeIds,
+            @Param("candidateLimit") int candidateLimit
+    );
+
+    @Query("SELECT pt.place.id, pt.tag.id FROM PlaceTag pt WHERE pt.place.id IN :placeIds")
+    List<Object[]> findPlaceTagMappings(@Param("placeIds") List<Long> placeIds);
 }

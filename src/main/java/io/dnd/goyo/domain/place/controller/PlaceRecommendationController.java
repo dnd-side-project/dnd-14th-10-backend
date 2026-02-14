@@ -42,6 +42,21 @@ public class PlaceRecommendationController {
         return ResponseEntity.ok(places);
     }
 
+    @Operation(summary = "비슷한 성향 공간 조회", description = "유저와 비슷한 성향의 공간을 추천합니다.")
+    @GetMapping("/similar")
+    public ResponseEntity<List<PlaceSummaryResponse>> getSimilarPlaces(
+            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @RequestParam int regionCode,
+            @RequestParam PlaceCategory category,
+            @RequestParam double longitude,
+            @RequestParam double latitude
+    ) {
+        List<PlaceSummaryResponse> places = placeRecommendationService.getSimilarPlaces(
+                userPrincipal.getId(), regionCode, category, longitude, latitude
+        );
+        return ResponseEntity.ok(places);
+    }
+
     @Operation(summary = "인기 공간 조회", description = "사용자 위치 기준, 반경 내 인기 순으로 공간을 조회합니다.")
     @GetMapping("/popular")
     public ResponseEntity<List<PlaceSummaryResponse>> getPopularPlaces(

@@ -1,0 +1,17 @@
+package io.dnd.goyo.domain.review.repository;
+
+import io.dnd.goyo.domain.review.entity.ReviewTag;
+import java.time.LocalDateTime;
+import java.util.List;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface ReviewTagRepository extends JpaRepository<ReviewTag, Long> {
+
+    @Query("SELECT rt.tag.id, rt.review.createdAt FROM ReviewTag rt "
+            + "WHERE rt.review.user.id = :userId AND rt.review.status = 'ACTIVE' "
+            + "AND rt.review.createdAt >= :since")
+    List<Object[]> findTagsWithCreatedAt(@Param("userId") Long userId,
+            @Param("since") LocalDateTime since);
+}
