@@ -58,8 +58,7 @@ public class KakaoOAuthProvider implements OAuthProvider {
                 .onStatus(HttpStatusCode::isError, (request, res) -> {
                     String errorBody = readErrorBody(res);
                     log.error("Kakao token error - status: {}, body: {}", res.getStatusCode(), errorBody);
-                    throw new BusinessException(ErrorCode.OAUTH_AUTH_FAILED,
-                            "카카오 토큰 발급 실패: " + errorBody);
+                    throw new BusinessException(ErrorCode.OAUTH_AUTH_FAILED);
                 })
                 .body(KakaoTokenResponse.class);
 
@@ -78,8 +77,7 @@ public class KakaoOAuthProvider implements OAuthProvider {
                 .onStatus(HttpStatusCode::isError, (request, res) -> {
                     String errorBody = readErrorBody(res);
                     log.error("Kakao user info error - status: {}, body: {}", res.getStatusCode(), errorBody);
-                    throw new BusinessException(ErrorCode.OAUTH_AUTH_FAILED,
-                            "카카오 사용자 정보 조회 실패: " + errorBody);
+                    throw new BusinessException(ErrorCode.OAUTH_AUTH_FAILED);
                 })
                 .body(KakaoUserInfoResponse.class);
 

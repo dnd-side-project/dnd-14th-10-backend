@@ -22,7 +22,14 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
+        validateSecretKey(jwtProperties.secret());
         this.secretKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private void validateSecretKey(String secret) {
+        if (secret == null || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 32 bytes for HMAC-SHA256");
+        }
     }
 
     public String createAccessToken(Long userId, UserRole role) {
@@ -83,11 +90,6 @@ public class JwtTokenProvider {
         return Long.parseLong(claims.getSubject());
     }
 
-    public String getRoleFromToken(String token) {
-        Claims claims = getClaims(token);
-        return claims.get("role", String.class);
-    }
-
     public SignupTokenInfo parseSignupToken(String token) {
         Claims claims = getClaims(token);
         String type = claims.get("type", String.class);
@@ -95,7 +97,7 @@ public class JwtTokenProvider {
             throw new BusinessException(ErrorCode.INVALID_SIGNUP_TOKEN);
         }
         String providerId = claims.getSubject();
-        Provider provider = Provider.valueOf(claims.get("provider", String.class));
+        Provider provider = Provider.from(claims.get("provider", String.class));
         return new SignupTokenInfo(provider, providerId);
     }
 
