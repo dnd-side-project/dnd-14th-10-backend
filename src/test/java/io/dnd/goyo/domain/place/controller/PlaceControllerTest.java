@@ -10,8 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.dnd.goyo.common.auth.security.UserPrincipal;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.security.CustomUserDetails;
+import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import io.dnd.goyo.domain.place.service.PlaceService;
 import java.util.HashMap;
 import java.util.List;
@@ -39,11 +40,14 @@ class PlaceControllerTest {
     @MockitoBean
     private PlaceService placeService;
 
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
+
     @BeforeEach
     void setUp() {
-        UserPrincipal userPrincipal = new UserPrincipal(1L);
+        CustomUserDetails userDetails = CustomUserDetails.of(1L, "USER");
         UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userPrincipal, null, List.of());
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(authentication);
     }
 

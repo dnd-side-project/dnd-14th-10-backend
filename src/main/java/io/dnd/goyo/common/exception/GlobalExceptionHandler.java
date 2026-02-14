@@ -57,6 +57,11 @@ public class GlobalExceptionHandler {
 
         if (cause instanceof ConstraintViolationException cve) {
             String constraintName = cve.getConstraintName();
+            if ("uk_users_nickname".equals(constraintName)) {
+                return ResponseEntity
+                    .status(ErrorCode.DUPLICATE_NICKNAME.getStatus())
+                    .body(ErrorResponse.of(ErrorCode.DUPLICATE_NICKNAME));
+            }
             if (constraintName != null && constraintName.startsWith("uk_")) {
                 return ResponseEntity
                     .status(ErrorCode.DUPLICATE_RESOURCE.getStatus())
