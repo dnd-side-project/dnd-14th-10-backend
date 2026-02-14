@@ -28,6 +28,10 @@ jobs:
 
       - name: 빌드 및 테스트 실행
         run: ./gradlew build
+        env:
+          JWT_SECRET: test-secret-key-for-ci-at-least-32-chars
+          KAKAO_CLIENT_ID: test-kakao-client-id
+          KAKAO_CLIENT_SECRET: test-kakao-client-secret
 
       - name: 테스트 결과 리포트
         if: always()

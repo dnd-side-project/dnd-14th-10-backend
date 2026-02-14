@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAuth Test</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 40px auto; padding: 20px; background: #f5f5f5; }
+        .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { color: #333; margin-bottom: 8px; }
+        h2 { color: #555; font-size: 18px; margin: 0 0 16px 0; }
+        .subtitle { color: #888; margin-bottom: 24px; }
+        button { padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; width: 100%; margin-bottom: 8px; }
+        .btn-kakao { background: #FEE500; color: #000; }
+        .btn-kakao:hover { background: #E6CF00; }
+        .btn-naver { background: #03C75A; color: white; }
+        .btn-naver:hover { background: #02b351; }
+        .btn-google { background: white; color: #333; border: 1px solid #ddd; }
+        .btn-google:hover { background: #f5f5f5; }
+        .btn-primary { background: #3182F6; color: white; }
+        .btn-primary:hover { background: #1B64DA; }
+        .btn-secondary { background: #E8E8E8; color: #333; }
+        .btn-secondary:hover { background: #D0D0D0; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #3182F6; }
+        label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
+        .form-group { margin-bottom: 16px; }
+        .hidden { display: none; }
+        .response { background: #f8f9fa; border-radius: 8px; padding: 16px; margin-top: 16px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; max-height: 300px; overflow-y: auto; }
+        .success { border-left: 4px solid #00C853; }
+        .error { border-left: 4px solid #FF5252; }
+        .info { border-left: 4px solid #2196F3; }
+        .token-display { background: #E3F2FD; padding: 12px; border-radius: 8px; margin: 12px 0; font-size: 12px; word-break: break-all; }
+        .status { padding: 8px 16px; border-radius: 20px; font-size: 13px; display: inline-block; margin-bottom: 16px; }
+        .status.logged-in { background: #E8F5E9; color: #2E7D32; }
+        .btn-group { display: flex; gap: 8px; margin-top: 12px; }
+        .btn-group button { flex: 1; margin-bottom: 0; }
+        .hint { font-size: 12px; color: #888; margin-top: -8px; margin-bottom: 12px; }
+        .divider { text-align: center; color: #999; margin: 20px 0; position: relative; }
+        .divider::before, .divider::after { content: ''; position: absolute; top: 50%; width: 40%; height: 1px; background: #ddd; }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+    </style>
+</head>
+<body>
+    <h1>OAuth Login Test</h1>
+    <p class="subtitle">인가 코드 방식 OAuth + JWT 인증 테스트</p>
+
+    <!-- Step 1: OAuth 설정 및 로그인 -->
+    <div class="card" id="step1">
+        <h2>1. OAuth 로그인</h2>
+
+        <div class="form-group">
+            <label>API Base URL</label>
+            <input type="text" id="apiBaseUrl" value="http://localhost:8080">
+        </div>
+
+        <div class="form-group">
+            <label>Kakao REST API Key (Client ID)</label>
+            <input type="text" id="kakaoClientId" placeholder="카카오 개발자 콘솔 > 앱 키 > REST API 키">
+        </div>
+
+        <button class="btn-kakao" onclick="loginWithKakao()">카카오로 로그인</button>
+
+        <p class="hint" style="margin-top: 8px;">
+            * 카카오 개발자 콘솔에서 Redirect URI를 등록하세요: <code id="redirectUriDisplay"></code>
+        </p>
+
+        <div id="step1Response" class="response hidden"></div>
+    </div>
+
+    <!-- Step 2: 인가 코드 처리 -->
+    <div class="card hidden" id="step2">
+        <h2>2. 인가 코드 → 서버 로그인</h2>
+        <p style="color:#666; font-size:14px;">인가 코드를 서버로 전송하여 로그인 처리</p>
+        <div class="token-display">
+            <strong>Authorization Code:</strong><br>
+            <span id="authCodeDisplay"></span>
+        </div>
+        <button class="btn-primary" onclick="processAuthCode()">서버 로그인 요청</button>
+        <div id="step2Response" class="response hidden"></div>
+    </div>
+
+    <!-- Step 3: 회원가입 (신규 회원인 경우) -->
+    <div class="card hidden" id="step3">
+        <h2>3. 회원가입 (추가 정보 입력)</h2>
+        <div class="form-group">
+            <label>이름 *</label>
+            <input type="text" id="signupName" placeholder="이름 입력">
+        </div>
+        <div class="form-group">
+            <label>닉네임 *</label>
+            <input type="text" id="signupNickname" placeholder="닉네임 입력">
+        </div>
+        <div class="form-group">
+            <label>성별 *</label>
+            <select id="signupGender">
+                <option value="">선택하세요</option>
+                <option value="MALE">남성</option>
+                <option value="FEMALE">여성</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>생년월일</label>
+            <input type="date" id="signupBirth">
+        </div>
+        <div class="form-group">
+            <label>프로필 이미지 URL</label>
+            <input type="text" id="signupProfileImg" placeholder="https://...">
+        </div>
+        <button class="btn-primary" onclick="signup()">회원가입 완료</button>
+        <div id="step3Response" class="response hidden"></div>
+    </div>
+
+    <!-- Step 4: 인증 완료 -->
+    <div class="card hidden" id="step4">
+        <h2>4. 인증 완료</h2>
+        <span class="status logged-in">로그인됨</span>
+        <div id="userInfo" style="margin: 16px 0;"></div>
+        <div class="token-display">
+            <strong>Access Token:</strong><br>
+            <span id="accessTokenDisplay"></span>
+        </div>
+        <div class="token-display">
+            <strong>Refresh Token:</strong><br>
+            <span id="refreshTokenDisplay"></span>
+        </div>
+        <div class="btn-group">
+            <button class="btn-secondary" onclick="testProtectedApi()">보호된 API 테스트</button>
+            <button class="btn-primary" onclick="refreshToken()">토큰 갱신</button>
+        </div>
+        <div id="step4Response" class="response hidden"></div>
+    </div>
+
+    <!-- API 직접 테스트 -->
+    <div class="card">
+        <h2>API 직접 테스트</h2>
+        <div class="form-group">
+            <label>엔드포인트</label>
+            <select id="testEndpoint">
+                <option value="/api/auth/oauth/kakao">POST /api/auth/oauth/kakao</option>
+                <option value="/api/auth/signup">POST /api/auth/signup</option>
+                <option value="/api/auth/refresh">POST /api/auth/refresh</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Request Body (JSON)</label>
+            <textarea id="testBody" rows="3" style="font-family:monospace; font-size:12px;">{
+  "code": ""
+}</textarea>
+        </div>
+        <button class="btn-primary" onclick="testApi()">API 호출</button>
+        <div id="testResponse" class="response hidden"></div>
+    </div>
+
+    <script>
+        // State
+        let authCode = null;
+        let currentProvider = null;
+        let signupToken = null;
+        let accessToken = null;
+        let refreshTokenValue = null;
+        let oauthInfo = null;
+
+        // Init
+        document.addEventListener('DOMContentLoaded', function() {
+            // Display redirect URI
+            document.getElementById('redirectUriDisplay').textContent = window.location.origin + window.location.pathname;
+
+            // Restore saved values
+            const savedClientId = localStorage.getItem('kakaoClientId');
+            if (savedClientId) document.getElementById('kakaoClientId').value = savedClientId;
+
+            const savedApiUrl = localStorage.getItem('apiBaseUrl');
+            if (savedApiUrl) document.getElementById('apiBaseUrl').value = savedApiUrl;
+
+            // Check for auth code in URL
+            checkAuthCode();
+        });
+
+        // Save settings on change
+        document.getElementById('kakaoClientId').addEventListener('change', function() {
+            localStorage.setItem('kakaoClientId', this.value);
+        });
+        document.getElementById('apiBaseUrl').addEventListener('change', function() {
+            localStorage.setItem('apiBaseUrl', this.value);
+        });
+
+        function getApiBaseUrl() {
+            return document.getElementById('apiBaseUrl').value;
+        }
+
+        function getRedirectUri() {
+            return window.location.origin + window.location.pathname;
+        }
+
+        function showResponse(elementId, data, type = 'info') {
+            const el = document.getElementById(elementId);
+            el.className = `response ${type}`;
+            el.textContent = JSON.stringify(data, null, 2);
+            el.classList.remove('hidden');
+        }
+
+        // Kakao OAuth
+        function loginWithKakao() {
+            const clientId = document.getElementById('kakaoClientId').value.trim();
+            if (!clientId) {
+                alert('Kakao REST API Key를 입력해주세요.');
+                return;
+            }
+
+            const redirectUri = encodeURIComponent(getRedirectUri());
+            const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=profile_nickname,profile_image`;
+
+            // Save current provider
+            localStorage.setItem('currentProvider', 'kakao');
+
+            // Redirect to Kakao
+            window.location.href = kakaoAuthUrl;
+        }
+
+        // Check for auth code in URL (after redirect)
+        function checkAuthCode() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const error = urlParams.get('error');
+
+            if (error) {
+                showResponse('step1Response', {
+                    error: error,
+                    description: urlParams.get('error_description')
+                }, 'error');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                return;
+            }
+
+            if (code) {
+                authCode = code;
+                currentProvider = localStorage.getItem('currentProvider') || 'kakao';
+
+                // Show step 2
+                document.getElementById('step2').classList.remove('hidden');
+                document.getElementById('authCodeDisplay').textContent = code.substring(0, 50) + '...';
+
+                showResponse('step1Response', {
+                    message: '인가 코드를 받았습니다!',
+                    provider: currentProvider,
+                    code: code.substring(0, 30) + '...'
+                }, 'success');
+
+                // Clean URL
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        }
+
+        // Process auth code - send to backend
+        async function processAuthCode() {
+            if (!authCode) {
+                alert('인가 코드가 없습니다. 먼저 로그인해주세요.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/auth/oauth/${currentProvider}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        code: authCode
+                    })
+                });
+
+                const data = await response.json();
+                showResponse('step2Response', data, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    if (data.isNewUser) {
+                        // New user - need signup
+                        signupToken = data.signupToken;
+                        oauthInfo = data.oauthInfo;
+
+                        document.getElementById('step3').classList.remove('hidden');
+                        if (oauthInfo) {
+                            document.getElementById('signupName').value = oauthInfo.name || '';
+                            document.getElementById('signupNickname').value = oauthInfo.name || '';
+                            document.getElementById('signupProfileImg').value = oauthInfo.profileImg || '';
+                        }
+                    } else {
+                        // Existing user - login complete
+                        handleLoginSuccess(data);
+                    }
+                }
+            } catch (error) {
+                showResponse('step2Response', { error: error.message }, 'error');
+            }
+        }
+
+        async function signup() {
+            const name = document.getElementById('signupName').value.trim();
+            const nickname = document.getElementById('signupNickname').value.trim();
+            const gender = document.getElementById('signupGender').value;
+            const birth = document.getElementById('signupBirth').value || null;
+            const profileImg = document.getElementById('signupProfileImg').value.trim() || null;
+
+            if (!name || !nickname || !gender) {
+                alert('이름, 닉네임, 성별은 필수입니다.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/auth/signup`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        signupToken: signupToken,
+                        name: name,
+                        nickname: nickname,
+                        gender: gender,
+                        birth: birth,
+                        profileImg: profileImg
+                    })
+                });
+
+                const data = await response.json();
+                showResponse('step3Response', data, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    handleLoginSuccess(data);
+                }
+            } catch (error) {
+                showResponse('step3Response', { error: error.message }, 'error');
+            }
+        }
+
+        function handleLoginSuccess(data) {
+            accessToken = data.accessToken;
+            refreshTokenValue = data.refreshToken;
+
+            document.getElementById('step3').classList.add('hidden');
+            document.getElementById('step4').classList.remove('hidden');
+
+            document.getElementById('accessTokenDisplay').textContent = accessToken;
+            document.getElementById('refreshTokenDisplay').textContent = refreshTokenValue;
+
+            if (data.user) {
+                document.getElementById('userInfo').innerHTML = `
+                    <strong>User ID:</strong> ${data.user.id}<br>
+                    <strong>Nickname:</strong> ${data.user.nickname}<br>
+                    ${data.user.profileImg ? `<img src="${data.user.profileImg}" style="width:50px;height:50px;border-radius:50%;margin-top:8px;">` : ''}
+                `;
+            }
+        }
+
+        async function refreshToken() {
+            if (!refreshTokenValue) {
+                alert('리프레시 토큰이 없습니다.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: refreshTokenValue })
+                });
+
+                const data = await response.json();
+                showResponse('step4Response', data, response.ok ? 'success' : 'error');
+
+                if (response.ok) {
+                    accessToken = data.accessToken;
+                    refreshTokenValue = data.refreshToken;
+                    document.getElementById('accessTokenDisplay').textContent = accessToken;
+                    document.getElementById('refreshTokenDisplay').textContent = refreshTokenValue;
+                }
+            } catch (error) {
+                showResponse('step4Response', { error: error.message }, 'error');
+            }
+        }
+
+        async function testProtectedApi() {
+            try {
+                const response = await fetch(`${getApiBaseUrl()}/api/test`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    }
+                });
+
+                const text = await response.text();
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { status: response.status, body: text };
+                }
+
+                showResponse('step4Response', {
+                    message: response.status === 401 ? '인증 실패 (401)' : response.status === 404 ? '인증 성공! (404는 엔드포인트 없음)' : `Status: ${response.status}`,
+                    response: data
+                }, response.status === 401 ? 'error' : 'success');
+            } catch (error) {
+                showResponse('step4Response', { error: error.message }, 'error');
+            }
+        }
+
+        async function testApi() {
+            const endpoint = document.getElementById('testEndpoint').value;
+            const body = document.getElementById('testBody').value;
+
+            try {
+                const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(accessToken ? { 'Authorization': `Bearer ${accessToken}` } : {})
+                    },
+                    body: body
+                });
+
+                const data = await response.json();
+                showResponse('testResponse', data, response.ok ? 'success' : 'error');
+            } catch (error) {
+                showResponse('testResponse', { error: error.message }, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

@@ -140,5 +140,31 @@ class UserTest {
             assertThat(user.getName()).isEqualTo("김고작");
             assertThat(user.getNickname()).isEqualTo("고작이");
         }
+
+        @Test
+        void locationConsent와_regionCode를_포함하여_생성_가능() {
+            // given & when
+            User user = createValidUserBuilder()
+                    .locationConsent(true)
+                    .regionCode(11680)
+                    .build();
+
+            // then
+            assertThat(user.getLocationConsent()).isTrue();
+            assertThat(user.getRegionCode()).isEqualTo(11680);
+        }
+
+        @Test
+        void locationConsent와_regionCode가_null이어도_생성_가능() {
+            // given & when
+            User user = createValidUserBuilder()
+                    .locationConsent(null)
+                    .regionCode(null)
+                    .build();
+
+            // then
+            assertThat(user.getLocationConsent()).isNull();
+            assertThat(user.getRegionCode()).isNull();
+        }
     }
 }

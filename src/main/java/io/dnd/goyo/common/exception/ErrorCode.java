@@ -16,6 +16,12 @@ public enum ErrorCode {
     // Auth
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH_001", "인증이 필요합니다"),
     FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH_002", "권한이 없습니다"),
+    INVALID_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_003", "유효하지 않은 토큰입니다"),
+    EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "AUTH_004", "만료된 토큰입니다"),
+    OAUTH_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "AUTH_005", "OAuth 인증에 실패했습니다"),
+    USER_BLOCKED(HttpStatus.FORBIDDEN, "AUTH_006", "차단된 사용자입니다"),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "AUTH_007", "이미 사용중인 닉네임입니다"),
+    INVALID_SIGNUP_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_008", "유효하지 않은 회원가입 토큰입니다"),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다");

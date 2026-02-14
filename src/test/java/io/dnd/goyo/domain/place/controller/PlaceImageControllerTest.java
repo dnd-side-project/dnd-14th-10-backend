@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.common.image.ImageType;
 import io.dnd.goyo.common.image.ImageUploadService;
+import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import io.dnd.goyo.common.image.dto.request.PresignedUrlRequest;
 import io.dnd.goyo.common.image.dto.response.PresignedUrlResponse.PresignedUrlItem;
 import java.util.List;
@@ -33,6 +34,9 @@ class PlaceImageControllerTest {
 
     @MockitoBean
     private ImageUploadService imageUploadService;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     @WithMockUser

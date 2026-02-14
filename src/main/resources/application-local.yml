@@ -41,3 +41,24 @@ management:
 info:
   app:
     name: ${spring.application.name}
+
+jwt:
+  secret: ${JWT_SECRET}
+  access-token-expiration: 1800000      # 30분
+  refresh-token-expiration: 604800000   # 7일
+  signup-token-expiration: 600000       # 10분
+
+minio:
+  endpoint: http://localhost:9000
+  access-key: minioadmin
+  secret-key: minioadmin
+  bucket: goyo-local
+  presigned-url-expiry-minutes: 10
+
+oauth:
+  kakao:
+    client-id: ${KAKAO_CLIENT_ID}
+    client-secret: ${KAKAO_CLIENT_SECRET}
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/test.html}
+    token-url: https://kauth.kakao.com/oauth/token
+    user-info-url: https://kapi.kakao.com/v2/user/me
