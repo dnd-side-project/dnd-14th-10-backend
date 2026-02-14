@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.user.entity;
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.user.enums.AgeGroup;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
@@ -48,6 +49,10 @@ public class User extends BaseEntity {
 
     private Integer age;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "age_group")
+    private AgeGroup ageGroup;
+
     @Column(columnDefinition = "TEXT")
     private String profileImg;
 
@@ -89,6 +94,7 @@ public class User extends BaseEntity {
         this.birth = birth;
         this.gender = gender;
         this.age = age;
+        this.ageGroup = AgeGroup.from(age);
         this.profileImg = profileImg;
         this.provider = provider;
         this.providerId = providerId;
