@@ -92,7 +92,7 @@ public class Place extends BaseEntity {
             String name,
             PlaceCategory category,
             Point location,
-            Integer regionCode,
+            Long regionCode,
             String addressDetail,
             User user,
             Integer floorInfo,

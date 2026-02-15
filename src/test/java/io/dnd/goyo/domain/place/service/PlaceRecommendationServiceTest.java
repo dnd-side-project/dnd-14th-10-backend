@@ -46,7 +46,7 @@ class PlaceRecommendationServiceTest {
         long userId = 1L;
         double longitude = 126.978;
         double latitude = 37.566;
-        int regionCode = 11010;
+        long regionCode = 11010L;
         PlaceCategory category = PlaceCategory.CAFE;
 
         List<Long> placeIds = List.of(10L, 20L);
@@ -77,13 +77,14 @@ class PlaceRecommendationServiceTest {
     @Test
     void 결과_없으면_빈_리스트_반환() {
         // given
+        long regionCode = 11010L;
         given(placeRepository.findNewPlaceIdsByRegionCode(
-                126.978, 37.566, 3000.0, 11010, "CAFE", 30, 6
+                126.978, 37.566, 3000.0, regionCode, "CAFE", 30, 6
         )).willReturn(List.of());
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                1L, 126.978, 37.566, 11010, PlaceCategory.CAFE, null
+                1L, 126.978, 37.566, regionCode, PlaceCategory.CAFE, null
         );
 
         // then
@@ -95,19 +96,20 @@ class PlaceRecommendationServiceTest {
     void 커스텀_반경_적용() {
         // given
         Integer customRadius = 5000;
+        long regionCode = 11010L;
 
         given(placeRepository.findNewPlaceIdsByRegionCode(
-                126.978, 37.566, 5000.0, 11010, "CAFE", 30, 6
+                126.978, 37.566, 5000.0, regionCode, "CAFE", 30, 6
         )).willReturn(List.of());
 
         // when
         placeRecommendationService.getNewPlaces(
-                1L, 126.978, 37.566, 11010, PlaceCategory.CAFE, customRadius
+                1L, 126.978, 37.566, regionCode, PlaceCategory.CAFE, customRadius
         );
 
         // then
         verify(placeRepository).findNewPlaceIdsByRegionCode(
-                126.978, 37.566, 5000.0, 11010, "CAFE", 30, 6
+                126.978, 37.566, 5000.0, regionCode, "CAFE", 30, 6
         );
     }
 
@@ -190,13 +192,14 @@ class PlaceRecommendationServiceTest {
     @Test
     void 거리순_정렬_유지() {
         // given
+        long regionCode = 11010L;
         List<Long> orderedIds = List.of(30L, 10L, 20L);
         Place place1 = createPlace(10L, "카페A", 126.9769, 37.5759);
         Place place2 = createPlace(20L, "카페B", 126.9836, 37.5700);
         Place place3 = createPlace(30L, "카페C", 126.9770, 37.5796);
 
         given(placeRepository.findNewPlaceIdsByRegionCode(
-                126.978, 37.566, 3000.0, 11010, "CAFE", 30, 6
+                126.978, 37.566, 3000.0, regionCode, "CAFE", 30, 6
         )).willReturn(orderedIds);
         given(placeRepository.findAllByIdWithDetails(orderedIds))
                 .willReturn(List.of(place1, place2, place3));
@@ -205,7 +208,7 @@ class PlaceRecommendationServiceTest {
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                1L, 126.978, 37.566, 11010, PlaceCategory.CAFE, null
+                1L, 126.978, 37.566, regionCode, PlaceCategory.CAFE, null
         );
 
         // then
@@ -218,7 +221,7 @@ class PlaceRecommendationServiceTest {
                 .name(name)
                 .category(PlaceCategory.CAFE)
                 .location(geometryFactory.createPoint(new Coordinate(longitude, latitude)))
-                .regionCode(110100520)
+                .regionCode(110100520L)
                 .addressDetail("테스트 주소")
                 .user(mock(User.class))
                 .openTime(LocalTime.of(9, 0))

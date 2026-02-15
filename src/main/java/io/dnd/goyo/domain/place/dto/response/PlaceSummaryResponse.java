@@ -21,8 +21,8 @@ public record PlaceSummaryResponse(
         @Schema(description = "상세 주소", example = "청계천로 101")
         String addressDetail,
 
-        @Schema(description = "행정구역 코드", example = "11010")
-        Integer regionCode,
+        @Schema(description = "행정구역 코드 (10자리)", example = "1168010100")
+        Long regionCode,
 
         @Schema(description = "대표 이미지 URL", example = "https://...")
         String representativeImageUrl,

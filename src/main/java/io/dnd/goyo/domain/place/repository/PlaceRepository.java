@@ -36,7 +36,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             @Param("longitude") double longitude,
             @Param("latitude") double latitude,
             @Param("radiusMeters") double radiusMeters,
-            @Param("regionCode") int regionCode,
+            @Param("regionCode") long regionCode,
             @Param("category") String category,
             @Param("recentDays") int recentDays,
             @Param("limit") int limit

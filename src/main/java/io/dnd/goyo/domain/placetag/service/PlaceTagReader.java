@@ -20,14 +20,14 @@ public class PlaceTagReader {
 
     public List<Long> findCandidatePlaceIds(
             List<Long> tagIds,
-            int regionCode,
+            long regionCode,
             String category,
             List<Long> excludeIds
     ) {
         if (tagIds.isEmpty()) {
             return List.of();
         }
-        
+
         List<Long> safeExcludeIds = toSafeExcludeIds(excludeIds);
         return placeTagRepository.findCandidatePlaceIds(
                 tagIds, regionCode, category, safeExcludeIds, CANDIDATE_LIMIT);

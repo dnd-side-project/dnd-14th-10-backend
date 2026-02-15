@@ -19,7 +19,7 @@ class RegionCodeTest {
         @Test
         void 코드가_null이면_예외_발생() {
             // given
-            Integer code = null;
+            Long code = null;
 
             // when & then
             assertThatThrownBy(() -> new RegionCode(code))
@@ -28,8 +28,8 @@ class RegionCodeTest {
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {9999, 1000, 100, 0, -1})
-        void 코드가_5자리_미만이면_예외_발생(int code) {
+        @ValueSource(longs = {9999L, 1000L, 100L, 0L, -1L})
+        void 코드가_5자리_미만이면_예외_발생(long code) {
             // when & then
             assertThatThrownBy(() -> new RegionCode(code))
                     .isInstanceOf(BusinessException.class)
@@ -37,8 +37,8 @@ class RegionCodeTest {
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {10000, 99999, 1000000000})
-        void 경계값은_허용(int code) {
+        @ValueSource(longs = {10000L, 99999L, 1111010100L, 9999999999L})
+        void 경계값은_허용(long code) {
             // when
             RegionCode regionCode = new RegionCode(code);
 
@@ -49,7 +49,7 @@ class RegionCodeTest {
         @Test
         void 정상적인_코드로_생성_성공() {
             // given
-            int code = 11111;
+            long code = 1111010100L;
 
             // when
             RegionCode regionCode = new RegionCode(code);

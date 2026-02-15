@@ -50,7 +50,7 @@ public class PlaceRecommendationService {
             Long userId,
             double longitude,
             double latitude,
-            int regionCode,
+            long regionCode,
             PlaceCategory category,
             Integer radiusMeters
     ) {
@@ -87,7 +87,7 @@ public class PlaceRecommendationService {
 
     public List<PlaceSummaryResponse> getSimilarPlaces(
             Long userId,
-            int regionCode,
+            long regionCode,
             PlaceCategory category,
             double longitude,
             double latitude
@@ -130,7 +130,7 @@ public class PlaceRecommendationService {
             LocalDateTime since,
             Map<Long, Double> userTagWeights,
             Map<Long, Double> groupTagNorm,
-            int regionCode,
+            long regionCode,
             PlaceCategory category
     ) {
         Set<Long> allTagIds = new HashSet<>(userTagWeights.keySet());
@@ -240,7 +240,7 @@ public class PlaceRecommendationService {
     private List<Long> findNewPlaceIds(
             double longitude,
             double latitude,
-            int regionCode,
+            long regionCode,
             PlaceCategory category,
             Integer radiusMeters
     ) {

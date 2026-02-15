@@ -101,14 +101,14 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 반경_내_같은_지역코드_같은_카테고리만_조회() {
         // given
-        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520);
-        savePlace("종각 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530);
-        savePlace("경복궁 도서관", PlaceCategory.PUBLIC, 126.9770, 37.5796, 110100220);
-        savePlace("강남 카페", PlaceCategory.CAFE, 127.0276, 37.4979, 116800110);
+        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L);
+        savePlace("종각 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L);
+        savePlace("경복궁 도서관", PlaceCategory.PUBLIC, 126.9770, 37.5796, 110100220L);
+        savePlace("강남 카페", PlaceCategory.CAFE, 127.0276, 37.4979, 116800110L);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), 126.978, 37.570, 11010, PlaceCategory.CAFE, null
+                user.getId(), 126.978, 37.570, 11010L, PlaceCategory.CAFE, null
         );
 
         // then
@@ -121,15 +121,15 @@ class PlaceRecommendationIntegrationTest {
     void 거리순_정렬_Haversine_공식과_일치() {
         // given
         double baseLon = 126.978, baseLat = 37.570;
-        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520);
-        savePlace("종각 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530);
+        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L);
+        savePlace("종각 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L);
 
         double distToGwanghwamun = geometryUtils.calculateDistance(baseLat, baseLon, 37.5759, 126.9769);
         double distToJonggak = geometryUtils.calculateDistance(baseLat, baseLon, 37.5700, 126.9836);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), baseLon, baseLat, 11010, PlaceCategory.CAFE, null
+                user.getId(), baseLon, baseLat, 11010L, PlaceCategory.CAFE, null
         );
 
         // then - DB(ST_Distance)와 Haversine 모두 종각이 더 가까움
@@ -141,12 +141,12 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 찜한_장소_표시() {
         // given
-        Place place = savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520);
+        Place place = savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L);
         wishlistRepository.saveAndFlush(Wishlist.of(user, place));
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), 126.978, 37.570, 11010, PlaceCategory.CAFE, null
+                user.getId(), 126.978, 37.570, 11010L, PlaceCategory.CAFE, null
         );
 
         // then
@@ -159,15 +159,15 @@ class PlaceRecommendationIntegrationTest {
         // given
         double baseLon = 126.978, baseLat = 37.570;
         int radiusMeters = 1000;
-        savePlace("가까운 카페", PlaceCategory.CAFE, 126.978, 37.574, 110100520);
-        savePlace("먼 카페", PlaceCategory.CAFE, 126.960, 37.570, 110100520);
+        savePlace("가까운 카페", PlaceCategory.CAFE, 126.978, 37.574, 110100520L);
+        savePlace("먼 카페", PlaceCategory.CAFE, 126.960, 37.570, 110100520L);
 
         double distToNear = geometryUtils.calculateDistance(baseLat, baseLon, 37.574, 126.978);
         double distToFar = geometryUtils.calculateDistance(baseLat, baseLon, 37.570, 126.960);
 
         // when - 반경 1000m
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), baseLon, baseLat, 11010, PlaceCategory.CAFE, radiusMeters
+                user.getId(), baseLon, baseLat, 11010L, PlaceCategory.CAFE, radiusMeters
         );
 
         // then - Haversine으로도 가까운 카페만 반경 내
@@ -181,7 +181,7 @@ class PlaceRecommendationIntegrationTest {
     void 결과_없으면_빈_리스트_반환() {
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), 126.978, 37.570, 11010, PlaceCategory.CAFE, null
+                user.getId(), 126.978, 37.570, 11010L, PlaceCategory.CAFE, null
         );
 
         // then
@@ -191,11 +191,11 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 대표_이미지_URL_반환() {
         // given
-        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520);
+        savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
-                user.getId(), 126.978, 37.570, 11010, PlaceCategory.CAFE, null
+                user.getId(), 126.978, 37.570, 11010L, PlaceCategory.CAFE, null
         );
 
         // then
@@ -205,9 +205,9 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 인기_공간_인기순_정렬() {
         // given
-        savePlaceWithDetails("인기 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
-        savePlaceWithDetails("보통 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 10, 5, 20.0);
-        savePlaceWithDetails("핫플 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520, 100, 80, 320.0);
+        savePlaceWithDetails("인기 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L, 50, 30, 120.0);
+        savePlaceWithDetails("보통 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L, 10, 5, 20.0);
+        savePlaceWithDetails("핫플 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520L, 100, 80, 320.0);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -223,8 +223,8 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 인기_공간_같은_카테고리만_조회() {
         // given
-        savePlaceWithDetails("종로 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
-        savePlaceWithDetails("종로 도서관", PlaceCategory.PUBLIC, 126.9770, 37.5796, 110100220, 100, 80, 320.0);
+        savePlaceWithDetails("종로 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L, 50, 30, 120.0);
+        savePlaceWithDetails("종로 도서관", PlaceCategory.PUBLIC, 126.9770, 37.5796, 110100220L, 100, 80, 320.0);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -239,8 +239,8 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 인기_공간_찜한_장소와_안_찜한_장소_구분() {
         // given
-        Place wishedPlace = savePlaceWithDetails("찜한 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 30, 120.0);
-        savePlaceWithDetails("안찜한 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 30, 10, 40.0);
+        Place wishedPlace = savePlaceWithDetails("찜한 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L, 50, 30, 120.0);
+        savePlaceWithDetails("안찜한 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L, 30, 10, 40.0);
         wishlistRepository.saveAndFlush(Wishlist.of(user, wishedPlace));
 
         // when
@@ -261,8 +261,8 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 인기_공간_평균_별점_3점_미만_제외() {
         // given
-        savePlaceWithDetails("좋은 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 50, 10, 40.0);
-        savePlaceWithDetails("나쁜 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 100, 10, 20.0);
+        savePlaceWithDetails("좋은 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L, 50, 10, 40.0);
+        savePlaceWithDetails("나쁜 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L, 100, 10, 20.0);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -277,9 +277,9 @@ class PlaceRecommendationIntegrationTest {
     @Test
     void 인기_공간_리뷰_없으면_필터_통과_별점_낮으면_제외() {
         // given
-        savePlaceWithDetails("리뷰없는 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520, 30, 0, 0.0);
-        savePlaceWithDetails("별점높은 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530, 20, 10, 45.0);
-        savePlaceWithDetails("별점낮은 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520, 40, 10, 20.0);
+        savePlaceWithDetails("리뷰없는 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 110100520L, 30, 0, 0.0);
+        savePlaceWithDetails("별점높은 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 110100530L, 20, 10, 45.0);
+        savePlaceWithDetails("별점낮은 카페", PlaceCategory.CAFE, 126.9770, 37.5796, 110100520L, 40, 10, 20.0);
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -294,7 +294,7 @@ class PlaceRecommendationIntegrationTest {
 
     private Place savePlaceWithDetails(
             String name, PlaceCategory category,
-            double longitude, double latitude, int regionCode,
+            double longitude, double latitude, long regionCode,
             int wishCount, int reviewCount, double totalRating
     ) {
         Place place = Place.builder()
@@ -320,7 +320,7 @@ class PlaceRecommendationIntegrationTest {
     }
 
     private Place savePlace(String name, PlaceCategory category,
-            double longitude, double latitude, int regionCode) {
+            double longitude, double latitude, long regionCode) {
         Place place = Place.builder()
                 .name(name)
                 .category(category)

@@ -22,7 +22,7 @@ public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
             """, nativeQuery = true)
     List<Long> findCandidatePlaceIds(
             @Param("tagIds") List<Long> tagIds,
-            @Param("regionCode") int regionCode,
+            @Param("regionCode") long regionCode,
             @Param("category") String category,
             @Param("excludeIds") List<Long> excludeIds,
             @Param("candidateLimit") int candidateLimit
