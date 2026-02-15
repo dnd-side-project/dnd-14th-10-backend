@@ -1,9 +1,9 @@
 package io.dnd.goyo.domain.place.controller;
 
-import io.dnd.goyo.common.auth.security.UserPrincipal;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.service.PlaceRecommendationService;
+import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
@@ -29,15 +29,15 @@ public class PlaceRecommendationController {
     )
     @GetMapping("/new")
     public ResponseEntity<List<PlaceSummaryResponse>> getNewPlaces(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam double longitude,
             @RequestParam double latitude,
-            @RequestParam int regionCode,
+            @RequestParam Long regionCode,
             @RequestParam PlaceCategory category,
             @RequestParam(required = false) Integer radiusMeters
     ) {
         List<PlaceSummaryResponse> places = placeRecommendationService.getNewPlaces(
-                userPrincipal.getId(), longitude, latitude, regionCode, category, radiusMeters
+                userDetails.userId(), longitude, latitude, regionCode, category, radiusMeters
         );
         return ResponseEntity.ok(places);
     }
@@ -45,14 +45,14 @@ public class PlaceRecommendationController {
     @Operation(summary = "비슷한 성향 공간 조회", description = "유저와 비슷한 성향의 공간을 추천합니다.")
     @GetMapping("/similar")
     public ResponseEntity<List<PlaceSummaryResponse>> getSimilarPlaces(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
-            @RequestParam int regionCode,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam Long regionCode,
             @RequestParam PlaceCategory category,
             @RequestParam double longitude,
             @RequestParam double latitude
     ) {
         List<PlaceSummaryResponse> places = placeRecommendationService.getSimilarPlaces(
-                userPrincipal.getId(), regionCode, category, longitude, latitude
+                userDetails.userId(), regionCode, category, longitude, latitude
         );
         return ResponseEntity.ok(places);
     }
@@ -60,14 +60,14 @@ public class PlaceRecommendationController {
     @Operation(summary = "인기 공간 조회", description = "사용자 위치 기준, 반경 내 인기 순으로 공간을 조회합니다.")
     @GetMapping("/popular")
     public ResponseEntity<List<PlaceSummaryResponse>> getPopularPlaces(
-            @AuthenticationPrincipal UserPrincipal userPrincipal,
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam double longitude,
             @RequestParam double latitude,
             @RequestParam PlaceCategory category,
             @RequestParam(required = false) Integer radiusMeters
     ) {
         List<PlaceSummaryResponse> places = placeRecommendationService.getPopularPlaces(
-                userPrincipal.getId(), longitude, latitude, category, radiusMeters
+                userDetails.userId(), longitude, latitude, category, radiusMeters
         );
         return ResponseEntity.ok(places);
     }
