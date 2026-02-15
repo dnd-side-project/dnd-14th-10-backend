@@ -16,6 +16,13 @@ public record RegionCode(
         validateCodeLength(value);
     }
 
+    public int getSiGunGuCode() {
+        if (value > 99999) {
+            return (int) (value / 100000);
+        }
+        return value.intValue();
+    }
+
     private static void validateIsNotNull(Long value) {
         if (value == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "행정구역 코드는 필수입니다.");

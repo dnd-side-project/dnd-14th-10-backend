@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.place.service;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.entity.Place;
+import io.dnd.goyo.domain.place.entity.RegionCode;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagReader;
@@ -54,7 +55,8 @@ public class PlaceRecommendationService {
             PlaceCategory category,
             Integer radiusMeters
     ) {
-        List<Long> placeIds = findNewPlaceIds(longitude, latitude, regionCode, category, radiusMeters);
+        long siGunGuCode = new RegionCode(regionCode).getSiGunGuCode();
+        List<Long> placeIds = findNewPlaceIds(longitude, latitude, siGunGuCode, category, radiusMeters);
 
         if (placeIds.isEmpty()) {
             return List.of();
@@ -103,8 +105,9 @@ public class PlaceRecommendationService {
         User user = userReader.getUser(userId);
         Map<Long, Double> groupTagNorm = buildGroupTagNorm(user, since);
 
+        long siGunGuCode = new RegionCode(regionCode).getSiGunGuCode();
         List<Long> candidatePlaceIds = findCandidatePlaceIds(
-                userId, since, userTagWeights, groupTagNorm, regionCode, category);
+                userId, since, userTagWeights, groupTagNorm, siGunGuCode, category);
 
         if (candidatePlaceIds.isEmpty()) {
             return List.of();
