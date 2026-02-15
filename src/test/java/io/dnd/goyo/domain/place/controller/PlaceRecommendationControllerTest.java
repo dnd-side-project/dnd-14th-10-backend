@@ -7,23 +7,22 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.dnd.goyo.common.auth.security.UserPrincipal;
+import io.dnd.goyo.common.annotation.WithMockCustomUser;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.service.PlaceRecommendationService;
+import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import java.util.List;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PlaceRecommendationController.class)
+@WithMockCustomUser
 class PlaceRecommendationControllerTest {
 
     @Autowired
@@ -32,32 +31,28 @@ class PlaceRecommendationControllerTest {
     @MockitoBean
     private PlaceRecommendationService placeRecommendationService;
 
-    @BeforeEach
-    void setUp() {
-        UserPrincipal userPrincipal = new UserPrincipal(1L);
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userPrincipal, null, List.of());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-    }
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     void 신규_공간_조회_성공_시_200_반환() throws Exception {
         // given
+        long regionCode = 1101010100L;
         PlaceSummaryResponse response = new PlaceSummaryResponse(
                 1L, "테스트 카페", PlaceCategory.CAFE, "청계천로 101",
-                11010, "images/test.jpg", 37.566, 126.978,
+                regionCode, "images/test.jpg", 37.566, 126.978,
                 Mood.CALM, SpaceSize.MEDIUM, false
         );
 
         given(placeRecommendationService.getNewPlaces(
-                eq(1L), eq(126.978), eq(37.566), eq(11010), eq(PlaceCategory.CAFE), isNull()
+                eq(1L), eq(126.978), eq(37.566), eq(regionCode), eq(PlaceCategory.CAFE), isNull()
         )).willReturn(List.of(response));
 
         // when & then
         mockMvc.perform(get("/api/places/recommendations/new")
                         .param("longitude", "126.978")
                         .param("latitude", "37.566")
-                        .param("regionCode", "11010")
+                        .param("regionCode", String.valueOf(regionCode))
                         .param("category", "CAFE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
@@ -69,15 +64,16 @@ class PlaceRecommendationControllerTest {
     @Test
     void 결과_없으면_빈_리스트_반환() throws Exception {
         // given
+        long regionCode = 1101010100L;
         given(placeRecommendationService.getNewPlaces(
-                eq(1L), eq(126.978), eq(37.566), eq(11010), eq(PlaceCategory.CAFE), isNull()
+                eq(1L), eq(126.978), eq(37.566), eq(regionCode), eq(PlaceCategory.CAFE), isNull()
         )).willReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/places/recommendations/new")
                         .param("longitude", "126.978")
                         .param("latitude", "37.566")
-                        .param("regionCode", "11010")
+                        .param("regionCode", String.valueOf(regionCode))
                         .param("category", "CAFE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isEmpty());
@@ -94,9 +90,10 @@ class PlaceRecommendationControllerTest {
     @Test
     void 인기_공간_조회_성공_시_200_반환() throws Exception {
         // given
+        long regionCode = 1101010100L;
         PlaceSummaryResponse response = new PlaceSummaryResponse(
                 1L, "테스트 카페", PlaceCategory.CAFE, "청계천로 101",
-                11010, "images/test.jpg", 37.566, 126.978,
+                regionCode, "images/test.jpg", 37.566, 126.978,
                 Mood.CALM, SpaceSize.MEDIUM, false
         );
 
@@ -135,15 +132,16 @@ class PlaceRecommendationControllerTest {
     @Test
     void 커스텀_반경_전달() throws Exception {
         // given
+        long regionCode = 1101010100L;
         given(placeRecommendationService.getNewPlaces(
-                eq(1L), eq(126.978), eq(37.566), eq(11010), eq(PlaceCategory.CAFE), eq(5000)
+                eq(1L), eq(126.978), eq(37.566), eq(regionCode), eq(PlaceCategory.CAFE), eq(5000)
         )).willReturn(List.of());
 
         // when & then
         mockMvc.perform(get("/api/places/recommendations/new")
                         .param("longitude", "126.978")
                         .param("latitude", "37.566")
-                        .param("regionCode", "11010")
+                        .param("regionCode", String.valueOf(regionCode))
                         .param("category", "CAFE")
                         .param("radiusMeters", "5000"))
                 .andExpect(status().isOk());

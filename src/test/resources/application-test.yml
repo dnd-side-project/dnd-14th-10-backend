@@ -13,3 +13,17 @@ minio:
   secret-key: test
   bucket: test-bucket
   presigned-url-expiry-minutes: 10
+
+jwt:
+  secret: local-test-secret-key-must-be-at-least-32-bytes-long
+  access-token-expiration: 1800000      # 30분
+  refresh-token-expiration: 604800000   # 7일
+  signup-token-expiration: 600000       # 10분
+
+oauth:
+  kakao:
+    client-id: test-kakao-client-id
+    client-secret: test-kakao-client-secret
+    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/test.html}
+    token-url: https://kauth.kakao.com/oauth/token
+    user-info-url: https://kapi.kakao.com/v2/user/me
