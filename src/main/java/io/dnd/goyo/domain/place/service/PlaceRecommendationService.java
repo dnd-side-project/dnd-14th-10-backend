@@ -119,8 +119,8 @@ public class PlaceRecommendationService {
                 candidatePlaceMap,
                 userTagWeights,
                 groupTagNorm,
-                latitude,
-                longitude
+                longitude,
+                latitude
         );
 
         Set<Long> wishedSet = new HashSet<>(wishlistReader.getAllWishedPlaceIds(userId, since));
@@ -151,8 +151,8 @@ public class PlaceRecommendationService {
             Map<Long, Place> placeMap,
             Map<Long, Double> userTagWeights,
             Map<Long, Double> groupTagNorm,
-            double latitude,
-            double longitude
+            double longitude,
+            double latitude
     ) {
         Map<Long, List<Long>> placeTagMap = placeTagReader.getPlaceTagMappings(candidatePlaceIds);
 
@@ -160,7 +160,7 @@ public class PlaceRecommendationService {
                 .map(placeMap::get)
                 .filter(Objects::nonNull)
                 .map(place -> {
-                    double score = calculateScore(place, placeTagMap, userTagWeights, groupTagNorm, latitude, longitude);
+                    double score = calculateScore(place, placeTagMap, userTagWeights, groupTagNorm, longitude, latitude);
                     return Map.entry(place.getId(), score);
                 })
                 .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
@@ -200,14 +200,14 @@ public class PlaceRecommendationService {
             Map<Long, List<Long>> placeTagMap,
             Map<Long, Double> userTagWeights,
             Map<Long, Double> groupTagNorm,
-            double userLat,
-            double userLng
+            double userLng,
+            double userLat
     ) {
         double distance = geometryUtils.calculateDistance(
-                userLat,
                 userLng,
-                place.getLocation().getY(),
-                place.getLocation().getX()
+                userLat,
+                place.getLocation().getX(),
+                place.getLocation().getY()
         );
 
         List<Long> tags = placeTagMap.getOrDefault(place.getId(), List.of());
