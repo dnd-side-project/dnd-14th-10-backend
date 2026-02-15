@@ -21,7 +21,7 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
                 CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
                 :radiusMeters
             )
-            AND CAST(p.region_code AS TEXT) LIKE CAST(:regionCode AS TEXT) || '%'
+            AND p.region_code BETWEEN :regionCode * 100000 AND (:regionCode * 100000) + 99999
             AND p.category = :category
             AND p.created_at >= CURRENT_TIMESTAMP - CAST(:recentDays || ' days' AS INTERVAL)
             AND p.status = 'ACTIVE'

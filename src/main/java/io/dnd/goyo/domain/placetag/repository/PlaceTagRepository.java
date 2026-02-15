@@ -12,7 +12,7 @@ public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
             SELECT pt.place_id FROM place_tags pt
             JOIN places p ON p.id = pt.place_id
             WHERE pt.tag_id IN (:tagIds)
-              AND CAST(p.region_code AS TEXT) LIKE CAST(:regionCode AS TEXT) || '%'
+              AND p.region_code BETWEEN :regionCode * 100000 AND (:regionCode * 100000) + 99999
               AND p.category = :category
               AND p.status = 'ACTIVE'
               AND p.id NOT IN (:excludeIds)
