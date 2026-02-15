@@ -123,7 +123,7 @@ public class PlaceRecommendationService {
                 latitude
         );
 
-        Set<Long> wishedSet = new HashSet<>(wishlistReader.getAllWishedPlaceIds(userId, since));
+        Set<Long> wishedSet = findWishedPlaceIds(userId, scoredPlaceIds);
 
         return createPlaceSummaries(scoredPlaceIds, candidatePlaceMap, wishedSet);
     }
