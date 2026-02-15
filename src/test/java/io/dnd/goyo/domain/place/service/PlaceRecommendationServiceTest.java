@@ -398,7 +398,7 @@ class PlaceRecommendationServiceTest {
                 .name(name)
                 .category(PlaceCategory.CAFE)
                 .location(geometryFactory.createPoint(new Coordinate(longitude, latitude)))
-                .regionCode(110100520L)
+                .regionCode(1101005200L)
                 .addressDetail("테스트 주소")
                 .user(mock(User.class))
                 .openTime(LocalTime.of(9, 0))
