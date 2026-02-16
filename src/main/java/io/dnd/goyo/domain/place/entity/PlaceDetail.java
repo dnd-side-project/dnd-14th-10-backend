@@ -128,6 +128,9 @@ public class PlaceDetail extends BaseEntity {
     }
 
     public void removeReviewScores(ReviewScores scores) {
+        if (this.reviewCount <= 0) {
+            return;
+        }
         this.totalRating -= scores.rating();
         this.totalOutletScore -= scores.outletScore();
         this.totalCrowdScore -= scores.crowdScore();

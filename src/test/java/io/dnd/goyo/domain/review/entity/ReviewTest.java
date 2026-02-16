@@ -22,7 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 class ReviewTest {
 
     private static Review createValidReview() {
-        return Review.create(mock(User.class), mock(Place.class), 4, Mood.CALM,
+        return Review.create(mock(User.class), mock(Place.class), 4.0, Mood.CALM,
                 OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
     }
 
@@ -33,7 +33,7 @@ class ReviewTest {
         @Test
         void 사용자_정보가_null이면_예외_발생() {
             // when & then
-            assertThatThrownBy(() -> Review.create(null, mock(Place.class), 4, Mood.CALM,
+            assertThatThrownBy(() -> Review.create(null, mock(Place.class), 4.0, Mood.CALM,
                     OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("사용자 정보는 필수입니다");
@@ -42,25 +42,25 @@ class ReviewTest {
         @Test
         void 장소_정보가_null이면_예외_발생() {
             // when & then
-            assertThatThrownBy(() -> Review.create(mock(User.class), null, 4, Mood.CALM,
+            assertThatThrownBy(() -> Review.create(mock(User.class), null, 4.0, Mood.CALM,
                     OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("장소 정보는 필수입니다");
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {0, -1, 6, 10})
-        void 평점이_범위를_벗어나면_예외_발생(int rating) {
+        @ValueSource(doubles = {0.0, -0.5, 5.5, 10.0})
+        void 평점이_범위를_벗어나면_예외_발생(double rating) {
             // when & then
             assertThatThrownBy(() -> Review.create(mock(User.class), mock(Place.class), rating,
                     Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("평점은 1 ~ 5 사이여야 합니다");
+                    .hasMessageContaining("평점은 0.5 ~ 5.0 사이여야 합니다");
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {1, 5})
-        void 평점_경계값은_허용(int rating) {
+        @ValueSource(doubles = {0.5, 5.0})
+        void 평점_경계값은_허용(double rating) {
             // when
             Review review = Review.create(mock(User.class), mock(Place.class), rating,
                     Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
@@ -95,7 +95,7 @@ class ReviewTest {
             Place place = mock(Place.class);
 
             // when
-            Review review = Review.create(user, place, 4, null,
+            Review review = Review.create(user, place, 4.0, null,
                     OutletScore.MANY, CrowdStatus.RELAX, SpaceSize.LARGE,
                     "좋은 카페입니다", null);
 
@@ -103,8 +103,29 @@ class ReviewTest {
             assertThat(review).isNotNull();
             assertThat(review.getUser()).isEqualTo(user);
             assertThat(review.getPlace()).isEqualTo(place);
-            assertThat(review.getRating()).isEqualTo(4);
+            assertThat(review.getRating()).isEqualTo(4.0);
             assertThat(review.getContent()).isEqualTo("좋은 카페입니다");
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.7, 1.2, 2.7, 4.9})
+        void 평점이_0점5_단위가_아니면_예외_발생(double rating) {
+            // when & then
+            assertThatThrownBy(() -> Review.create(mock(User.class), mock(Place.class), rating,
+                    Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("평점은 0.5 단위로 입력해야 합니다");
+        }
+
+        @ParameterizedTest
+        @ValueSource(doubles = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0})
+        void 유효한_0점5_단위_평점은_허용(double rating) {
+            // when
+            Review review = Review.create(mock(User.class), mock(Place.class), rating,
+                    Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
+
+            // then
+            assertThat(review.getRating()).isEqualTo(rating);
         }
     }
 
@@ -147,21 +168,22 @@ class ReviewTest {
             Review review = createValidReview();
 
             // when
-            review.update(5, Mood.SILENT, OutletScore.FEW, CrowdStatus.RELAX,
+            review.update(5.0, Mood.SILENT, OutletScore.FEW, CrowdStatus.RELAX,
                     SpaceSize.LARGE, "수정된 내용", LocalDateTime.of(2026, 1, 1, 12, 0));
 
             // then
-            assertThat(review.getRating()).isEqualTo(5);
+            assertThat(review.getRating()).isEqualTo(5.0);
             assertThat(review.getMood()).isEqualTo(Mood.SILENT);
             assertThat(review.getOutletScore()).isEqualTo(OutletScore.FEW);
             assertThat(review.getCrowdStatus()).isEqualTo(CrowdStatus.RELAX);
             assertThat(review.getSpaceSize()).isEqualTo(SpaceSize.LARGE);
             assertThat(review.getContent()).isEqualTo("수정된 내용");
+            assertThat(review.getVisitedAt()).isEqualTo(LocalDateTime.of(2026, 1, 1, 12, 0));
         }
 
         @ParameterizedTest
-        @ValueSource(ints = {0, -1, 6, 10})
-        void 잘못된_평점으로_수정_시_예외_발생(int rating) {
+        @ValueSource(doubles = {0.0, -0.5, 5.5, 10.0})
+        void 잘못된_평점으로_수정_시_예외_발생(double rating) {
             // given
             Review review = createValidReview();
 
@@ -169,7 +191,7 @@ class ReviewTest {
             assertThatThrownBy(() -> review.update(rating, Mood.CALM, OutletScore.MANY,
                     CrowdStatus.NORMAL, SpaceSize.MEDIUM, "내용", null))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("평점은 1 ~ 5 사이여야 합니다");
+                    .hasMessageContaining("평점은 0.5 ~ 5.0 사이여야 합니다");
         }
     }
 }

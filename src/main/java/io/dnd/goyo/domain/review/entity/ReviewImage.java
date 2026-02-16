@@ -36,11 +36,14 @@ public class ReviewImage extends BaseEntity {
     @Column(nullable = false)
     private int sequence;
 
-    public static ReviewImage of(Review review, String imageUrl, int sequence) {
-        return new ReviewImage(review, imageUrl, sequence);
+    @Column(nullable = false)
+    private boolean isPrimary;
+
+    public static ReviewImage of(Review review, String imageUrl, int sequence, boolean isPrimary) {
+        return new ReviewImage(review, imageUrl, sequence, isPrimary);
     }
 
-    private ReviewImage(Review review, String imageUrl, int sequence) {
+    private ReviewImage(Review review, String imageUrl, int sequence, boolean isPrimary) {
         validateReview(review);
         validateImageUrl(imageUrl);
         validateSequence(sequence);
@@ -48,6 +51,7 @@ public class ReviewImage extends BaseEntity {
         this.review = review;
         this.imageUrl = imageUrl;
         this.sequence = sequence;
+        this.isPrimary = isPrimary;
     }
 
     private static void validateReview(Review review) {

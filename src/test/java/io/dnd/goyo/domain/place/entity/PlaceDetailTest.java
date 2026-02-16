@@ -111,7 +111,7 @@ class PlaceDetailTest {
             PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
 
             // when
-            placeDetail.addReviewScores(new ReviewScores(4, 80, 60, 70, 90));
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
 
             // then
             assertThat(placeDetail.getTotalRating()).isEqualTo(4.0);
@@ -127,10 +127,10 @@ class PlaceDetailTest {
             // given
             Place place = mock(Place.class);
             PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
-            placeDetail.addReviewScores(new ReviewScores(4, 80, 60, 70, 90));
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
 
             // when
-            placeDetail.removeReviewScores(new ReviewScores(4, 80, 60, 70, 90));
+            placeDetail.removeReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
 
             // then
             assertThat(placeDetail.getTotalRating()).isEqualTo(0.0);
@@ -142,14 +142,32 @@ class PlaceDetailTest {
         }
 
         @Test
+        void 리뷰가_없을_때_점수_제거_시_무시된다() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.removeReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+
+            // then
+            assertThat(placeDetail.getReviewCount()).isEqualTo(0);
+            assertThat(placeDetail.getTotalRating()).isEqualTo(0.0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(50);
+        }
+
+        @Test
         void 리뷰_점수_연속_추가_성공() {
             // given
             Place place = mock(Place.class);
             PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
 
             // when
-            placeDetail.addReviewScores(new ReviewScores(4, 80, 60, 70, 90));
-            placeDetail.addReviewScores(new ReviewScores(3, 40, 50, 60, 75));
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+            placeDetail.addReviewScores(new ReviewScores(3.0, 40, 50, 60, 75));
 
             // then
             assertThat(placeDetail.getTotalRating()).isEqualTo(7.0);

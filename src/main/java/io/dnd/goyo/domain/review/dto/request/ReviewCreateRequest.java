@@ -1,12 +1,13 @@
 package io.dnd.goyo.domain.review.dto.request;
 
+import io.dnd.goyo.common.validation.HalfStep;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDateTime;
@@ -17,9 +18,10 @@ public record ReviewCreateRequest(
         Long placeId,
 
         @NotNull(message = "평점은 필수입니다")
-        @Min(value = 1, message = "평점은 1 이상이어야 합니다")
-        @Max(value = 5, message = "평점은 5 이하여야 합니다")
-        Integer rating,
+        @DecimalMin(value = "0.5", message = "평점은 0.5 이상이어야 합니다")
+        @DecimalMax(value = "5.0", message = "평점은 5.0 이하여야 합니다")
+        @HalfStep
+        Double rating,
 
         @NotNull(message = "태그는 필수입니다")
         @Size(min = 2, max = 5, message = "태그는 2~5개 선택해야 합니다")
@@ -39,7 +41,7 @@ public record ReviewCreateRequest(
 
         String content,
 
-        @Valid List<ReviewImageRequest> images,
+        @Valid @Size(max = 6, message = "리뷰 이미지는 최대 6개까지 등록할 수 있습니다") List<ReviewImageRequest> images,
 
         LocalDateTime visitedAt
 ) {

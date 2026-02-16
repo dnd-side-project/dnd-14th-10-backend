@@ -8,6 +8,8 @@ public record ReviewImageRequest(
         String imageUrl,
 
         @NotNull(message = "이미지 순서는 필수입니다")
-        Integer sequence
+        Integer sequence,
+
+        boolean isPrimary
 ) {
 }

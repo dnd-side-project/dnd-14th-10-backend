@@ -32,6 +32,9 @@ import io.dnd.goyo.domain.user.service.UserReader;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +71,7 @@ class ReviewServiceTest {
     private ReviewTagService reviewTagService;
 
     private Review createReview(User user, Place place) {
-        Review review = Review.create(user, place, 4, Mood.CALM,
+        Review review = Review.create(user, place, 4.0, Mood.CALM,
                 OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM,
                 "좋은 카페입니다", null);
         ReflectionTestUtils.setField(review, "id", 1L);
@@ -77,14 +80,14 @@ class ReviewServiceTest {
 
     private ReviewCreateRequest createReviewCreateRequest(Long placeId) {
         return new ReviewCreateRequest(
-                placeId, 4, List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
+                placeId, 4.0, List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
                 OutletScore.MANY, CrowdStatus.NORMAL, "좋은 카페입니다", null, null
         );
     }
 
     private ReviewUpdateRequest createReviewUpdateRequest() {
         return new ReviewUpdateRequest(
-                5, List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
+                5.0, List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
                 OutletScore.FEW, CrowdStatus.RELAX, "수정된 내용", null, null
         );
     }
@@ -154,7 +157,7 @@ class ReviewServiceTest {
             given(place.getId()).willReturn(10L);
             Review review = createReview(user, place);
 
-            given(reviewRepository.findByIdWithUser(reviewId)).willReturn(Optional.of(review));
+            given(reviewRepository.findByIdWithUserAndPlace(reviewId)).willReturn(Optional.of(review));
             given(reviewTagRepository.findAllByReviewId(reviewId)).willReturn(List.of());
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId)).willReturn(List.of());
 
@@ -163,14 +166,14 @@ class ReviewServiceTest {
 
             // then
             assertThat(response.reviewId()).isEqualTo(reviewId);
-            assertThat(response.rating()).isEqualTo(4);
+            assertThat(response.rating()).isEqualTo(4.0);
         }
 
         @Test
         void 존재하지_않는_리뷰_조회_시_예외() {
             // given
             Long reviewId = 999L;
-            given(reviewRepository.findByIdWithUser(reviewId)).willReturn(Optional.empty());
+            given(reviewRepository.findByIdWithUserAndPlace(reviewId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> reviewService.getReview(reviewId))
@@ -187,12 +190,65 @@ class ReviewServiceTest {
             Review review = createReview(user, place);
             review.delete();
 
-            given(reviewRepository.findByIdWithUser(reviewId)).willReturn(Optional.of(review));
+            given(reviewRepository.findByIdWithUserAndPlace(reviewId)).willReturn(Optional.of(review));
 
             // when & then
             assertThatThrownBy(() -> reviewService.getReview(reviewId))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REVIEW_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("내 리뷰 목록 조회")
+    class GetMyReviews {
+
+        @Test
+        void 내_리뷰_목록_조회_성공() {
+            // given
+            Long userId = 1L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(user.getId()).willReturn(userId);
+            given(user.getNickname()).willReturn("테스터");
+            given(user.getProfileImg()).willReturn("profile.jpg");
+            given(place.getId()).willReturn(10L);
+            Review review = createReview(user, place);
+            PageRequest pageable = PageRequest.of(0, 10);
+            Page<Review> reviewPage = new PageImpl<>(List.of(review), pageable, 1);
+
+            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable))
+                    .willReturn(reviewPage);
+            given(reviewTagRepository.findAllByReviewIdIn(List.of(1L))).willReturn(List.of());
+            given(reviewImageRepository.findAllByReviewIdInOrderBySequence(List.of(1L))).willReturn(List.of());
+
+            // when
+            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable);
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).reviewId()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).rating()).isEqualTo(4.0);
+        }
+
+        @Test
+        void 리뷰가_없으면_빈_페이지_반환() {
+            // given
+            Long userId = 1L;
+            PageRequest pageable = PageRequest.of(0, 10);
+            Page<Review> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+
+            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable))
+                    .willReturn(emptyPage);
+            given(reviewTagRepository.findAllByReviewIdIn(List.of())).willReturn(List.of());
+            given(reviewImageRepository.findAllByReviewIdInOrderBySequence(List.of())).willReturn(List.of());
+
+            // when
+            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable);
+
+            // then
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalElements()).isZero();
         }
     }
 
@@ -220,13 +276,13 @@ class ReviewServiceTest {
             reviewService.updateReview(userId, reviewId, request);
 
             // then
-            verify(placeDetail).removeReviewScores(new ReviewScores(4, OutletScore.MANY.getScore(),
+            verify(placeDetail).removeReviewScores(new ReviewScores(4.0, OutletScore.MANY.getScore(),
                     CrowdStatus.NORMAL.getScore(), SpaceSize.MEDIUM.getScore(), Mood.CALM.getScore()));
             verify(placeDetail).addReviewScores(ReviewScores.from(request.rating(),
                     request.outletScore(), request.crowdStatus(),
                     request.spaceSize(), request.mood()));
             verify(reviewTagService).replaceReviewTags(eq(review), eq(request.tagIds()));
-            assertThat(review.getRating()).isEqualTo(5);
+            assertThat(review.getRating()).isEqualTo(5.0);
         }
 
         @Test
@@ -273,7 +329,7 @@ class ReviewServiceTest {
 
             // then
             assertThat(review.getStatus()).isEqualTo(ReviewStatus.DELETED);
-            verify(placeDetail).removeReviewScores(new ReviewScores(4, OutletScore.MANY.getScore(),
+            verify(placeDetail).removeReviewScores(new ReviewScores(4.0, OutletScore.MANY.getScore(),
                     CrowdStatus.NORMAL.getScore(), SpaceSize.MEDIUM.getScore(), Mood.CALM.getScore()));
         }
 

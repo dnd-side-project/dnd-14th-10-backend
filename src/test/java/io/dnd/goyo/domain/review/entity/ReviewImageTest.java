@@ -21,7 +21,7 @@ class ReviewImageTest {
         @Test
         void 리뷰_정보가_null이면_예외_발생() {
             // when & then
-            assertThatThrownBy(() -> ReviewImage.of(null, "https://example.com/image.jpg", 0))
+            assertThatThrownBy(() -> ReviewImage.of(null, "https://example.com/image.jpg", 0, false))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("리뷰 정보는 필수입니다");
         }
@@ -34,7 +34,7 @@ class ReviewImageTest {
             Review review = mock(Review.class);
 
             // when & then
-            assertThatThrownBy(() -> ReviewImage.of(review, imageUrl, 0))
+            assertThatThrownBy(() -> ReviewImage.of(review, imageUrl, 0, false))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("이미지 URL은 필수입니다");
         }
@@ -46,7 +46,7 @@ class ReviewImageTest {
             Review review = mock(Review.class);
 
             // when & then
-            assertThatThrownBy(() -> ReviewImage.of(review, "https://example.com/image.jpg", sequence))
+            assertThatThrownBy(() -> ReviewImage.of(review, "https://example.com/image.jpg", sequence, false))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("이미지 순서는 0 이상이어야 합니다");
         }
@@ -59,13 +59,26 @@ class ReviewImageTest {
             int sequence = 0;
 
             // when
-            ReviewImage reviewImage = ReviewImage.of(review, imageUrl, sequence);
+            ReviewImage reviewImage = ReviewImage.of(review, imageUrl, sequence, false);
 
             // then
             assertThat(reviewImage).isNotNull();
             assertThat(reviewImage.getReview()).isEqualTo(review);
             assertThat(reviewImage.getImageUrl()).isEqualTo(imageUrl);
             assertThat(reviewImage.getSequence()).isEqualTo(sequence);
+            assertThat(reviewImage.isPrimary()).isFalse();
+        }
+
+        @Test
+        void isPrimary_true로_생성_성공() {
+            // given
+            Review review = mock(Review.class);
+
+            // when
+            ReviewImage reviewImage = ReviewImage.of(review, "https://example.com/image.jpg", 0, true);
+
+            // then
+            assertThat(reviewImage.isPrimary()).isTrue();
         }
     }
 }

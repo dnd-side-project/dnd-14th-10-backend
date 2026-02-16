@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -56,6 +57,15 @@ public class ReviewController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         return ResponseEntity.ok(reviewService.getReviewsByPlace(placeId, pageable));
+    }
+
+    @Operation(summary = "내 리뷰 목록 조회", description = "로그인한 사용자가 작성한 리뷰 목록을 페이지네이션으로 조회합니다.")
+    @GetMapping("/reviews/me")
+    public ResponseEntity<Page<ReviewDetailResponse>> getMyReviews(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(reviewService.getMyReviews(userDetails.userId(), pageable));
     }
 
     @Operation(summary = "리뷰 수정", description = "본인이 작성한 리뷰를 수정합니다.")

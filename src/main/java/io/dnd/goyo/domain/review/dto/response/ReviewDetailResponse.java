@@ -16,7 +16,7 @@ public record ReviewDetailResponse(
         Long userId,
         String userNickname,
         String userProfileImg,
-        Integer rating,
+        Double rating,
         Mood mood,
         SpaceSize spaceSize,
         OutletScore outletScore,

@@ -20,9 +20,13 @@ import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.service.ReviewService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +64,7 @@ class ReviewControllerTest {
     private Map<String, Object> createValidCreateRequest() {
         return Map.ofEntries(
                 Map.entry("placeId", 10),
-                Map.entry("rating", 4),
+                Map.entry("rating", 4.0),
                 Map.entry("tagIds", List.of(1, 2)),
                 Map.entry("mood", "CALM"),
                 Map.entry("spaceSize", "MEDIUM"),
@@ -72,7 +76,7 @@ class ReviewControllerTest {
 
     private Map<String, Object> createValidUpdateRequest() {
         return Map.ofEntries(
-                Map.entry("rating", 5),
+                Map.entry("rating", 5.0),
                 Map.entry("tagIds", List.of(2, 3)),
                 Map.entry("mood", "SILENT"),
                 Map.entry("spaceSize", "LARGE"),
@@ -143,7 +147,7 @@ class ReviewControllerTest {
     void 리뷰_조회_성공_시_200_반환() throws Exception {
         ReviewDetailResponse response = new ReviewDetailResponse(
                 1L, 10L, 1L, "테스터", "profile.jpg",
-                4, null, null, null, null,
+                4.0, null, null, null, null,
                 "좋은 카페입니다", List.of(), List.of(), null, null
         );
         given(reviewService.getReview(1L)).willReturn(response);
@@ -151,7 +155,7 @@ class ReviewControllerTest {
         mockMvc.perform(get("/api/reviews/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reviewId").value(1))
-                .andExpect(jsonPath("$.rating").value(4));
+                .andExpect(jsonPath("$.rating").value(4.0));
     }
 
     @Test
@@ -176,5 +180,54 @@ class ReviewControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(reviewService).deleteReview(1L, 1L);
+    }
+
+    @Test
+    void 내_리뷰_목록_조회_성공_시_200_반환() throws Exception {
+        ReviewDetailResponse response = new ReviewDetailResponse(
+                1L, 10L, 1L, "테스터", "profile.jpg",
+                4.0, null, null, null, null,
+                "좋은 카페입니다", List.of(), List.of(), null, null
+        );
+        Page<ReviewDetailResponse> page = new PageImpl<>(List.of(response));
+
+        given(reviewService.getMyReviews(eq(1L), any(Pageable.class))).willReturn(page);
+
+        mockMvc.perform(get("/api/reviews/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].reviewId").value(1))
+                .andExpect(jsonPath("$.content[0].rating").value(4.0))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @WithMockUser
+    void 평점이_0점5_단위가_아니면_400_반환() throws Exception {
+        Map<String, Object> request = new HashMap<>(createValidCreateRequest());
+        request.put("rating", 1.3);
+
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser
+    void 이미지_7개_등록_시_400_반환() throws Exception {
+        List<Map<String, Object>> images = new ArrayList<>();
+        for (int i = 0; i < 7; i++) {
+            images.add(Map.of("imageUrl", "https://example.com/img" + i + ".jpg", "sequence", i, "isPrimary", i == 0));
+        }
+
+        Map<String, Object> request = new HashMap<>(createValidCreateRequest());
+        request.put("images", images);
+
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest());
     }
 }

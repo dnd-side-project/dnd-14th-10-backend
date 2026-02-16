@@ -22,7 +22,7 @@ public interface ReviewTagRepository extends JpaRepository<ReviewTag, Long> {
 
     List<ReviewTag> findAllByReviewIdIn(List<Long> reviewIds);
 
-    @Modifying
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM ReviewTag rt WHERE rt.review.id = :reviewId")
     void deleteAllByReviewId(@Param("reviewId") Long reviewId);
 }

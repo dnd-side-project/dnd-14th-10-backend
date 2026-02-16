@@ -54,7 +54,7 @@ public class ReviewService {
 
         if (request.images() != null && !request.images().isEmpty()) {
             List<ReviewImage> images = request.images().stream()
-                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence()))
+                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence(), img.isPrimary()))
                     .toList();
             reviewImageRepository.saveAll(images);
         }
@@ -96,6 +96,26 @@ public class ReviewService {
         ));
     }
 
+    public Page<ReviewDetailResponse> getMyReviews(Long userId, Pageable pageable) {
+        Page<Review> reviewPage = reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable);
+
+        List<Long> reviewIds = reviewPage.getContent().stream()
+                .map(Review::getId)
+                .toList();
+
+        Map<Long, List<ReviewTag>> tagsByReviewId = reviewTagRepository.findAllByReviewIdIn(reviewIds).stream()
+                .collect(Collectors.groupingBy(rt -> rt.getReview().getId()));
+
+        Map<Long, List<ReviewImage>> imagesByReviewId = reviewImageRepository.findAllByReviewIdInOrderBySequence(reviewIds).stream()
+                .collect(Collectors.groupingBy(ri -> ri.getReview().getId()));
+
+        return reviewPage.map(review -> ReviewDetailResponse.of(
+                review,
+                tagsByReviewId.getOrDefault(review.getId(), List.of()),
+                imagesByReviewId.getOrDefault(review.getId(), List.of())
+        ));
+    }
+
     @Transactional
     public void updateReview(Long userId, Long reviewId, ReviewUpdateRequest request) {
         Review review = getActiveReview(reviewId);
@@ -117,7 +137,7 @@ public class ReviewService {
         reviewImageRepository.deleteAllByReviewId(reviewId);
         if (request.images() != null && !request.images().isEmpty()) {
             List<ReviewImage> images = request.images().stream()
-                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence()))
+                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence(), img.isPrimary()))
                     .toList();
             reviewImageRepository.saveAll(images);
         }
@@ -150,7 +170,7 @@ public class ReviewService {
     }
 
     private Review getActiveReviewWithUser(Long reviewId) {
-        Review review = reviewRepository.findByIdWithUser(reviewId)
+        Review review = reviewRepository.findByIdWithUserAndPlace(reviewId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
         if (review.getStatus() != ReviewStatus.ACTIVE) {
             throw new BusinessException(ErrorCode.REVIEW_NOT_FOUND);

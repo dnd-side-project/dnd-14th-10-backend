@@ -44,7 +44,7 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
-    private Integer rating;
+    private Double rating;
 
     @Enumerated(EnumType.STRING)
     private Mood mood;
@@ -70,7 +70,7 @@ public class Review extends BaseEntity {
     private Review(
             User user,
             Place place,
-            Integer rating,
+            Double rating,
             Mood mood,
             OutletScore outletScore,
             String content,
@@ -97,7 +97,7 @@ public class Review extends BaseEntity {
     public static Review create(
             User user,
             Place place,
-            Integer rating,
+            Double rating,
             Mood mood,
             OutletScore outletScore,
             CrowdStatus crowdStatus,
@@ -109,8 +109,8 @@ public class Review extends BaseEntity {
                 crowdStatus, spaceSize, visitedAt);
     }
 
-    private static final int MIN_RATING = 1;
-    private static final int MAX_RATING = 5;
+    private static final double MIN_RATING = 0.5;
+    private static final double MAX_RATING = 5.0;
 
     private static void validateUser(User user) {
         if (user == null) {
@@ -124,10 +124,17 @@ public class Review extends BaseEntity {
         }
     }
 
-    private static void validateRating(Integer rating) {
-        if (rating != null && (rating < MIN_RATING || rating > MAX_RATING)) {
+    private static void validateRating(Double rating) {
+        if (rating == null) {
+            return;
+        }
+        if (rating < MIN_RATING || rating > MAX_RATING) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("평점은 %d ~ %d 사이여야 합니다.", MIN_RATING, MAX_RATING));
+                    String.format("평점은 %.1f ~ %.1f 사이여야 합니다.", MIN_RATING, MAX_RATING));
+        }
+        double doubled = rating * 2;
+        if (doubled != Math.floor(doubled)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "평점은 0.5 단위로 입력해야 합니다.");
         }
     }
 
@@ -140,7 +147,7 @@ public class Review extends BaseEntity {
     }
 
     public void update(
-            Integer rating,
+            Double rating,
             Mood mood,
             OutletScore outletScore,
             CrowdStatus crowdStatus,
