@@ -146,4 +146,37 @@ public class User extends BaseEntity {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "사용자 권한은 필수입니다.");
         }
     }
+
+    public void updateNickname(String nickname) {
+        validateNickname(nickname);
+        this.nickname = nickname;
+    }
+
+    public void updateGender(Gender gender) {
+        validateGender(gender);
+        this.gender = gender;
+    }
+
+    public void updateBirth(LocalDate birth) {
+        this.birth = birth;
+    }
+
+    public void updateRegionCode(Integer regionCode) {
+        this.regionCode = regionCode;
+    }
+
+    public void updateLocationConsent(Boolean locationConsent) {
+        this.locationConsent = locationConsent;
+    }
+
+    public void updateProfileImg(String profileImg) {
+        this.profileImg = profileImg;
+    }
+
+    public void withdraw() {
+        if (this.status == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_ALREADY_DELETED);
+        }
+        this.status = UserStatus.DELETED;
+    }
 }

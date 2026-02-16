@@ -24,7 +24,8 @@ public enum ErrorCode {
     INVALID_SIGNUP_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_008", "유효하지 않은 회원가입 토큰입니다"),
 
     // User
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다");
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다"),
+    USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "USER_002", "이미 탈퇴한 사용자입니다");
 
     private final HttpStatus status;
     private final String code;

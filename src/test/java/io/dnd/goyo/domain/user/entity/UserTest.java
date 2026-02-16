@@ -167,4 +167,170 @@ class UserTest {
             assertThat(user.getRegionCode()).isNull();
         }
     }
+
+    @Nested
+    @DisplayName("닉네임 수정 시")
+    class UpdateNickname {
+
+        @Test
+        void 정상적인_닉네임으로_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.updateNickname("새닉네임");
+
+            // then
+            assertThat(user.getNickname()).isEqualTo("새닉네임");
+        }
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void 비어있는_닉네임으로_수정_시_예외_발생(String nickname) {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname(nickname))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("닉네임은 필수입니다");
+        }
+
+        @Test
+        void 닉네임이_30자를_초과하면_예외_발생() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when & then
+            assertThatThrownBy(() -> user.updateNickname("a".repeat(31)))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("닉네임은 30자 이내여야 합니다");
+        }
+    }
+
+    @Nested
+    @DisplayName("성별 수정 시")
+    class UpdateGender {
+
+        @Test
+        void 정상적인_성별로_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.updateGender(Gender.FEMALE);
+
+            // then
+            assertThat(user.getGender()).isEqualTo(Gender.FEMALE);
+        }
+
+        @Test
+        void null_성별로_수정_시_예외_발생() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when & then
+            assertThatThrownBy(() -> user.updateGender(null))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("성별은 필수입니다");
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴 시")
+    class Withdraw {
+
+        @Test
+        void 정상_탈퇴_시_상태가_DELETED() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.withdraw();
+
+            // then
+            assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+        }
+
+        @Test
+        void 이미_탈퇴한_사용자가_다시_탈퇴_시_예외_발생() {
+            // given
+            User user = createValidUserBuilder().build();
+            user.withdraw();
+
+            // when & then
+            assertThatThrownBy(user::withdraw)
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("이미 탈퇴한 사용자입니다");
+        }
+    }
+
+    @Nested
+    @DisplayName("프로필 수정 시")
+    class UpdateProfile {
+
+        @Test
+        void 생년월일_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+            java.time.LocalDate birth = java.time.LocalDate.of(1995, 3, 15);
+
+            // when
+            user.updateBirth(birth);
+
+            // then
+            assertThat(user.getBirth()).isEqualTo(birth);
+        }
+
+        @Test
+        void 거주지_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.updateRegionCode(11110);
+
+            // then
+            assertThat(user.getRegionCode()).isEqualTo(11110);
+        }
+
+        @Test
+        void 위치정보_동의_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.updateLocationConsent(true);
+
+            // then
+            assertThat(user.getLocationConsent()).isTrue();
+        }
+
+        @Test
+        void 프로필_이미지_수정_가능() {
+            // given
+            User user = createValidUserBuilder().build();
+
+            // when
+            user.updateProfileImg("https://example.com/profile.jpg");
+
+            // then
+            assertThat(user.getProfileImg()).isEqualTo("https://example.com/profile.jpg");
+        }
+
+        @Test
+        void 프로필_이미지_null로_삭제_가능() {
+            // given
+            User user = createValidUserBuilder()
+                    .profileImg("https://example.com/profile.jpg")
+                    .build();
+
+            // when
+            user.updateProfileImg(null);
+
+            // then
+            assertThat(user.getProfileImg()).isNull();
+        }
+    }
 }
