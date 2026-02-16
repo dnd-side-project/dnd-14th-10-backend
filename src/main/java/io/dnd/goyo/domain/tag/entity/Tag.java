@@ -12,12 +12,13 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tags")
+@Table(name = "tags", uniqueConstraints = @UniqueConstraint(name = "uk_tags_type_code", columnNames = {"type", "code"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tag extends BaseEntity {
@@ -30,17 +31,25 @@ public class Tag extends BaseEntity {
     @Column(length = 30, nullable = false)
     private TagType type;
 
+    @Column(length = 30)
+    private String code;
+
     @Column(length = 30, nullable = false)
     private String name;
 
     public static Tag of(TagType type, String name) {
-        return new Tag(type, name);
+        return new Tag(type, null, name);
     }
 
-    private Tag(TagType type, String name) {
+    public static Tag of(TagType type, String code, String name) {
+        return new Tag(type, code, name);
+    }
+
+    private Tag(TagType type, String code, String name) {
         validateType(type);
         validateName(name);
         this.type = type;
+        this.code = code;
         this.name = name;
     }
 

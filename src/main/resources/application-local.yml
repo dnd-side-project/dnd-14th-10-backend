@@ -21,6 +21,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+    defer-datasource-initialization: true
     properties:
       hibernate:
         format_sql: true

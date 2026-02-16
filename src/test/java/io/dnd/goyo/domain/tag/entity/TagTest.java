@@ -68,5 +68,28 @@ class TagTest {
             assertThat(tag.getType()).isEqualTo(TagType.REVIEW);
             assertThat(tag.getName()).isEqualTo("디저트가 맛있어요");
         }
+
+        @Test
+        void code_포함하여_생성_가능() {
+            // given & when
+            Tag tag = Tag.of(TagType.REVIEW, "CLEAN", "청결해요");
+
+            // then
+            assertThat(tag).isNotNull();
+            assertThat(tag.getType()).isEqualTo(TagType.REVIEW);
+            assertThat(tag.getCode()).isEqualTo("CLEAN");
+            assertThat(tag.getName()).isEqualTo("청결해요");
+        }
+
+        @Test
+        void code가_null이어도_생성_가능() {
+            // given & when
+            Tag tag = Tag.of(TagType.REVIEW, null, "청결해요");
+
+            // then
+            assertThat(tag).isNotNull();
+            assertThat(tag.getCode()).isNull();
+            assertThat(tag.getName()).isEqualTo("청결해요");
+        }
     }
 }

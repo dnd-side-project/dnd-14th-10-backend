@@ -7,8 +7,10 @@ import static org.mockito.Mockito.mock;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
+import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
+import java.time.LocalDateTime;
 import io.dnd.goyo.domain.review.enums.ReviewStatus;
 import io.dnd.goyo.domain.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
@@ -19,14 +21,9 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class ReviewTest {
 
-    private static Review.ReviewBuilder createValidReviewBuilder() {
-        return Review.builder()
-                .user(mock(User.class))
-                .place(mock(Place.class))
-                .rating(4)
-                .outletScore(OutletScore.MANY)
-                .crowdStatus(CrowdStatus.NORMAL)
-                .spaceSize(SpaceSize.MEDIUM);
+    private static Review createValidReview() {
+        return Review.create(mock(User.class), mock(Place.class), 4, Mood.CALM,
+                OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
     }
 
     @Nested
@@ -35,24 +32,18 @@ class ReviewTest {
 
         @Test
         void 사용자_정보가_null이면_예외_발생() {
-            // given
-            Review.ReviewBuilder builder = createValidReviewBuilder()
-                    .user(null);
-
             // when & then
-            assertThatThrownBy(builder::build)
+            assertThatThrownBy(() -> Review.create(null, mock(Place.class), 4, Mood.CALM,
+                    OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("사용자 정보는 필수입니다");
         }
 
         @Test
         void 장소_정보가_null이면_예외_발생() {
-            // given
-            Review.ReviewBuilder builder = createValidReviewBuilder()
-                    .place(null);
-
             // when & then
-            assertThatThrownBy(builder::build)
+            assertThatThrownBy(() -> Review.create(mock(User.class), null, 4, Mood.CALM,
+                    OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("장소 정보는 필수입니다");
         }
@@ -60,12 +51,9 @@ class ReviewTest {
         @ParameterizedTest
         @ValueSource(ints = {0, -1, 6, 10})
         void 평점이_범위를_벗어나면_예외_발생(int rating) {
-            // given
-            Review.ReviewBuilder builder = createValidReviewBuilder()
-                    .rating(rating);
-
             // when & then
-            assertThatThrownBy(builder::build)
+            assertThatThrownBy(() -> Review.create(mock(User.class), mock(Place.class), rating,
+                    Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("평점은 1 ~ 5 사이여야 합니다");
         }
@@ -73,12 +61,9 @@ class ReviewTest {
         @ParameterizedTest
         @ValueSource(ints = {1, 5})
         void 평점_경계값은_허용(int rating) {
-            // given
-            Review.ReviewBuilder builder = createValidReviewBuilder()
-                    .rating(rating);
-
             // when
-            Review review = builder.build();
+            Review review = Review.create(mock(User.class), mock(Place.class), rating,
+                    Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
 
             // then
             assertThat(review.getRating()).isEqualTo(rating);
@@ -86,12 +71,9 @@ class ReviewTest {
 
         @Test
         void 평점은_선택_값으로_null_허용() {
-            // given
-            Review.ReviewBuilder builder = createValidReviewBuilder()
-                    .rating(null);
-
             // when
-            Review review = builder.build();
+            Review review = Review.create(mock(User.class), mock(Place.class), null,
+                    Mood.CALM, OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null);
 
             // then
             assertThat(review.getRating()).isNull();
@@ -100,7 +82,7 @@ class ReviewTest {
         @Test
         void 정상적인_값으로_생성하면_상태는_ACTIVE() {
             // given & when
-            Review review = createValidReviewBuilder().build();
+            Review review = createValidReview();
 
             // then
             assertThat(review.getStatus()).isEqualTo(ReviewStatus.ACTIVE);
@@ -113,15 +95,9 @@ class ReviewTest {
             Place place = mock(Place.class);
 
             // when
-            Review review = Review.builder()
-                    .user(user)
-                    .place(place)
-                    .rating(4)
-                    .content("좋은 카페입니다")
-                    .outletScore(OutletScore.MANY)
-                    .crowdStatus(CrowdStatus.RELAX)
-                    .spaceSize(SpaceSize.LARGE)
-                    .build();
+            Review review = Review.create(user, place, 4, null,
+                    OutletScore.MANY, CrowdStatus.RELAX, SpaceSize.LARGE,
+                    "좋은 카페입니다", null);
 
             // then
             assertThat(review).isNotNull();
@@ -139,7 +115,7 @@ class ReviewTest {
         @Test
         void 삭제하면_상태가_DELETED로_변경() {
             // given
-            Review review = createValidReviewBuilder().build();
+            Review review = createValidReview();
 
             // when
             review.delete();
@@ -151,13 +127,49 @@ class ReviewTest {
         @Test
         void 숨기면_상태가_HIDDEN으로_변경() {
             // given
-            Review review = createValidReviewBuilder().build();
+            Review review = createValidReview();
 
             // when
             review.hide();
 
             // then
             assertThat(review.getStatus()).isEqualTo(ReviewStatus.HIDDEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("Review 수정 시")
+    class UpdateReview {
+
+        @Test
+        void 정상적인_값으로_수정_성공() {
+            // given
+            Review review = createValidReview();
+
+            // when
+            review.update(5, Mood.SILENT, OutletScore.FEW, CrowdStatus.RELAX,
+                    SpaceSize.LARGE, "수정된 내용", LocalDateTime.of(2026, 1, 1, 12, 0));
+
+            // then
+            assertThat(review.getRating()).isEqualTo(5);
+            assertThat(review.getMood()).isEqualTo(Mood.SILENT);
+            assertThat(review.getOutletScore()).isEqualTo(OutletScore.FEW);
+            assertThat(review.getCrowdStatus()).isEqualTo(CrowdStatus.RELAX);
+            assertThat(review.getSpaceSize()).isEqualTo(SpaceSize.LARGE);
+            assertThat(review.getContent()).isEqualTo("수정된 내용");
+        }
+
+        @ParameterizedTest
+        @ValueSource(ints = {0, -1, 6, 10})
+        void 잘못된_평점으로_수정_시_예외_발생(int rating) {
+            // given
+            Review review = createValidReview();
+
+            // when & then
+            assertThatThrownBy(() -> review.update(rating, Mood.CALM, OutletScore.MANY,
+                    CrowdStatus.NORMAL, SpaceSize.MEDIUM, "내용", null))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("평점은 1 ~ 5 사이여야 합니다");
         }
     }
 }

@@ -5,6 +5,7 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
+import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.review.enums.ReviewStatus;
@@ -22,7 +23,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -47,6 +47,9 @@ public class Review extends BaseEntity {
     private Integer rating;
 
     @Enumerated(EnumType.STRING)
+    private Mood mood;
+
+    @Enumerated(EnumType.STRING)
     private OutletScore outletScore;
 
     @Column(columnDefinition = "TEXT")
@@ -64,11 +67,11 @@ public class Review extends BaseEntity {
 
     private LocalDateTime visitedAt;
 
-    @Builder
     private Review(
             User user,
             Place place,
             Integer rating,
+            Mood mood,
             OutletScore outletScore,
             String content,
             CrowdStatus crowdStatus,
@@ -82,12 +85,28 @@ public class Review extends BaseEntity {
         this.user = user;
         this.place = place;
         this.rating = rating;
+        this.mood = mood;
         this.outletScore = outletScore;
         this.content = content;
         this.crowdStatus = crowdStatus;
         this.spaceSize = spaceSize;
         this.visitedAt = visitedAt;
         this.status = ReviewStatus.ACTIVE;
+    }
+
+    public static Review create(
+            User user,
+            Place place,
+            Integer rating,
+            Mood mood,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize,
+            String content,
+            LocalDateTime visitedAt
+    ) {
+        return new Review(user, place, rating, mood, outletScore, content,
+                crowdStatus, spaceSize, visitedAt);
     }
 
     private static final int MIN_RATING = 1;
@@ -118,5 +137,24 @@ public class Review extends BaseEntity {
 
     public void hide() {
         this.status = ReviewStatus.HIDDEN;
+    }
+
+    public void update(
+            Integer rating,
+            Mood mood,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize,
+            String content,
+            LocalDateTime visitedAt
+    ) {
+        validateRating(rating);
+        this.rating = rating;
+        this.mood = mood;
+        this.outletScore = outletScore;
+        this.crowdStatus = crowdStatus;
+        this.spaceSize = spaceSize;
+        this.content = content;
+        this.visitedAt = visitedAt;
     }
 }
