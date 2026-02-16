@@ -146,4 +146,58 @@ class PlaceRecommendationControllerTest {
                         .param("radiusMeters", "5000"))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    void 비슷한_성향_공간_조회_성공_시_200_반환() throws Exception {
+        // given
+        long regionCode = 1101010100L;
+        PlaceSummaryResponse response = new PlaceSummaryResponse(
+                1L, "테스트 카페", PlaceCategory.CAFE, "청계천로 101",
+                regionCode, "images/test.jpg", 37.566, 126.978,
+                Mood.CALM, SpaceSize.MEDIUM, false
+        );
+
+        given(placeRecommendationService.getSimilarPlaces(
+                eq(1L), eq(regionCode), eq(PlaceCategory.CAFE), eq(126.978), eq(37.566)
+        )).willReturn(List.of(response));
+
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/similar")
+                        .param("regionCode", String.valueOf(regionCode))
+                        .param("category", "CAFE")
+                        .param("longitude", "126.978")
+                        .param("latitude", "37.566"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].name").value("테스트 카페"))
+                .andExpect(jsonPath("$[0].category").value("CAFE"))
+                .andExpect(jsonPath("$[0].isWished").value(false));
+    }
+
+    @Test
+    void 비슷한_성향_공간_결과_없으면_빈_리스트_반환() throws Exception {
+        // given
+        long regionCode = 1101010100L;
+        given(placeRecommendationService.getSimilarPlaces(
+                eq(1L), eq(regionCode), eq(PlaceCategory.CAFE), eq(126.978), eq(37.566)
+        )).willReturn(List.of());
+
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/similar")
+                        .param("regionCode", String.valueOf(regionCode))
+                        .param("category", "CAFE")
+                        .param("longitude", "126.978")
+                        .param("latitude", "37.566"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isEmpty());
+    }
+
+    @Test
+    void 비슷한_성향_공간_필수_파라미터_누락_시_400_반환() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/similar")
+                        .param("regionCode", "1101010100")
+                        .param("category", "CAFE"))
+                .andExpect(status().isBadRequest());
+    }
 }
