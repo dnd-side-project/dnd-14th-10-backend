@@ -24,6 +24,10 @@ public class WishlistReader {
     private final WishlistRepository wishlistRepository;
 
     public List<Long> getWishedPlaceIds(Long userId, List<Long> placeIds) {
+        if (placeIds.isEmpty()) {
+            return List.of();
+        }
+
         return wishlistRepository.findPlaceIdsByUserIdAndPlaceIds(userId, placeIds);
     }
 
