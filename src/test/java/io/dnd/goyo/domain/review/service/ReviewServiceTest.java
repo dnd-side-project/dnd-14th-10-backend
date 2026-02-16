@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
@@ -21,9 +23,11 @@ import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
 import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
+import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.entity.Review;
+import io.dnd.goyo.domain.review.entity.ReviewImage;
 import io.dnd.goyo.domain.review.enums.ReviewStatus;
 import io.dnd.goyo.domain.review.repository.ReviewImageRepository;
 import io.dnd.goyo.domain.review.repository.ReviewRepository;
@@ -276,6 +280,7 @@ class ReviewServiceTest {
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
             given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId)).willReturn(List.of());
 
             // when
             reviewService.updateReview(userId, reviewId, request);
@@ -307,6 +312,75 @@ class ReviewServiceTest {
             assertThatThrownBy(() -> reviewService.updateReview(otherUserId, reviewId, request))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REVIEW_NOT_OWNER);
+        }
+
+        @Test
+        void 이미지_교체_시_orphan_키에_대해_deleteObjects_호출() {
+            // given
+            Long userId = 1L;
+            Long reviewId = 1L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(user.getId()).willReturn(userId);
+            given(place.getId()).willReturn(10L);
+            Review review = createReview(user, place);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewImage oldImage1 = ReviewImage.of(review, "old-key-1", 0, true);
+            ReviewImage oldImage2 = ReviewImage.of(review, "old-key-2", 1, false);
+
+            ReviewUpdateRequest request = new ReviewUpdateRequest(
+                    new BigDecimal("5.0"), List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
+                    OutletScore.FEW, CrowdStatus.RELAX, "수정된 내용",
+                    List.of(new ReviewImageRequest("old-key-1", 0, true),
+                            new ReviewImageRequest("new-key-1", 1, false)),
+                    null
+            );
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
+                    .willReturn(List.of(oldImage1, oldImage2));
+
+            // when
+            reviewService.updateReview(userId, reviewId, request);
+
+            // then — old-key-2는 새 요청에 없으므로 삭제되어야 함
+            verify(fileStorage).deleteObjects(List.of("old-key-2"));
+        }
+
+        @Test
+        void MinIO_삭제_실패해도_리뷰_수정_성공() {
+            // given
+            Long userId = 1L;
+            Long reviewId = 1L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(user.getId()).willReturn(userId);
+            given(place.getId()).willReturn(10L);
+            Review review = createReview(user, place);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewImage oldImage = ReviewImage.of(review, "old-key-1", 0, true);
+
+            ReviewUpdateRequest request = new ReviewUpdateRequest(
+                    new BigDecimal("5.0"), List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
+                    OutletScore.FEW, CrowdStatus.RELAX, "수정된 내용", null, null
+            );
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
+                    .willReturn(List.of(oldImage));
+            willThrow(new RuntimeException("MinIO 연결 실패"))
+                    .given(fileStorage).deleteObjects(List.of("old-key-1"));
+
+            // when — 예외 없이 정상 완료되어야 함
+            reviewService.updateReview(userId, reviewId, request);
+
+            // then
+            assertThat(review.getRating()).isEqualTo(5.0);
+            verify(fileStorage).deleteObjects(List.of("old-key-1"));
         }
     }
 

@@ -22,13 +22,16 @@ import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -138,12 +141,33 @@ public class ReviewService {
                 request.visitedAt()
         );
 
+        List<ReviewImage> existingImages = reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId);
+        Set<String> oldKeys = existingImages.stream()
+                .map(ReviewImage::getImageKey)
+                .collect(Collectors.toSet());
+
+        Set<String> newKeys = (request.images() != null)
+                ? request.images().stream().map(img -> img.imageKey()).collect(Collectors.toSet())
+                : Set.of();
+
+        List<String> orphanedKeys = oldKeys.stream()
+                .filter(key -> !newKeys.contains(key))
+                .toList();
+
         reviewImageRepository.deleteAllByReviewId(reviewId);
         if (request.images() != null && !request.images().isEmpty()) {
             List<ReviewImage> images = request.images().stream()
                     .map(img -> ReviewImage.of(review, img.imageKey(), img.sequence(), img.isPrimary()))
                     .toList();
             reviewImageRepository.saveAll(images);
+        }
+
+        if (!orphanedKeys.isEmpty()) {
+            try {
+                fileStorage.deleteObjects(orphanedKeys);
+            } catch (Exception e) {
+                log.warn("리뷰 이미지 MinIO 삭제 실패 (reviewId: {}): {}", reviewId, e.getMessage());
+            }
         }
 
         reviewTagService.replaceReviewTags(review, request.tagIds());
