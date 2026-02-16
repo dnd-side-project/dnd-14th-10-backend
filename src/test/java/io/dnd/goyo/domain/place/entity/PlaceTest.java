@@ -37,7 +37,7 @@ class PlaceTest {
                 .name("테스트 카페")
                 .category(PlaceCategory.CAFE)
                 .location(DEFAULT_LOCATION)
-                .regionCode(11111)
+                .regionCode(1168010100L)
                 .addressDetail("청계천로 100번길 31")
                 .user(mock(User.class));
     }

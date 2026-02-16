@@ -6,26 +6,44 @@ import jakarta.persistence.Embeddable;
 
 @Embeddable
 public record RegionCode(
-    Integer value
+        Long value
 ) {
-    private static final int CODE_LENGTH = 5;
-    private static final int MIN_VALUE = 10000;
-    private static final int MAX_VALUE = 99999;
+    private static final int SI_GUN_GU_CODE_LENGTH = 5;
+    private static final int LEGAL_DONG_CODE_LENGTH = 10;
 
     public RegionCode {
         validateIsNotNull(value);
-        validateCodeRange(value);
+        validateIsPositive(value);
+        validateCodeLength(value);
     }
 
-    private static void validateIsNotNull(Integer value) {
+    public int getSiGunGuCode() {
+        if (value > 99999) {
+            return (int) (value / 100000);
+        }
+        return value.intValue();
+    }
+
+    private static void validateIsNotNull(Long value) {
         if (value == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "행정구역 코드는 필수입니다.");
         }
     }
 
-    private static void validateCodeRange(Integer value) {
-        if (value < MIN_VALUE || value > MAX_VALUE) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("행정구역 코드는 %d자리여야 합니다.", CODE_LENGTH));
+    private static void validateIsPositive(Long value) {
+        if (value <= 0) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "행정구역 코드는 양수여야 합니다.");
+        }
+    }
+
+    private static void validateCodeLength(Long value) {
+        int length = String.valueOf(value).length();
+        if (length != SI_GUN_GU_CODE_LENGTH && length != LEGAL_DONG_CODE_LENGTH) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_INPUT,
+                    String.format("행정구역 코드는 %d자리(시군구) 또는 %d자리(법정동)여야 합니다.",
+                            SI_GUN_GU_CODE_LENGTH, LEGAL_DONG_CODE_LENGTH)
+            );
         }
     }
 }

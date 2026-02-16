@@ -12,21 +12,6 @@ jobs:
       checks: write
       pull-requests: write
 
-    services:
-      postgres:
-        image: postgis/postgis:16-3.4-alpine
-        env:
-          POSTGRES_DB: testdb
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: 코드 체크아웃
         uses: actions/checkout@v4
@@ -44,10 +29,6 @@ jobs:
       - name: 빌드 및 테스트 실행
         run: ./gradlew build
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/testdb
-          SPRING_DATASOURCE_USERNAME: test
-          SPRING_DATASOURCE_PASSWORD: test
-          SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
           JWT_SECRET: test-secret-key-for-ci-at-least-32-chars
           KAKAO_CLIENT_ID: test-kakao-client-id
           KAKAO_CLIENT_SECRET: test-kakao-client-secret

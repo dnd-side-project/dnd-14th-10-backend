@@ -49,9 +49,9 @@ public record PlaceRegisterRequest(
         @JsonFormat(pattern = "HH:mm")
         LocalTime closeTime,
 
-        @Schema(description = "행정구역 코드", example = "11010")
+        @Schema(description = "행정구역 코드 (10자리)", example = "1168010100")
         @NotNull(message = "행정구역 코드는 필수입니다")
-        Integer regionCode,
+        Long regionCode,
 
         @Schema(description = "상세 주소", example = "청계천로 101")
         @NotBlank(message = "상세 주소는 필수입니다")

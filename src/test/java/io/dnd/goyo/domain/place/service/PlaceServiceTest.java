@@ -68,7 +68,7 @@ class PlaceServiceTest {
                 2,
                 LocalTime.of(10, 0),
                 LocalTime.of(22, 0),
-                11111,
+                1111010100L,
                 "가온로 245",
                 "1층",
                 OutletScore.MANY,

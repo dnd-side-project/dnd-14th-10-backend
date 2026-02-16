@@ -20,6 +20,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalTime;
@@ -83,12 +84,15 @@ public class Place extends BaseEntity {
     @OneToMany(mappedBy = "place", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PlaceImage> images = new ArrayList<>();
 
+    @OneToOne(mappedBy = "place")
+    private PlaceDetail placeDetail;
+
     @Builder
     private Place(
             String name,
             PlaceCategory category,
             Point location,
-            Integer regionCode,
+            Long regionCode,
             String addressDetail,
             User user,
             Integer floorInfo,
@@ -136,6 +140,14 @@ public class Place extends BaseEntity {
         List<PlaceImage> allImages = new ArrayList<>(this.images);
         allImages.addAll(newImages);
         return allImages;
+    }
+
+    public String getRepresentativeImageKey() {
+        return images.stream()
+                .filter(PlaceImage::isRepresentativeFlag)
+                .findFirst()
+                .map(PlaceImage::getImageKey)
+                .orElse(null);
     }
 
     private void validateImagesNotEmpty(List<PlaceImage> images) {
