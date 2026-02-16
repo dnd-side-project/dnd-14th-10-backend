@@ -35,6 +35,27 @@ public class GlobalExceptionHandler {
             .body(ErrorResponse.of(ErrorCode.INVALID_INPUT));
     }
 
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> handleConstraintViolationException(
+            jakarta.validation.ConstraintViolationException e) {
+        List<ErrorResponse.FieldError> fieldErrors = e.getConstraintViolations()
+            .stream()
+            .map(violation -> new ErrorResponse.FieldError(
+                extractFieldName(violation.getPropertyPath().toString()),
+                violation.getMessage()
+            ))
+            .toList();
+
+        return ResponseEntity
+            .status(ErrorCode.INVALID_INPUT.getStatus())
+            .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, fieldErrors));
+    }
+
+    private String extractFieldName(String propertyPath) {
+        int lastDot = propertyPath.lastIndexOf('.');
+        return lastDot >= 0 ? propertyPath.substring(lastDot + 1) : propertyPath;
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
         List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()

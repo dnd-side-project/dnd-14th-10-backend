@@ -156,7 +156,7 @@ class AuthServiceTest {
             SignupTokenInfo tokenInfo = new SignupTokenInfo(Provider.KAKAO, "kakao_123");
 
             given(jwtTokenProvider.parseSignupToken("signup_token")).willReturn(tokenInfo);
-            given(userRepository.existsByNickname("고요한여행자")).willReturn(false);
+            given(userRepository.existsByNicknameAndStatusNot("고요한여행자", UserStatus.DELETED)).willReturn(false);
             given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
             given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh_token");
@@ -177,12 +177,12 @@ class AuthServiceTest {
             AuthService authService = createAuthService();
             SignupRequest request = new SignupRequest(
                     "signup_token", "김고요", "고요한여행자", Gender.FEMALE,
-                    LocalDate.of(1995, 3, 15), null, true, 11680
+                    LocalDate.of(1995, 3, 15), null, true, 1168010100L
             );
             SignupTokenInfo tokenInfo = new SignupTokenInfo(Provider.KAKAO, "kakao_123");
 
             given(jwtTokenProvider.parseSignupToken("signup_token")).willReturn(tokenInfo);
-            given(userRepository.existsByNickname("고요한여행자")).willReturn(false);
+            given(userRepository.existsByNicknameAndStatusNot("고요한여행자", UserStatus.DELETED)).willReturn(false);
             given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
             given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh_token");
@@ -207,7 +207,7 @@ class AuthServiceTest {
             SignupTokenInfo tokenInfo = new SignupTokenInfo(Provider.KAKAO, "kakao_123");
 
             given(jwtTokenProvider.parseSignupToken("signup_token")).willReturn(tokenInfo);
-            given(userRepository.existsByNickname("중복닉네임")).willReturn(true);
+            given(userRepository.existsByNicknameAndStatusNot("중복닉네임", UserStatus.DELETED)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> authService.signup(request))

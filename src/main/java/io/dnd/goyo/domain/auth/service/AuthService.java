@@ -65,7 +65,7 @@ public class AuthService {
         Provider provider = tokenInfo.provider();
         String providerId = tokenInfo.providerId();
 
-        if (userRepository.existsByNickname(request.nickname())) {
+        if (userRepository.existsByNicknameAndStatusNot(request.nickname(), UserStatus.DELETED)) {
             throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
         }
 
@@ -115,6 +115,9 @@ public class AuthService {
     }
 
     private void validateUserStatus(User user) {
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
         if (user.getStatus() == UserStatus.BLOCKED) {
             throw new BusinessException(ErrorCode.USER_BLOCKED);
         }

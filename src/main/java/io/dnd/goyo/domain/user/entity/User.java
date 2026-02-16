@@ -18,6 +18,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -75,7 +76,7 @@ public class User extends BaseEntity {
     private Boolean locationConsent;
 
     @Column(name = "region_code")
-    private Integer regionCode;
+    private Long regionCode;
 
     @Builder
     private User(
@@ -89,7 +90,7 @@ public class User extends BaseEntity {
             String providerId,
             UserRole role,
             Boolean locationConsent,
-            Integer regionCode
+            Long regionCode
     ) {
         validateName(name);
         validateNickname(nickname);
@@ -151,5 +152,39 @@ public class User extends BaseEntity {
         if (role == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "사용자 권한은 필수입니다.");
         }
+    }
+
+    public void updateNickname(String nickname) {
+        validateNickname(nickname);
+        this.nickname = nickname;
+    }
+
+    public void updateGender(Gender gender) {
+        validateGender(gender);
+        this.gender = gender;
+    }
+
+    public void updateBirth(LocalDate birth) {
+        this.birth = birth;
+    }
+
+    public void updateRegionCode(Long regionCode) {
+        this.regionCode = regionCode;
+    }
+
+    public void updateLocationConsent(Boolean locationConsent) {
+        this.locationConsent = locationConsent;
+    }
+
+    public void updateProfileImg(String profileImg) {
+        this.profileImg = profileImg;
+    }
+
+    public void withdraw() {
+        if (this.status == UserStatus.DELETED) {
+            throw new BusinessException(ErrorCode.USER_ALREADY_DELETED);
+        }
+        this.nickname = "deleted_" + UUID.randomUUID().toString().substring(0, 8);
+        this.status = UserStatus.DELETED;
     }
 }
