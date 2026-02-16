@@ -279,7 +279,7 @@ class PlaceRecommendationServiceTest {
                 .willReturn(reviewedPlaceIds);
 
         given(placeTagReader.findCandidatePlaceIds(
-                eq(List.of(1L, 2L, 3L)),
+                argThat(list -> list.size() == 3 && list.containsAll(List.of(1L, 2L, 3L))),
                 eq(11010L),
                 eq("CAFE"),
                 argThat(list -> list.containsAll(List.of(10L, 20L)) && list.size() == 2)
@@ -353,8 +353,12 @@ class PlaceRecommendationServiceTest {
                 .willReturn(List.of());
         given(reviewReader.getReviewedPlaceIds(eq(userId), any(LocalDateTime.class)))
                 .willReturn(List.of());
-        given(placeTagReader.findCandidatePlaceIds(List.of(1L), 11010L, "CAFE", List.of()))
-                .willReturn(candidateIds);
+        given(placeTagReader.findCandidatePlaceIds(
+                argThat(list -> list.size() == 1 && list.contains(1L)),
+                eq(11010L),
+                eq("CAFE"),
+                any()
+        )).willReturn(candidateIds);
         given(placeRepository.findAllByIdWithDetails(candidateIds))
                 .willReturn(List.of(place1, place2, place3));
         given(placeTagReader.getPlaceTagMappings(candidateIds)).willReturn(placeTagMap);
