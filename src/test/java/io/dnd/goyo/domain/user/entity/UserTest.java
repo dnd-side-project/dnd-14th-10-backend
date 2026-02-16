@@ -146,12 +146,12 @@ class UserTest {
             // given & when
             User user = createValidUserBuilder()
                     .locationConsent(true)
-                    .regionCode(11680)
+                    .regionCode(1168010100L)
                     .build();
 
             // then
             assertThat(user.getLocationConsent()).isTrue();
-            assertThat(user.getRegionCode()).isEqualTo(11680);
+            assertThat(user.getRegionCode()).isEqualTo(1168010100L);
         }
 
         @Test
@@ -251,6 +251,7 @@ class UserTest {
 
             // then
             assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+            assertThat(user.getNickname()).startsWith("deleted_");
         }
 
         @Test
@@ -289,10 +290,10 @@ class UserTest {
             User user = createValidUserBuilder().build();
 
             // when
-            user.updateRegionCode(11110);
+            user.updateRegionCode(1111010100L);
 
             // then
-            assertThat(user.getRegionCode()).isEqualTo(11110);
+            assertThat(user.getRegionCode()).isEqualTo(1111010100L);
         }
 
         @Test

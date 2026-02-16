@@ -63,7 +63,7 @@ class UserControllerTest {
             // given
             UserProfileResponse response = new UserProfileResponse(
                     1L, "김고작", "고작이", LocalDate.of(1995, 3, 15),
-                    Gender.MALE, null, true, 11680
+                    Gender.MALE, null, true, 1168010100L
             );
             given(userService.getMyProfile(1L)).willReturn(response);
 
@@ -97,6 +97,16 @@ class UserControllerTest {
     class CheckNickname {
 
         @Test
+        void 닉네임_빈값이면_400_반환() throws Exception {
+            // when & then
+            mockMvc.perform(get("/api/users/nickname/check")
+                            .param("nickname", "")
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors[0].field").value("nickname"));
+        }
+
+        @Test
         void 닉네임_중복_검사_성공() throws Exception {
             // given
             given(userService.checkNickname("새닉네임"))
@@ -116,7 +126,7 @@ class UserControllerTest {
     class UpdateNickname {
 
         @Test
-        void 닉네임_수정_성공_시_200_반환() throws Exception {
+        void 닉네임_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
                     Map.of("nickname", "새닉네임"));
@@ -126,7 +136,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
             verify(userService).updateNickname(eq(1L), eq("새닉네임"));
         }
@@ -152,7 +162,7 @@ class UserControllerTest {
     class UpdateGender {
 
         @Test
-        void 성별_수정_성공_시_200_반환() throws Exception {
+        void 성별_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
                     Map.of("gender", "FEMALE"));
@@ -162,7 +172,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
             verify(userService).updateGender(eq(1L), eq(Gender.FEMALE));
         }
@@ -173,7 +183,7 @@ class UserControllerTest {
     class UpdateBirth {
 
         @Test
-        void 생년월일_수정_성공_시_200_반환() throws Exception {
+        void 생년월일_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
                     Map.of("birth", "1995-03-15"));
@@ -183,7 +193,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
             verify(userService).updateBirth(eq(1L), eq(LocalDate.of(1995, 3, 15)));
         }
@@ -194,19 +204,19 @@ class UserControllerTest {
     class UpdateRegion {
 
         @Test
-        void 거주지_수정_성공_시_200_반환() throws Exception {
+        void 거주지_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
-                    Map.of("regionCode", 11110));
+                    Map.of("regionCode", 1111010100L));
 
             // when & then
             mockMvc.perform(patch("/api/users/me/region")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
-            verify(userService).updateRegionCode(eq(1L), eq(11110));
+            verify(userService).updateRegionCode(eq(1L), eq(1111010100L));
         }
     }
 
@@ -215,7 +225,7 @@ class UserControllerTest {
     class UpdateLocationConsent {
 
         @Test
-        void 위치정보_동의_수정_성공_시_200_반환() throws Exception {
+        void 위치정보_동의_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
                     Map.of("locationConsent", false));
@@ -225,7 +235,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
             verify(userService).updateLocationConsent(eq(1L), eq(false));
         }
@@ -236,7 +246,7 @@ class UserControllerTest {
     class UpdateProfileImage {
 
         @Test
-        void 프로필_이미지_수정_성공_시_200_반환() throws Exception {
+        void 프로필_이미지_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
                     Map.of("profileImg", "https://example.com/new.jpg"));
@@ -246,7 +256,7 @@ class UserControllerTest {
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(request)
                             .with(csrf()))
-                    .andExpect(status().isOk());
+                    .andExpect(status().isNoContent());
 
             verify(userService).updateProfileImg(eq(1L), eq("https://example.com/new.jpg"));
         }

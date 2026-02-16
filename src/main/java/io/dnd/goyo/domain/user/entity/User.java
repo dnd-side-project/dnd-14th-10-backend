@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import java.time.LocalDate;
+import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -70,7 +71,7 @@ public class User extends BaseEntity {
     private Boolean locationConsent;
 
     @Column(name = "region_code")
-    private Integer regionCode;
+    private Long regionCode;
 
     @Builder
     private User(
@@ -84,7 +85,7 @@ public class User extends BaseEntity {
             String providerId,
             UserRole role,
             Boolean locationConsent,
-            Integer regionCode
+            Long regionCode
     ) {
         validateName(name);
         validateNickname(nickname);
@@ -161,7 +162,7 @@ public class User extends BaseEntity {
         this.birth = birth;
     }
 
-    public void updateRegionCode(Integer regionCode) {
+    public void updateRegionCode(Long regionCode) {
         this.regionCode = regionCode;
     }
 
@@ -177,6 +178,7 @@ public class User extends BaseEntity {
         if (this.status == UserStatus.DELETED) {
             throw new BusinessException(ErrorCode.USER_ALREADY_DELETED);
         }
+        this.nickname = "deleted_" + UUID.randomUUID().toString().substring(0, 8);
         this.status = UserStatus.DELETED;
     }
 }

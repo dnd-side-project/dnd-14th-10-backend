@@ -6,6 +6,7 @@ import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.enums.Gender;
+import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
@@ -26,16 +27,19 @@ public class UserService {
     }
 
     public NicknameCheckResponse checkNickname(String nickname) {
-        boolean exists = userRepository.existsByNickname(nickname);
+        boolean exists = userRepository.existsByNicknameAndStatusNot(nickname, UserStatus.DELETED);
         return NicknameCheckResponse.from(!exists);
     }
 
     @Transactional
     public void updateNickname(Long userId, String nickname) {
-        if (userRepository.existsByNickname(nickname)) {
+        User user = userReader.getUser(userId);
+        if (user.getNickname().equals(nickname)) {
+            return;
+        }
+        if (userRepository.existsByNicknameAndStatusNot(nickname, UserStatus.DELETED)) {
             throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
         }
-        User user = userReader.getUser(userId);
         user.updateNickname(nickname);
     }
 
@@ -52,7 +56,7 @@ public class UserService {
     }
 
     @Transactional
-    public void updateRegionCode(Long userId, Integer regionCode) {
+    public void updateRegionCode(Long userId, Long regionCode) {
         User user = userReader.getUser(userId);
         user.updateRegionCode(regionCode);
     }

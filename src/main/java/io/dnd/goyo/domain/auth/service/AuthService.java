@@ -65,7 +65,7 @@ public class AuthService {
         Provider provider = tokenInfo.provider();
         String providerId = tokenInfo.providerId();
 
-        if (userRepository.existsByNickname(request.nickname())) {
+        if (userRepository.existsByNicknameAndStatusNot(request.nickname(), UserStatus.DELETED)) {
             throw new BusinessException(ErrorCode.DUPLICATE_NICKNAME);
         }
 

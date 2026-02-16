@@ -13,6 +13,7 @@ import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
+import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import java.time.LocalDate;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,7 @@ class UserServiceTest {
                 .provider(Provider.KAKAO)
                 .role(UserRole.USER)
                 .locationConsent(true)
-                .regionCode(11680)
+                .regionCode(1168010100L)
                 .build();
     }
 
@@ -87,7 +88,7 @@ class UserServiceTest {
         @Test
         void 사용_가능한_닉네임이면_available_true() {
             // given
-            given(userRepository.existsByNickname("새닉네임")).willReturn(false);
+            given(userRepository.existsByNicknameAndStatusNot("새닉네임", UserStatus.DELETED)).willReturn(false);
 
             // when
             NicknameCheckResponse response = userService.checkNickname("새닉네임");
@@ -99,7 +100,7 @@ class UserServiceTest {
         @Test
         void 중복된_닉네임이면_available_false() {
             // given
-            given(userRepository.existsByNickname("고작이")).willReturn(true);
+            given(userRepository.existsByNicknameAndStatusNot("고작이", UserStatus.DELETED)).willReturn(true);
 
             // when
             NicknameCheckResponse response = userService.checkNickname("고작이");
@@ -118,8 +119,8 @@ class UserServiceTest {
             // given
             Long userId = 1L;
             User user = createValidUser();
-            given(userRepository.existsByNickname("새닉네임")).willReturn(false);
             given(userReader.getUser(userId)).willReturn(user);
+            given(userRepository.existsByNicknameAndStatusNot("새닉네임", UserStatus.DELETED)).willReturn(false);
 
             // when
             userService.updateNickname(userId, "새닉네임");
@@ -132,11 +133,27 @@ class UserServiceTest {
         void 중복_닉네임으로_수정_시_예외_발생() {
             // given
             Long userId = 1L;
-            given(userRepository.existsByNickname("중복닉네임")).willReturn(true);
+            User user = createValidUser();
+            given(userReader.getUser(userId)).willReturn(user);
+            given(userRepository.existsByNicknameAndStatusNot("중복닉네임", UserStatus.DELETED)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> userService.updateNickname(userId, "중복닉네임"))
                     .isInstanceOf(BusinessException.class);
+        }
+
+        @Test
+        void 현재_닉네임과_동일하면_변경없이_정상_반환() {
+            // given
+            Long userId = 1L;
+            User user = createValidUser();
+            given(userReader.getUser(userId)).willReturn(user);
+
+            // when
+            userService.updateNickname(userId, "고작이");
+
+            // then
+            assertThat(user.getNickname()).isEqualTo("고작이");
         }
     }
 
@@ -191,10 +208,10 @@ class UserServiceTest {
             given(userReader.getUser(userId)).willReturn(user);
 
             // when
-            userService.updateRegionCode(userId, 11110);
+            userService.updateRegionCode(userId, 1111010100L);
 
             // then
-            assertThat(user.getRegionCode()).isEqualTo(11110);
+            assertThat(user.getRegionCode()).isEqualTo(1111010100L);
         }
     }
 
@@ -265,7 +282,8 @@ class UserServiceTest {
             userService.withdraw(userId);
 
             // then
-            verify(userReader).getUser(userId);
+            assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+            assertThat(user.getNickname()).startsWith("deleted_");
         }
     }
 }

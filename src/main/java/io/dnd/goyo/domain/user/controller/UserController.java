@@ -13,6 +13,7 @@ import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,11 +21,13 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "User", description = "유저 API")
+@Validated
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -53,7 +56,7 @@ public class UserController {
     @Operation(summary = "닉네임 중복 검사", description = "닉네임이 사용 가능한지 확인합니다")
     @GetMapping("/nickname/check")
     public ResponseEntity<NicknameCheckResponse> checkNickname(
-            @RequestParam String nickname
+            @RequestParam @NotBlank(message = "닉네임은 필수입니다") String nickname
     ) {
         NicknameCheckResponse response = userService.checkNickname(nickname);
         return ResponseEntity.ok(response);
@@ -66,7 +69,7 @@ public class UserController {
             @Valid @RequestBody UpdateNicknameRequest request
     ) {
         userService.updateNickname(userDetails.userId(), request.nickname());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "성별 수정", description = "현재 로그인한 유저의 성별을 수정합니다")
@@ -76,7 +79,7 @@ public class UserController {
             @Valid @RequestBody UpdateGenderRequest request
     ) {
         userService.updateGender(userDetails.userId(), request.gender());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "생년월일 수정", description = "현재 로그인한 유저의 생년월일을 수정합니다")
@@ -86,7 +89,7 @@ public class UserController {
             @Valid @RequestBody UpdateBirthRequest request
     ) {
         userService.updateBirth(userDetails.userId(), request.birth());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "거주지 수정", description = "현재 로그인한 유저의 거주지를 수정합니다")
@@ -96,7 +99,7 @@ public class UserController {
             @Valid @RequestBody UpdateRegionRequest request
     ) {
         userService.updateRegionCode(userDetails.userId(), request.regionCode());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "위치정보 동의 수정", description = "현재 로그인한 유저의 위치정보 동의 여부를 수정합니다")
@@ -106,7 +109,7 @@ public class UserController {
             @Valid @RequestBody UpdateLocationConsentRequest request
     ) {
         userService.updateLocationConsent(userDetails.userId(), request.locationConsent());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 
     @Operation(summary = "프로필 이미지 수정", description = "현재 로그인한 유저의 프로필 이미지를 수정합니다. null 전송 시 이미지가 삭제됩니다")
@@ -116,6 +119,6 @@ public class UserController {
             @RequestBody UpdateProfileImageRequest request
     ) {
         userService.updateProfileImg(userDetails.userId(), request.profileImg());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.noContent().build();
     }
 }

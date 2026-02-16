@@ -28,8 +28,8 @@ public record UserProfileResponse(
         @Schema(description = "위치정보 동의 여부", example = "true")
         Boolean locationConsent,
 
-        @Schema(description = "거주지 행정구역 코드", example = "11680")
-        Integer regionCode
+        @Schema(description = "거주지 행정구역 코드", example = "1168010100")
+        Long regionCode
 ) {
     public static UserProfileResponse from(User user) {
         return new UserProfileResponse(
