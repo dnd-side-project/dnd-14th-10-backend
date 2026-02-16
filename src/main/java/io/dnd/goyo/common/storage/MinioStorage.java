@@ -28,6 +28,9 @@ public class MinioStorage implements FileStorage {
     @Value("${minio.presigned-url-expiry-minutes}")
     private int expiryMinutes;
 
+    @Value("${minio.public-url-base}")
+    private String publicUrlBase;
+
     @PostConstruct
     public void init() {
         try {
@@ -51,6 +54,11 @@ public class MinioStorage implements FileStorage {
             log.error("MinIO 초기화 실패: {}", e.getMessage());
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "MinIO 초기화에 실패했습니다.");
         }
+    }
+
+    @Override
+    public String generatePublicUrl(String objectKey) {
+        return publicUrlBase + "/" + objectKey;
     }
 
     @Override

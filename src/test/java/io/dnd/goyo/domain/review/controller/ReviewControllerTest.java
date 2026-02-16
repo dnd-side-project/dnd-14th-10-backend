@@ -215,10 +215,24 @@ class ReviewControllerTest {
 
     @Test
     @WithMockUser
+    void 중복_태그_ID_포함_시_400_반환() throws Exception {
+        Map<String, Object> request = new HashMap<>(createValidCreateRequest());
+        request.put("tagIds", List.of(1, 1, 2));
+
+        mockMvc.perform(post("/api/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .with(csrf()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errors[0].field").value("tagIds"));
+    }
+
+    @Test
+    @WithMockUser
     void 이미지_7개_등록_시_400_반환() throws Exception {
         List<Map<String, Object>> images = new ArrayList<>();
         for (int i = 0; i < 7; i++) {
-            images.add(Map.of("imageUrl", "https://example.com/img" + i + ".jpg", "sequence", i, "isPrimary", i == 0));
+            images.add(Map.of("imageKey", "review/img" + i + ".jpg", "sequence", i, "isPrimary", i == 0));
         }
 
         Map<String, Object> request = new HashMap<>(createValidCreateRequest());

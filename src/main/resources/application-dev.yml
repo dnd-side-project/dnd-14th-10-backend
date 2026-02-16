@@ -33,6 +33,7 @@ minio:
   secret-key: ${MINIO_SECRET_KEY}
   bucket: ${MINIO_BUCKET_NAME}
   presigned-url-expiry-minutes: ${MINIO_PRESIGNED_URL_EXPIRY_MINUTES:10}
+  public-url-base: ${MINIO_PUBLIC_URL_BASE}
 
 management:
   endpoints:

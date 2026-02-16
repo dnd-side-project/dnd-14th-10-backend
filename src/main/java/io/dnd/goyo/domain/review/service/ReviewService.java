@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.review.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.entity.ReviewScores;
@@ -40,6 +41,7 @@ public class ReviewService {
     private final UserReader userReader;
     private final PlaceReader placeReader;
     private final ReviewTagService reviewTagService;
+    private final FileStorage fileStorage;
 
     @Transactional
     public Long createReview(Long userId, ReviewCreateRequest request) {
@@ -47,14 +49,14 @@ public class ReviewService {
         Place place = placeReader.getPlace(request.placeId());
 
         Review review = Review.create(
-                user, place, request.rating(), request.mood(),
+                user, place, request.rating().doubleValue(), request.mood(),
                 request.outletScore(), request.crowdStatus(), request.spaceSize(),
                 request.content(), request.visitedAt());
         reviewRepository.save(review);
 
         if (request.images() != null && !request.images().isEmpty()) {
             List<ReviewImage> images = request.images().stream()
-                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence(), img.isPrimary()))
+                    .map(img -> ReviewImage.of(review, img.imageKey(), img.sequence(), img.isPrimary()))
                     .toList();
             reviewImageRepository.saveAll(images);
         }
@@ -63,7 +65,7 @@ public class ReviewService {
 
         PlaceDetail placeDetail = getPlaceDetail(place.getId());
         placeDetail.addReviewScores(ReviewScores.from(
-                request.rating(), request.outletScore(),
+                request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
 
         return review.getId();
@@ -73,7 +75,7 @@ public class ReviewService {
         Review review = getActiveReviewWithUser(reviewId);
         List<ReviewTag> reviewTags = reviewTagRepository.findAllByReviewId(reviewId);
         List<ReviewImage> reviewImages = reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId);
-        return ReviewDetailResponse.of(review, reviewTags, reviewImages);
+        return ReviewDetailResponse.of(review, reviewTags, reviewImages, fileStorage);
     }
 
     public Page<ReviewDetailResponse> getReviewsByPlace(Long placeId, Pageable pageable) {
@@ -92,7 +94,8 @@ public class ReviewService {
         return reviewPage.map(review -> ReviewDetailResponse.of(
                 review,
                 tagsByReviewId.getOrDefault(review.getId(), List.of()),
-                imagesByReviewId.getOrDefault(review.getId(), List.of())
+                imagesByReviewId.getOrDefault(review.getId(), List.of()),
+                fileStorage
         ));
     }
 
@@ -112,7 +115,8 @@ public class ReviewService {
         return reviewPage.map(review -> ReviewDetailResponse.of(
                 review,
                 tagsByReviewId.getOrDefault(review.getId(), List.of()),
-                imagesByReviewId.getOrDefault(review.getId(), List.of())
+                imagesByReviewId.getOrDefault(review.getId(), List.of()),
+                fileStorage
         ));
     }
 
@@ -125,7 +129,7 @@ public class ReviewService {
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.update(
-                request.rating(),
+                request.rating().doubleValue(),
                 request.mood(),
                 request.outletScore(),
                 request.crowdStatus(),
@@ -137,7 +141,7 @@ public class ReviewService {
         reviewImageRepository.deleteAllByReviewId(reviewId);
         if (request.images() != null && !request.images().isEmpty()) {
             List<ReviewImage> images = request.images().stream()
-                    .map(img -> ReviewImage.of(review, img.imageUrl(), img.sequence(), img.isPrimary()))
+                    .map(img -> ReviewImage.of(review, img.imageKey(), img.sequence(), img.isPrimary()))
                     .toList();
             reviewImageRepository.saveAll(images);
         }
@@ -145,7 +149,7 @@ public class ReviewService {
         reviewTagService.replaceReviewTags(review, request.tagIds());
 
         placeDetail.addReviewScores(ReviewScores.from(
-                request.rating(), request.outletScore(),
+                request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
     }
 

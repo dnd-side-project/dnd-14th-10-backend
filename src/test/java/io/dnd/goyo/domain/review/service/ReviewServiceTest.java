@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.entity.ReviewScores;
@@ -29,6 +30,7 @@ import io.dnd.goyo.domain.review.repository.ReviewRepository;
 import io.dnd.goyo.domain.review.repository.ReviewTagRepository;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
@@ -70,6 +72,9 @@ class ReviewServiceTest {
     @Mock
     private ReviewTagService reviewTagService;
 
+    @Mock
+    private FileStorage fileStorage;
+
     private Review createReview(User user, Place place) {
         Review review = Review.create(user, place, 4.0, Mood.CALM,
                 OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM,
@@ -80,14 +85,14 @@ class ReviewServiceTest {
 
     private ReviewCreateRequest createReviewCreateRequest(Long placeId) {
         return new ReviewCreateRequest(
-                placeId, 4.0, List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
+                placeId, new BigDecimal("4.0"), List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
                 OutletScore.MANY, CrowdStatus.NORMAL, "좋은 카페입니다", null, null
         );
     }
 
     private ReviewUpdateRequest createReviewUpdateRequest() {
         return new ReviewUpdateRequest(
-                5.0, List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
+                new BigDecimal("5.0"), List.of(2L, 3L), Mood.SILENT, SpaceSize.LARGE,
                 OutletScore.FEW, CrowdStatus.RELAX, "수정된 내용", null, null
         );
     }
@@ -118,7 +123,7 @@ class ReviewServiceTest {
             verify(reviewRepository).save(any(Review.class));
             verify(reviewTagService).registerReviewTags(any(Review.class), eq(request.tagIds()));
             verify(placeDetail).addReviewScores(ReviewScores.from(
-                    request.rating(), request.outletScore(),
+                    request.rating().doubleValue(), request.outletScore(),
                     request.crowdStatus(), request.spaceSize(), request.mood()));
         }
 
@@ -278,7 +283,7 @@ class ReviewServiceTest {
             // then
             verify(placeDetail).removeReviewScores(new ReviewScores(4.0, OutletScore.MANY.getScore(),
                     CrowdStatus.NORMAL.getScore(), SpaceSize.MEDIUM.getScore(), Mood.CALM.getScore()));
-            verify(placeDetail).addReviewScores(ReviewScores.from(request.rating(),
+            verify(placeDetail).addReviewScores(ReviewScores.from(request.rating().doubleValue(),
                     request.outletScore(), request.crowdStatus(),
                     request.spaceSize(), request.mood()));
             verify(reviewTagService).replaceReviewTags(eq(review), eq(request.tagIds()));

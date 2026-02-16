@@ -31,7 +31,7 @@ public class ReviewImage extends BaseEntity {
     private Review review;
 
     @Column(columnDefinition = "TEXT", nullable = false)
-    private String imageUrl;
+    private String imageKey;
 
     @Column(nullable = false)
     private int sequence;
@@ -39,17 +39,17 @@ public class ReviewImage extends BaseEntity {
     @Column(nullable = false)
     private boolean isPrimary;
 
-    public static ReviewImage of(Review review, String imageUrl, int sequence, boolean isPrimary) {
-        return new ReviewImage(review, imageUrl, sequence, isPrimary);
+    public static ReviewImage of(Review review, String imageKey, int sequence, boolean isPrimary) {
+        return new ReviewImage(review, imageKey, sequence, isPrimary);
     }
 
-    private ReviewImage(Review review, String imageUrl, int sequence, boolean isPrimary) {
+    private ReviewImage(Review review, String imageKey, int sequence, boolean isPrimary) {
         validateReview(review);
-        validateImageUrl(imageUrl);
+        validateImageKey(imageKey);
         validateSequence(sequence);
 
         this.review = review;
-        this.imageUrl = imageUrl;
+        this.imageKey = imageKey;
         this.sequence = sequence;
         this.isPrimary = isPrimary;
     }
@@ -60,9 +60,9 @@ public class ReviewImage extends BaseEntity {
         }
     }
 
-    private static void validateImageUrl(String imageUrl) {
-        if (imageUrl == null || imageUrl.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 URL은 필수입니다.");
+    private static void validateImageKey(String imageKey) {
+        if (imageKey == null || imageKey.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "이미지 키는 필수입니다.");
         }
     }
 

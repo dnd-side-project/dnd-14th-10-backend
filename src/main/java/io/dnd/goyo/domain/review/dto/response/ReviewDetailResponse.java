@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.review.dto.response;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -28,13 +29,16 @@ public record ReviewDetailResponse(
         LocalDateTime createdAt
 ) {
 
-    public static ReviewDetailResponse of(Review review, List<ReviewTag> reviewTags, List<ReviewImage> reviewImages) {
+    public static ReviewDetailResponse of(
+            Review review, List<ReviewTag> reviewTags,
+            List<ReviewImage> reviewImages, FileStorage fileStorage
+    ) {
         List<ReviewTagResponse> tags = reviewTags.stream()
                 .map(ReviewTagResponse::from)
                 .toList();
 
         List<ReviewImageResponse> images = reviewImages.stream()
-                .map(ReviewImageResponse::from)
+                .map(img -> ReviewImageResponse.from(img, fileStorage))
                 .toList();
 
         return new ReviewDetailResponse(
