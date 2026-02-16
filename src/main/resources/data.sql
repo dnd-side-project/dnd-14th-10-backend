@@ -1,0 +1,20 @@
+INSERT INTO tags (type, code, name, created_at, updated_at) VALUES
+('REVIEW', 'CLEAN', '청결해요', NOW(), NOW()),
+('REVIEW', 'PARTITION', '칸막이가 있어요', NOW(), NOW()),
+('REVIEW', 'FOCUS', '집중하기 좋아요', NOW(), NOW()),
+('REVIEW', 'VALUE', '가성비가 좋아요', NOW(), NOW()),
+('REVIEW', 'KIND_OWNER', '사장님이 친절해요', NOW(), NOW()),
+('REVIEW', 'GROUP_WORK', '단체 작업하기 좋아요', NOW(), NOW()),
+('REVIEW', 'WIDE_SEAT_GAP', '좌석 간 간격이 넓어요', NOW(), NOW()),
+('REVIEW', 'WIDE_SPACE', '작업공간이 넓어요', NOW(), NOW()),
+('REVIEW', 'COZY', '아늑해요', NOW(), NOW()),
+('REVIEW', 'CLEAN_RESTROOM', '화장실이 깨끗해요', NOW(), NOW()),
+('REVIEW', 'MANY_SEATS', '자리가 많아요', NOW(), NOW()),
+('REVIEW', 'COMFORTABLE_SEAT', '좌석이 편해요', NOW(), NOW()),
+('REVIEW', 'WORTH_PRICE', '비싼 만큼 가치있어요', NOW(), NOW()),
+('REVIEW', 'LONG_STAY', '오래 머무르기 좋아요', NOW(), NOW()),
+('REVIEW', 'PRETTY_INTERIOR', '인테리어가 예뻐요', NOW(), NOW()),
+('REVIEW', 'GOOD_VIEW', '뷰가 좋아요', NOW(), NOW()),
+('REVIEW', 'ADULT_ONLY', '어른만의 공간이에요', NOW(), NOW()),
+('REVIEW', 'BRIGHT_LIGHT', '조명이 밝았어요', NOW(), NOW())
+ON CONFLICT (type, code) DO NOTHING;

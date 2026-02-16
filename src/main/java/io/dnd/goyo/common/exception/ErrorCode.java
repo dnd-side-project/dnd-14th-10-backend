@@ -25,7 +25,14 @@ public enum ErrorCode {
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다"),
-    USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "USER_002", "이미 탈퇴한 사용자입니다");
+    USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "USER_002", "이미 탈퇴한 사용자입니다"),
+
+    // Place
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_001", "장소를 찾을 수 없습니다"),
+
+    // Review
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_001", "리뷰를 찾을 수 없습니다"),
+    REVIEW_NOT_OWNER(HttpStatus.FORBIDDEN, "REVIEW_002", "리뷰 작성자만 수정/삭제할 수 있습니다");
 
     private final HttpStatus status;
     private final String code;

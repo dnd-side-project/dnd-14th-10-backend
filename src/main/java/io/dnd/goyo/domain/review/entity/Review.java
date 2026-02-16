@@ -5,6 +5,7 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
+import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.review.enums.ReviewStatus;
@@ -22,7 +23,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import lombok.AccessLevel;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -44,7 +44,10 @@ public class Review extends BaseEntity {
     @JoinColumn(name = "place_id", nullable = false)
     private Place place;
 
-    private Integer rating;
+    private Double rating;
+
+    @Enumerated(EnumType.STRING)
+    private Mood mood;
 
     @Enumerated(EnumType.STRING)
     private OutletScore outletScore;
@@ -64,11 +67,11 @@ public class Review extends BaseEntity {
 
     private LocalDateTime visitedAt;
 
-    @Builder
     private Review(
             User user,
             Place place,
-            Integer rating,
+            Double rating,
+            Mood mood,
             OutletScore outletScore,
             String content,
             CrowdStatus crowdStatus,
@@ -82,6 +85,7 @@ public class Review extends BaseEntity {
         this.user = user;
         this.place = place;
         this.rating = rating;
+        this.mood = mood;
         this.outletScore = outletScore;
         this.content = content;
         this.crowdStatus = crowdStatus;
@@ -90,8 +94,23 @@ public class Review extends BaseEntity {
         this.status = ReviewStatus.ACTIVE;
     }
 
-    private static final int MIN_RATING = 1;
-    private static final int MAX_RATING = 5;
+    public static Review create(
+            User user,
+            Place place,
+            Double rating,
+            Mood mood,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize,
+            String content,
+            LocalDateTime visitedAt
+    ) {
+        return new Review(user, place, rating, mood, outletScore, content,
+                crowdStatus, spaceSize, visitedAt);
+    }
+
+    private static final double MIN_RATING = 0.5;
+    private static final double MAX_RATING = 5.0;
 
     private static void validateUser(User user) {
         if (user == null) {
@@ -105,10 +124,17 @@ public class Review extends BaseEntity {
         }
     }
 
-    private static void validateRating(Integer rating) {
-        if (rating != null && (rating < MIN_RATING || rating > MAX_RATING)) {
+    private static void validateRating(Double rating) {
+        if (rating == null) {
+            return;
+        }
+        if (rating < MIN_RATING || rating > MAX_RATING) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("평점은 %d ~ %d 사이여야 합니다.", MIN_RATING, MAX_RATING));
+                    String.format("평점은 %.1f ~ %.1f 사이여야 합니다.", MIN_RATING, MAX_RATING));
+        }
+        double doubled = rating * 2;
+        if (doubled != Math.floor(doubled)) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "평점은 0.5 단위로 입력해야 합니다.");
         }
     }
 
@@ -118,5 +144,24 @@ public class Review extends BaseEntity {
 
     public void hide() {
         this.status = ReviewStatus.HIDDEN;
+    }
+
+    public void update(
+            Double rating,
+            Mood mood,
+            OutletScore outletScore,
+            CrowdStatus crowdStatus,
+            SpaceSize spaceSize,
+            String content,
+            LocalDateTime visitedAt
+    ) {
+        validateRating(rating);
+        this.rating = rating;
+        this.mood = mood;
+        this.outletScore = outletScore;
+        this.crowdStatus = crowdStatus;
+        this.spaceSize = spaceSize;
+        this.content = content;
+        this.visitedAt = visitedAt;
     }
 }

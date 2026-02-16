@@ -21,6 +21,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create
+    defer-datasource-initialization: true
     properties:
       hibernate:
         format_sql: true
@@ -54,6 +55,7 @@ minio:
   secret-key: minioadmin
   bucket: goyo-local
   presigned-url-expiry-minutes: 10
+  public-url-base: http://localhost:9000/goyo-local
 
 oauth:
   kakao:

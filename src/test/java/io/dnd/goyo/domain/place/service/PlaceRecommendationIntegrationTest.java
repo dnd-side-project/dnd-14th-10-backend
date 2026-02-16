@@ -527,12 +527,8 @@ class PlaceRecommendationIntegrationTest {
                 .build());
     }
 
-    private Review createReview(User user, Place place, int rating) {
-        Review review = Review.builder()
-                .user(user)
-                .place(place)
-                .rating(rating)
-                .build();
+    private Review createReview(User user, Place place, double rating) {
+        Review review = Review.create(user, place, rating, null, null, null, null, null, null);
         ReflectionTestUtils.setField(review, "status", ReviewStatus.ACTIVE);
         return reviewRepository.save(review);
     }

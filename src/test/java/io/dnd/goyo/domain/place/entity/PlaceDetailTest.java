@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 
 import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.domain.place.entity.ReviewScores;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -96,6 +97,85 @@ class PlaceDetailTest {
             assertThat(placeDetail.getTotalRating()).isEqualTo(0.0);
             assertThat(placeDetail.getReviewCount()).isEqualTo(0);
             assertThat(placeDetail.getWishCount()).isEqualTo(0);
+        }
+    }
+
+    @Nested
+    @DisplayName("리뷰 점수 관리 시")
+    class ReviewScoreManagement {
+
+        @Test
+        void 리뷰_점수_추가_성공() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+
+            // then
+            assertThat(placeDetail.getTotalRating()).isEqualTo(4.0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(130);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(110);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(120);
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(140);
+            assertThat(placeDetail.getReviewCount()).isEqualTo(1);
+        }
+
+        @Test
+        void 리뷰_점수_제거_성공() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+
+            // when
+            placeDetail.removeReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+
+            // then
+            assertThat(placeDetail.getTotalRating()).isEqualTo(0.0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(50);
+            assertThat(placeDetail.getReviewCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 리뷰가_없을_때_점수_제거_시_무시된다() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.removeReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+
+            // then
+            assertThat(placeDetail.getReviewCount()).isEqualTo(0);
+            assertThat(placeDetail.getTotalRating()).isEqualTo(0.0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(50);
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(50);
+        }
+
+        @Test
+        void 리뷰_점수_연속_추가_성공() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.addReviewScores(new ReviewScores(4.0, 80, 60, 70, 90));
+            placeDetail.addReviewScores(new ReviewScores(3.0, 40, 50, 60, 75));
+
+            // then
+            assertThat(placeDetail.getTotalRating()).isEqualTo(7.0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(170);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(160);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(180);
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(215);
+            assertThat(placeDetail.getReviewCount()).isEqualTo(2);
         }
     }
 }

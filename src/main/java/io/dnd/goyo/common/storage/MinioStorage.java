@@ -6,9 +6,14 @@ import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectsArgs;
+import io.minio.Result;
 import io.minio.errors.ErrorResponseException;
 import io.minio.http.Method;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
 import jakarta.annotation.PostConstruct;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +32,9 @@ public class MinioStorage implements FileStorage {
 
     @Value("${minio.presigned-url-expiry-minutes}")
     private int expiryMinutes;
+
+    @Value("${minio.public-url-base}")
+    private String publicUrlBase;
 
     @PostConstruct
     public void init() {
@@ -50,6 +58,38 @@ public class MinioStorage implements FileStorage {
         } catch (Exception e) {
             log.error("MinIO 초기화 실패: {}", e.getMessage());
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "MinIO 초기화에 실패했습니다.");
+        }
+    }
+
+    @Override
+    public String generatePublicUrl(String objectKey) {
+        return publicUrlBase + "/" + objectKey;
+    }
+
+    @Override
+    public void deleteObjects(List<String> objectKeys) {
+        if (objectKeys == null || objectKeys.isEmpty()) {
+            return;
+        }
+
+        List<DeleteObject> deleteObjects = objectKeys.stream()
+                .map(DeleteObject::new)
+                .toList();
+
+        Iterable<Result<DeleteError>> results = minioClient.removeObjects(
+                RemoveObjectsArgs.builder()
+                        .bucket(bucket)
+                        .objects(deleteObjects)
+                        .build()
+        );
+
+        for (Result<DeleteError> result : results) {
+            try {
+                DeleteError error = result.get();
+                log.warn("MinIO 객체 삭제 실패 - key: {}, message: {}", error.objectName(), error.message());
+            } catch (Exception e) {
+                log.warn("MinIO 객체 삭제 결과 확인 중 오류: {}", e.getMessage());
+            }
         }
     }
 

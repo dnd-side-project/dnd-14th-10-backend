@@ -117,4 +117,25 @@ public class PlaceDetail extends BaseEntity {
         int count = this.reviewCount + 1;
         return (double) totalScore / count;
     }
+
+    public void addReviewScores(ReviewScores scores) {
+        this.totalRating += scores.rating();
+        this.totalOutletScore += scores.outletScore();
+        this.totalCrowdScore += scores.crowdScore();
+        this.totalSpaceSizeScore += scores.spaceSizeScore();
+        this.totalQuietScore += scores.quietScore();
+        this.reviewCount++;
+    }
+
+    public void removeReviewScores(ReviewScores scores) {
+        if (this.reviewCount <= 0) {
+            return;
+        }
+        this.totalRating -= scores.rating();
+        this.totalOutletScore -= scores.outletScore();
+        this.totalCrowdScore -= scores.crowdScore();
+        this.totalSpaceSizeScore -= scores.spaceSizeScore();
+        this.totalQuietScore -= scores.quietScore();
+        this.reviewCount--;
+    }
 }
