@@ -37,6 +37,8 @@ import io.dnd.goyo.domain.user.service.UserReader;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -48,6 +50,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @ExtendWith(MockitoExtension.class)
 class ReviewServiceTest {
@@ -265,6 +269,22 @@ class ReviewServiceTest {
     @DisplayName("리뷰 수정")
     class UpdateReview {
 
+        @BeforeEach
+        void initSynchronization() {
+            TransactionSynchronizationManager.initSynchronization();
+        }
+
+        @AfterEach
+        void clearSynchronization() {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+
+        private void simulateCommit() {
+            for (TransactionSynchronization sync : TransactionSynchronizationManager.getSynchronizations()) {
+                sync.afterCommit();
+            }
+        }
+
         @Test
         void 리뷰_수정_성공() {
             // given
@@ -345,7 +365,11 @@ class ReviewServiceTest {
             // when
             reviewService.updateReview(userId, reviewId, request);
 
-            // then — old-key-2는 새 요청에 없으므로 삭제되어야 함
+            // then — 커밋 전에는 deleteObjects 호출되지 않음
+            verify(fileStorage, never()).deleteObjects(any());
+
+            // 커밋 시뮬레이션 후 old-key-2 삭제 확인
+            simulateCommit();
             verify(fileStorage).deleteObjects(List.of("old-key-2"));
         }
 
@@ -378,9 +402,44 @@ class ReviewServiceTest {
             // when — 예외 없이 정상 완료되어야 함
             reviewService.updateReview(userId, reviewId, request);
 
-            // then
+            // then — 커밋 시뮬레이션 후에도 예외가 전파되지 않아야 함
+            simulateCommit();
             assertThat(review.getRating()).isEqualTo(5.0);
             verify(fileStorage).deleteObjects(List.of("old-key-1"));
+        }
+
+        @Test
+        void 트랜잭션_롤백_시_MinIO_삭제_호출되지_않음() {
+            // given
+            Long userId = 1L;
+            Long reviewId = 1L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(user.getId()).willReturn(userId);
+            given(place.getId()).willReturn(10L);
+            Review review = createReview(user, place);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewImage oldImage = ReviewImage.of(review, "old-key-1", 0, true);
+
+            ReviewUpdateRequest request = new ReviewUpdateRequest(
+                    new BigDecimal("5.0"), List.of(999L), Mood.SILENT, SpaceSize.LARGE,
+                    OutletScore.FEW, CrowdStatus.RELAX, "수정된 내용", null, null
+            );
+
+            given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
+                    .willReturn(List.of(oldImage));
+            willThrow(new BusinessException(ErrorCode.INVALID_INPUT, "존재하지 않는 태그가 포함되어 있습니다."))
+                    .given(reviewTagService).replaceReviewTags(any(), any());
+
+            // when — replaceReviewTags에서 예외 발생 (트랜잭션 롤백 시나리오)
+            assertThatThrownBy(() -> reviewService.updateReview(userId, reviewId, request))
+                    .isInstanceOf(BusinessException.class);
+
+            // then — 커밋이 일어나지 않으므로 afterCommit 콜백은 실행되지 않고, deleteObjects도 호출되지 않음
+            verify(fileStorage, never()).deleteObjects(any());
         }
     }
 

@@ -30,6 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Slf4j
 @Service
@@ -163,11 +165,16 @@ public class ReviewService {
         }
 
         if (!orphanedKeys.isEmpty()) {
-            try {
-                fileStorage.deleteObjects(orphanedKeys);
-            } catch (Exception e) {
-                log.warn("리뷰 이미지 MinIO 삭제 실패 (reviewId: {}): {}", reviewId, e.getMessage());
-            }
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        fileStorage.deleteObjects(orphanedKeys);
+                    } catch (Exception e) {
+                        log.warn("리뷰 이미지 MinIO 삭제 실패 (reviewId: {}): {}", reviewId, e.getMessage());
+                    }
+                }
+            });
         }
 
         reviewTagService.replaceReviewTags(review, request.tagIds());
