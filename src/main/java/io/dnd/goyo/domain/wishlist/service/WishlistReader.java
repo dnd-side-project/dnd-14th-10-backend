@@ -3,6 +3,8 @@ package io.dnd.goyo.domain.wishlist.service;
 import io.dnd.goyo.common.util.TimeDecayUtils;
 import io.dnd.goyo.domain.user.enums.AgeGroup;
 import io.dnd.goyo.domain.user.enums.Gender;
+import io.dnd.goyo.domain.wishlist.dto.TagPopularityProjection;
+import io.dnd.goyo.domain.wishlist.dto.TagWithCreatedAtDto;
 import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -31,34 +33,30 @@ public class WishlistReader {
 
     public Map<Long, Double> getTagWeights(Long userId, LocalDateTime since, LocalDateTime now) {
         Map<Long, Double> tagWeights = new HashMap<>();
-        for (Object[] row : wishlistRepository.findTagsWithCreatedAt(userId, since)) {
-            Long tagId = (Long) row[0];
-            LocalDateTime createdAt = (LocalDateTime) row[1];
-            double weight = TimeDecayUtils.calculateWeight(createdAt, now);
-            tagWeights.merge(tagId, weight, Double::sum);
+        for (TagWithCreatedAtDto dto : wishlistRepository.findTagsWithCreatedAt(userId, since)) {
+            double weight = TimeDecayUtils.calculateWeight(dto.createdAt(), now);
+            tagWeights.merge(dto.tagId(), weight, Double::sum);
         }
         return tagWeights;
     }
 
     public Map<Long, Double> getGroupTagPopularity(Gender gender, AgeGroup ageGroup, LocalDateTime since) {
-        List<Object[]> rows = wishlistRepository.findGroupTagPopularity(
+        List<TagPopularityProjection> results = wishlistRepository.findGroupTagPopularity(
                 gender.name(), ageGroup.name(), since, GROUP_TAG_LIMIT);
-        
-        if (rows.isEmpty()) {
+
+        if (results.isEmpty()) {
             return Map.of();
         }
 
-        double maxPopularity = rows.stream()
-                .mapToDouble(row -> ((Number) row[1]).doubleValue())
+        double maxPopularity = results.stream()
+                .mapToDouble(projection -> projection.getPopularity().doubleValue())
                 .max()
                 .orElse(1.0);
 
-        Map<Long, Double> result = new HashMap<>();
-        for (Object[] row : rows) {
-            Long tagId = ((Number) row[0]).longValue();
-            double count = ((Number) row[1]).doubleValue();
-            result.put(tagId, count / maxPopularity);
+        Map<Long, Double> normalized = new HashMap<>();
+        for (TagPopularityProjection projection : results) {
+            normalized.put(projection.getTagId(), projection.getPopularity().doubleValue() / maxPopularity);
         }
-        return result;
+        return normalized;
     }
 }

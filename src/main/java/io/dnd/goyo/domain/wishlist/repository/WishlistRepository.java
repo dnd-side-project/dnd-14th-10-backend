@@ -1,5 +1,7 @@
 package io.dnd.goyo.domain.wishlist.repository;
 
+import io.dnd.goyo.domain.wishlist.dto.TagPopularityProjection;
+import io.dnd.goyo.domain.wishlist.dto.TagWithCreatedAtDto;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,14 +19,14 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     List<Long> findPlaceIdsByUserId(@Param("userId") Long userId,
             @Param("since") LocalDateTime since);
 
-    @Query("SELECT pt.tag.id, w.createdAt FROM Wishlist w "
-            + "JOIN PlaceTag pt ON pt.place.id = w.place.id "
+    @Query("SELECT new io.dnd.goyo.domain.wishlist.dto.TagWithCreatedAtDto(pt.tag.id, w.createdAt) "
+            + "FROM Wishlist w JOIN PlaceTag pt ON pt.place.id = w.place.id "
             + "WHERE w.user.id = :userId AND w.createdAt >= :since")
-    List<Object[]> findTagsWithCreatedAt(@Param("userId") Long userId,
+    List<TagWithCreatedAtDto> findTagsWithCreatedAt(@Param("userId") Long userId,
             @Param("since") LocalDateTime since);
 
     @Query(value = """
-            SELECT pt.tag_id, COUNT(DISTINCT w.user_id)
+            SELECT pt.tag_id AS tagId, COUNT(DISTINCT w.user_id) AS popularity
             FROM wishlists w
             JOIN place_tags pt ON pt.place_id = w.place_id
             JOIN users u ON u.id = w.user_id
@@ -34,7 +36,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
             ORDER BY COUNT(DISTINCT w.user_id) DESC
             LIMIT :tagLimit
             """, nativeQuery = true)
-    List<Object[]> findGroupTagPopularity(
+    List<TagPopularityProjection> findGroupTagPopularity(
             @Param("gender") String gender,
             @Param("ageGroup") String ageGroup,
             @Param("since") LocalDateTime since,

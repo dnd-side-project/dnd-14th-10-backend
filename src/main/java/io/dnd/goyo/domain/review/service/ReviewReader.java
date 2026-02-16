@@ -1,6 +1,7 @@
 package io.dnd.goyo.domain.review.service;
 
 import io.dnd.goyo.common.util.TimeDecayUtils;
+import io.dnd.goyo.domain.review.dto.TagWithCreatedAtDto;
 import io.dnd.goyo.domain.review.repository.ReviewRepository;
 import io.dnd.goyo.domain.review.repository.ReviewTagRepository;
 import java.time.LocalDateTime;
@@ -25,11 +26,9 @@ public class ReviewReader {
 
     public Map<Long, Double> getReviewTagWeights(Long userId, LocalDateTime since, LocalDateTime now) {
         Map<Long, Double> tagWeights = new HashMap<>();
-        for (Object[] row : reviewTagRepository.findTagsWithCreatedAt(userId, since)) {
-            Long tagId = (Long) row[0];
-            LocalDateTime createdAt = (LocalDateTime) row[1];
-            double weight = TimeDecayUtils.calculateWeight(createdAt, now);
-            tagWeights.merge(tagId, weight, Double::sum);
+        for (TagWithCreatedAtDto dto : reviewTagRepository.findTagsWithCreatedAt(userId, since)) {
+            double weight = TimeDecayUtils.calculateWeight(dto.createdAt(), now);
+            tagWeights.merge(dto.tagId(), weight, Double::sum);
         }
         return tagWeights;
     }

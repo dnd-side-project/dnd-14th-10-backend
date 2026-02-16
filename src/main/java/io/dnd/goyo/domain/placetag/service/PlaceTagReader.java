@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.placetag.service;
 
+import io.dnd.goyo.domain.placetag.dto.PlaceTagMappingDto;
 import io.dnd.goyo.domain.placetag.repository.PlaceTagRepository;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,13 +41,11 @@ public class PlaceTagReader {
 
         Map<Long, List<Long>> result = new HashMap<>();
 
-        for (Object[] row : placeTagRepository.findPlaceTagMappings(placeIds)) {
-            Long placeId = (Long) row[0];
-            Long tagId = (Long) row[1];
-            if (!result.containsKey(placeId)) {
-                result.put(placeId, new ArrayList<>());
+        for (PlaceTagMappingDto mapping : placeTagRepository.findPlaceTagMappings(placeIds)) {
+            if (!result.containsKey(mapping.placeId())) {
+                result.put(mapping.placeId(), new ArrayList<>());
             }
-            result.get(placeId).add(tagId);
+            result.get(mapping.placeId()).add(mapping.tagId());
         }
         return result;
     }

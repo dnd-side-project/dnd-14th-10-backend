@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.placetag.repository;
 
+import io.dnd.goyo.domain.placetag.dto.PlaceTagMappingDto;
 import io.dnd.goyo.domain.placetag.entity.PlaceTag;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,6 +29,7 @@ public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
             @Param("candidateLimit") int candidateLimit
     );
 
-    @Query("SELECT pt.place.id, pt.tag.id FROM PlaceTag pt WHERE pt.place.id IN :placeIds")
-    List<Object[]> findPlaceTagMappings(@Param("placeIds") List<Long> placeIds);
+    @Query("SELECT new io.dnd.goyo.domain.placetag.dto.PlaceTagMappingDto(pt.place.id, pt.tag.id) " +
+            "FROM PlaceTag pt WHERE pt.place.id IN :placeIds")
+    List<PlaceTagMappingDto> findPlaceTagMappings(@Param("placeIds") List<Long> placeIds);
 }
