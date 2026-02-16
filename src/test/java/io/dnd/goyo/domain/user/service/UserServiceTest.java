@@ -77,7 +77,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.getMyProfile(userId))
-                    .isInstanceOf(BusinessException.class);
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 
@@ -139,7 +140,8 @@ class UserServiceTest {
 
             // when & then
             assertThatThrownBy(() -> userService.updateNickname(userId, "중복닉네임"))
-                    .isInstanceOf(BusinessException.class);
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_NICKNAME);
         }
 
         @Test
