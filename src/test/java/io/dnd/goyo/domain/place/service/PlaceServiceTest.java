@@ -341,19 +341,7 @@ class PlaceServiceTest {
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
         }
 
-        @Test
-        void 이미_삭제된_공간_삭제_시_예외_발생() {
-            // given
-            Long placeId = 1L;
-            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.empty());
-
-            // when & then
-            assertThatThrownBy(() -> placeService.deletePlace(1L, placeId))
-                    .isInstanceOf(BusinessException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
-        }
-
-        @Test
+       @Test
         void 다른_사용자가_삭제_시도_시_예외_발생() {
             // given
             Long ownerId = 1L;
