@@ -35,6 +35,7 @@ class UserStatsTest {
             assertThat(userStats.getReviewCount()).isEqualTo(0);
             assertThat(userStats.getPlaceCount()).isEqualTo(0);
             assertThat(userStats.getBadgeCount()).isEqualTo(0);
+            assertThat(userStats.getImageCount()).isEqualTo(0);
         }
 
         @Test
@@ -92,6 +93,105 @@ class UserStatsTest {
 
             // then
             assertThat(userStats.getBadgeCount()).isEqualTo(1);
+        }
+
+        @Test
+        void 이미지_카운트_증가() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+
+            // when
+            userStats.incrementImageCount();
+
+            // then
+            assertThat(userStats.getImageCount()).isEqualTo(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("카운트 감소 시")
+    class DecrementCount {
+
+        @Test
+        void 리뷰_카운트_감소() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+            userStats.incrementReviewCount();
+
+            // when
+            userStats.decrementReviewCount();
+
+            // then
+            assertThat(userStats.getReviewCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 장소_카운트_감소() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+            userStats.incrementPlaceCount();
+
+            // when
+            userStats.decrementPlaceCount();
+
+            // then
+            assertThat(userStats.getPlaceCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 이미지_카운트_감소() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+            userStats.incrementImageCount();
+
+            // when
+            userStats.decrementImageCount();
+
+            // then
+            assertThat(userStats.getImageCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 리뷰_카운트_0에서_감소해도_0_유지() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+
+            // when
+            userStats.decrementReviewCount();
+
+            // then
+            assertThat(userStats.getReviewCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 장소_카운트_0에서_감소해도_0_유지() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+
+            // when
+            userStats.decrementPlaceCount();
+
+            // then
+            assertThat(userStats.getPlaceCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 이미지_카운트_0에서_감소해도_0_유지() {
+            // given
+            User user = mock(User.class);
+            UserStats userStats = UserStats.of(user);
+
+            // when
+            userStats.decrementImageCount();
+
+            // then
+            assertThat(userStats.getImageCount()).isEqualTo(0);
         }
     }
 }

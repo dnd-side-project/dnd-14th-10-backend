@@ -18,3 +18,15 @@ INSERT INTO tags (type, code, name, created_at, updated_at) VALUES
 ('REVIEW', 'ADULT_ONLY', '어른만의 공간이에요', NOW(), NOW()),
 ('REVIEW', 'BRIGHT_LIGHT', '조명이 밝았어요', NOW(), NOW())
 ON CONFLICT (type, code) DO NOTHING;
+
+INSERT INTO badges (code, name, description, created_at, updated_at) VALUES
+('REVIEW_1', '첫 리뷰', '첫 번째 리뷰를 작성했습니다', NOW(), NOW()),
+('REVIEW_25', '리뷰 25개', '리뷰를 25개 작성했습니다', NOW(), NOW()),
+('REVIEW_80', '리뷰 80개', '리뷰를 80개 작성했습니다', NOW(), NOW()),
+('PLACE_1', '첫 장소', '첫 번째 장소를 등록했습니다', NOW(), NOW()),
+('PLACE_7', '장소 7개', '장소를 7개 등록했습니다', NOW(), NOW()),
+('PLACE_20', '장소 20개', '장소를 20개 등록했습니다', NOW(), NOW()),
+('IMAGE_5', '이미지 5개', '이미지가 포함된 활동을 5회 했습니다', NOW(), NOW()),
+('IMAGE_30', '이미지 30개', '이미지가 포함된 활동을 30회 했습니다', NOW(), NOW()),
+('IMAGE_80', '이미지 80개', '이미지가 포함된 활동을 80회 했습니다', NOW(), NOW())
+ON CONFLICT (code) DO NOTHING;

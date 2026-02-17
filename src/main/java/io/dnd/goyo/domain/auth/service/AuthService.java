@@ -10,10 +10,12 @@ import io.dnd.goyo.domain.auth.dto.response.UserInfoResponse;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthProvider;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
 import io.dnd.goyo.domain.user.entity.User;
+import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
 import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import io.dnd.goyo.security.jwt.JwtTokenProvider.SignupTokenInfo;
 import java.util.List;
@@ -30,16 +32,19 @@ public class AuthService {
 
     private final Map<Provider, OAuthProvider> oauthProviders;
     private final UserRepository userRepository;
+    private final UserStatsRepository userStatsRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
     public AuthService(
             List<OAuthProvider> oauthProviderList,
             UserRepository userRepository,
+            UserStatsRepository userStatsRepository,
             JwtTokenProvider jwtTokenProvider
     ) {
         this.oauthProviders = oauthProviderList.stream()
                 .collect(Collectors.toMap(OAuthProvider::getProvider, Function.identity()));
         this.userRepository = userRepository;
+        this.userStatsRepository = userStatsRepository;
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
@@ -83,6 +88,7 @@ public class AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
+        userStatsRepository.save(UserStats.of(savedUser));
 
         return createLoginResponse(savedUser);
     }

@@ -49,6 +49,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -82,6 +83,9 @@ class ReviewServiceTest {
 
     @Mock
     private FileStorage fileStorage;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     private Review createReview(User user, Place place) {
         Review review = Review.create(user, place, 4.0, Mood.CALM,
@@ -460,6 +464,7 @@ class ReviewServiceTest {
             PlaceDetail placeDetail = mock(PlaceDetail.class);
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
+            given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId)).willReturn(List.of());
             given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
 
             // when

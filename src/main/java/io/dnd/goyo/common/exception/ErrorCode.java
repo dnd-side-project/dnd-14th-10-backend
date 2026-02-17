@@ -32,7 +32,10 @@ public enum ErrorCode {
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_001", "리뷰를 찾을 수 없습니다"),
-    REVIEW_NOT_OWNER(HttpStatus.FORBIDDEN, "REVIEW_002", "리뷰 작성자만 수정/삭제할 수 있습니다");
+    REVIEW_NOT_OWNER(HttpStatus.FORBIDDEN, "REVIEW_002", "리뷰 작성자만 수정/삭제할 수 있습니다"),
+
+    // Badge
+    BADGE_NOT_FOUND(HttpStatus.NOT_FOUND, "BADGE_001", "뱃지를 찾을 수 없습니다");
 
     private final HttpStatus status;
     private final String code;

@@ -20,12 +20,15 @@ import io.dnd.goyo.domain.review.repository.ReviewRepository;
 import io.dnd.goyo.domain.review.repository.ReviewTagRepository;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
+import io.dnd.goyo.domain.badge.enums.ActivityType;
+import io.dnd.goyo.domain.badge.event.ActivityEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,6 +50,7 @@ public class ReviewService {
     private final PlaceReader placeReader;
     private final ReviewTagService reviewTagService;
     private final FileStorage fileStorage;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long createReview(Long userId, ReviewCreateRequest request) {
@@ -72,6 +76,9 @@ public class ReviewService {
         placeDetail.addReviewScores(ReviewScores.from(
                 request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
+
+        boolean hasImages = request.images() != null && !request.images().isEmpty();
+        eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.REVIEW, 1, hasImages ? 1 : 0));
 
         return review.getId();
     }
@@ -182,6 +189,15 @@ public class ReviewService {
         placeDetail.addReviewScores(ReviewScores.from(
                 request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
+
+        boolean hadImages = !existingImages.isEmpty();
+        boolean hasImages = request.images() != null && !request.images().isEmpty();
+        int imageDelta = 0;
+        if (!hadImages && hasImages) imageDelta = 1;
+        if (hadImages && !hasImages) imageDelta = -1;
+        if (imageDelta != 0) {
+            eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.IMAGE, 0, imageDelta));
+        }
     }
 
     @Transactional
@@ -189,10 +205,14 @@ public class ReviewService {
         Review review = getActiveReview(reviewId);
         validateOwner(userId, review);
 
+        boolean hadImages = !reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId).isEmpty();
+
         PlaceDetail placeDetail = getPlaceDetail(review.getPlace().getId());
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.delete();
+
+        eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.REVIEW, -1, hadImages ? -1 : 0));
     }
 
     private Review getActiveReview(Long reviewId) {

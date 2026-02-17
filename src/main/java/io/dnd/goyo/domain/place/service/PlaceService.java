@@ -6,10 +6,13 @@ import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
+import io.dnd.goyo.domain.badge.enums.ActivityType;
+import io.dnd.goyo.domain.badge.event.ActivityEvent;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ public class PlaceService {
     private final PlaceTagService placeTagService;
     private final UserReader userReader;
     private final GeometryUtils geometryUtils;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
     public Long registerPlace(Long userId, PlaceRegisterRequest request) {
@@ -36,6 +40,8 @@ public class PlaceService {
         PlaceDetail placeDetail = request.toPlaceDetailEntity(place);
         placeDetailService.registerPlaceDetail(placeDetail);
         placeTagService.registerPlaceTags(place, request.tagIds());
+
+        eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.PLACE, 1, 1));
 
         return place.getId();
     }
