@@ -6,6 +6,10 @@ import static org.mockito.Mockito.mock;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.domain.place.entity.ReviewScores;
+import io.dnd.goyo.domain.place.enums.CrowdStatus;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.OutletScore;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -176,6 +180,59 @@ class PlaceDetailTest {
             assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(180);
             assertThat(placeDetail.getTotalQuietScore()).isEqualTo(215);
             assertThat(placeDetail.getReviewCount()).isEqualTo(2);
+        }
+    }
+
+    @Nested
+    @DisplayName("장소 점수 수정 시")
+    class UpdateScore {
+
+        @Test
+        void 분위기만_변경하면_차분함_지수만_바뀐다() {
+            // given: CALM(75)으로 초기화
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 100, 0, 100, 75);
+
+            // when
+            placeDetail.updateScore(Mood.SILENT, null, null, null);
+
+            // then: mood만 SILENT(100)으로 변경
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(100);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(100);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(0);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(100);
+        }
+
+        @Test
+        void null_전달_시_점수_변경_없음() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 100, 0, 100, 75);
+
+            // when
+            placeDetail.updateScore(null, null, null, null);
+
+            // then
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(75);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(100);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(0);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(100);
+        }
+
+        @Test
+        void 모든_필드_동시_변경() {
+            // given: MANY(100), RELAX(0), LARGE(100), CALM(75)으로 초기화
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 100, 0, 100, 75);
+
+            // when: FEW(0), FULL(100), SMALL(0), SILENT(100)으로 변경
+            placeDetail.updateScore(Mood.SILENT, SpaceSize.SMALL, OutletScore.FEW, CrowdStatus.FULL);
+
+            // then
+            assertThat(placeDetail.getTotalQuietScore()).isEqualTo(100);
+            assertThat(placeDetail.getTotalSpaceSizeScore()).isEqualTo(0);
+            assertThat(placeDetail.getTotalOutletScore()).isEqualTo(0);
+            assertThat(placeDetail.getTotalCrowdScore()).isEqualTo(100);
         }
     }
 }

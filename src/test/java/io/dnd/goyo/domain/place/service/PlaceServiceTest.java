@@ -15,6 +15,7 @@ import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceImageRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
@@ -28,7 +29,9 @@ import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
+import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
@@ -69,7 +72,13 @@ class PlaceServiceTest {
     private GeometryUtils geometryUtils;
 
     @Mock
+    private PlaceImageService placeImageService;
+
+    @Mock
     private FileStorage fileStorage;
+
+    @Mock
+    private WishlistService wishlistService;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -215,6 +224,84 @@ class PlaceServiceTest {
             given(place.getLocation()).willReturn(location);
 
             return place;
+        }
+    }
+
+    @Nested
+    @DisplayName("장소 수정")
+    class UpdatePlace {
+
+        @Test
+        void 장소_수정_성공() {
+            // given
+            Long userId = 1L;
+            Long placeId = 1L;
+            PlaceUpdateRequest request = createUpdateRequest();
+
+            User user = mock(User.class);
+            given(user.getId()).willReturn(userId);
+
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            Place place = mock(Place.class);
+            given(place.getUser()).willReturn(user);
+            given(place.getPlaceDetail()).willReturn(placeDetail);
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
+
+            // when
+            placeService.updatePlace(userId, placeId, request);
+
+            // then
+            verify(place).update(request.name(), request.floorInfo(), request.openTime(), request.closeTime(), request.restroomInfo());
+            verify(placeDetailService).updateScore(placeDetail, request.mood(), request.spaceSize(), request.outletScore(), request.crowdStatus());
+            verify(placeTagService).replacePlaceTags(place, request.tagIds());
+            verify(placeImageService).replaceImages(place, placeId, request.images());
+        }
+
+        @Test
+        void 존재하지_않는_장소_수정_시_예외_발생() {
+            // given
+            given(placeRepository.findByIdWithDetails(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(1L, 999L, createUpdateRequest()))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
+        }
+
+        @Test
+        void 다른_사용자가_수정_시도_시_예외_발생() {
+            // given
+            Long ownerId = 1L;
+            Long otherUserId = 2L;
+            Long placeId = 1L;
+
+            User owner = mock(User.class);
+            given(owner.getId()).willReturn(ownerId);
+
+            Place place = mock(Place.class);
+            given(place.getUser()).willReturn(owner);
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.updatePlace(otherUserId, placeId, createUpdateRequest()))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+        }
+
+        private PlaceUpdateRequest createUpdateRequest() {
+            return new PlaceUpdateRequest(
+                    "수정된 카페",
+                    2,
+                    LocalTime.of(10, 0),
+                    LocalTime.of(22, 0),
+                    "1층",
+                    Mood.CALM,
+                    SpaceSize.LARGE,
+                    OutletScore.MANY,
+                    CrowdStatus.RELAX,
+                    List.of(1L, 2L),
+                    List.of(new PlaceImageRequest("image.jpg", 0, true))
+            );
         }
     }
 
