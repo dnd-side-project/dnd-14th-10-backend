@@ -12,13 +12,13 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +
             "LEFT JOIN FETCH p.images " +
-            "WHERE p.id IN :ids")
+            "WHERE p.id IN :ids AND p.status = 'ACTIVE'")
     List<Place> findAllByIdWithDetails(@Param("ids") List<Long> ids);
 
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +
             "LEFT JOIN FETCH p.images " +
-            "WHERE p.id = :id")
+            "WHERE p.id = :id AND p.status = 'ACTIVE'")
     Optional<Place> findByIdWithDetails(@Param("id") Long id);
 
     @Query(value = """

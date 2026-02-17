@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +59,16 @@ public class PlaceController {
             @Valid @RequestBody PlaceUpdateRequest request
     ) {
         placeService.updatePlace(userDetails.userId(), placeId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "장소 삭제", description = "등록한 장소를 삭제합니다.")
+    @DeleteMapping("/{placeId}")
+    public ResponseEntity<Void> deletePlace(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long placeId
+    ) {
+        placeService.deletePlace(userDetails.userId(), placeId);
         return ResponseEntity.noContent().build();
     }
 }

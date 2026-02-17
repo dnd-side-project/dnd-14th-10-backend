@@ -268,6 +268,10 @@ public class Place extends BaseEntity {
         }
     }
 
+    public void delete() {
+        this.status = PlaceStatus.DELETED;
+    }
+
     public void replaceImages(List<PlaceImage> newImages) {
         validateImagesNotEmpty(newImages);
         validateRepresentativeImage(newImages);

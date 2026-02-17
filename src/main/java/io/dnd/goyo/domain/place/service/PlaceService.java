@@ -9,11 +9,13 @@ import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
+import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class PlaceService {
     private final PlaceImageService placeImageService;
     private final UserReader userReader;
     private final WishlistReader wishlistReader;
+    private final WishlistService wishlistService;
     private final GeometryUtils geometryUtils;
     private final FileStorage fileStorage;
 
@@ -71,6 +74,20 @@ public class PlaceService {
         placeDetailService.updateScore(place.getPlaceDetail(), request.mood(), request.spaceSize(), request.outletScore(), request.crowdStatus());
         placeTagService.replacePlaceTags(place, request.tagIds());
         placeImageService.replaceImages(place, placeId, request.images());
+    }
+
+    @Transactional
+    public void deletePlace(Long userId, Long placeId) {
+        Place place = placeRepository.findById(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+
+        if (place.getStatus() == PlaceStatus.DELETED) {
+            throw new BusinessException(ErrorCode.PLACE_NOT_FOUND);
+        }
+
+        validateOwner(userId, place);
+        place.delete();
+        wishlistService.deleteByPlaceId(placeId);
     }
 
     private void validateOwner(Long userId, Place place) {
