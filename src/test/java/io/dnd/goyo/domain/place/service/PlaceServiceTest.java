@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -10,11 +11,14 @@ import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceImageRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
+import io.dnd.goyo.domain.place.entity.PlaceImage;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -24,8 +28,12 @@ import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
+import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -55,9 +63,160 @@ class PlaceServiceTest {
     private UserReader userReader;
 
     @Mock
+    private WishlistReader wishlistReader;
+
+    @Mock
     private GeometryUtils geometryUtils;
 
+    @Mock
+    private FileStorage fileStorage;
+
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+
+    @Nested
+    @DisplayName("장소 등록")
+    class RegisterPlace {
+
+        @Test
+        void 장소_등록_성공() {
+            // given
+            Long userId = 1L;
+            User user = mock(User.class);
+            Point location = geometryFactory.createPoint(new Coordinate(127.0, 37.5));
+            PlaceRegisterRequest request = createRegisterRequest();
+
+            given(userReader.getUser(userId)).willReturn(user);
+            given(geometryUtils.createPoint(request.longitude(), request.latitude())).willReturn(location);
+
+            // when
+            placeService.registerPlace(userId, request);
+
+            // then
+            verify(userReader).getUser(userId);
+            verify(geometryUtils).createPoint(request.longitude(), request.latitude());
+            verify(placeRepository).save(any(Place.class));
+            verify(placeDetailService).registerPlaceDetail(any(PlaceDetail.class));
+            verify(placeTagService).registerPlaceTags(any(Place.class), eq(request.tagIds()));
+        }
+
+        @Test
+        void 존재하지_않는_사용자로_등록_시_예외_발생() {
+            // given
+            Long userId = 999L;
+            PlaceRegisterRequest request = createRegisterRequest();
+
+            given(userReader.getUser(userId))
+                    .willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.registerPlace(userId, request))
+                    .isInstanceOf(BusinessException.class);
+
+            verify(placeRepository, never()).save(any(Place.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("장소 상세 조회")
+    class GetPlaceDetail {
+
+        @Test
+        void 장소_상세_조회_성공_모든_필드_검증() {
+            // given
+            Long userId = 1L;
+            Long placeId = 1L;
+            Place place = createMockPlace(placeId);
+
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
+            given(wishlistReader.isWished(userId, placeId)).willReturn(true);
+            given(fileStorage.generatePublicUrl("place/image1.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image1.jpg");
+
+            // when
+            PlaceDetailResponse response = placeService.getPlaceDetail(userId, placeId);
+
+            // then
+            assertThat(response.id()).isEqualTo(placeId);
+            assertThat(response.name()).isEqualTo("테스트 카페");
+            assertThat(response.category()).isEqualTo(PlaceCategory.CAFE);
+            assertThat(response.averageRating()).isEqualTo(4.5);
+            assertThat(response.reviewCount()).isEqualTo(10);
+            assertThat(response.spaceSize()).isEqualTo(SpaceSize.LARGE);
+            assertThat(response.mood()).isEqualTo(Mood.CALM);
+            assertThat(response.outletScore()).isEqualTo(OutletScore.MANY);
+            assertThat(response.crowdStatus()).isEqualTo(CrowdStatus.RELAX);
+            assertThat(response.isWished()).isTrue();
+            assertThat(response.images()).hasSize(1);
+            assertThat(response.images().getFirst())
+                    .isEqualTo("http://localhost:9000/goyo-local/place/image1.jpg");
+
+            verify(placeRepository).findByIdWithDetails(placeId);
+            verify(wishlistReader).isWished(userId, placeId);
+        }
+
+        @Test
+        void 존재하지_않는_장소_조회_예외() {
+            // given
+            Long placeId = 999L;
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> placeService.getPlaceDetail(1L, placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
+
+            verify(placeRepository).findByIdWithDetails(placeId);
+        }
+
+        @Test
+        void 이미지_URL_변환_확인() {
+            // given
+            Long placeId = 1L;
+            Place place = createMockPlace(placeId);
+
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
+            given(fileStorage.generatePublicUrl("place/image1.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image1.jpg");
+
+            // when
+            PlaceDetailResponse response = placeService.getPlaceDetail(1L, placeId);
+
+            // then
+            assertThat(response.images())
+                    .containsExactly("http://localhost:9000/goyo-local/place/image1.jpg");
+            verify(fileStorage).generatePublicUrl("place/image1.jpg");
+        }
+
+        private Place createMockPlace(Long placeId) {
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetail.getAverageRating()).willReturn(4.5);
+            given(placeDetail.getReviewCount()).willReturn(10);
+            given(placeDetail.getSpaceSize()).willReturn(SpaceSize.LARGE);
+            given(placeDetail.getMood()).willReturn(Mood.CALM);
+            given(placeDetail.getOutletScore()).willReturn(OutletScore.MANY);
+            given(placeDetail.getCrowdStatus()).willReturn(CrowdStatus.RELAX);
+
+            PlaceImage image = mock(PlaceImage.class);
+            given(image.getImageKey()).willReturn("place/image1.jpg");
+
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(placeId);
+            given(place.getName()).willReturn("테스트 카페");
+            given(place.getCategory()).willReturn(PlaceCategory.CAFE);
+            given(place.getAddressDetail()).willReturn("서울시 강남구 테헤란로 123");
+            given(place.getOpenTime()).willReturn(LocalTime.of(9, 0));
+            given(place.getCloseTime()).willReturn(LocalTime.of(22, 0));
+            given(place.getFloorInfo()).willReturn(1);
+            given(place.getRestroomInfo()).willReturn("내부");
+            given(place.getPlaceDetail()).willReturn(placeDetail);
+            given(place.getImages()).willReturn(List.of(image));
+
+            Point location = geometryFactory.createPoint(new Coordinate(127.0, 37.5));
+            given(place.getLocation()).willReturn(location);
+
+            return place;
+        }
+    }
 
     private static PlaceRegisterRequest createRegisterRequest() {
         return new PlaceRegisterRequest(
@@ -78,43 +237,5 @@ class PlaceServiceTest {
                 List.of(1L, 2L),
                 List.of(new PlaceImageRequest("image.jpg", 0, true))
         );
-    }
-
-    @Test
-    void 장소_등록_성공() {
-        // given
-        Long userId = 1L;
-        User user = mock(User.class);
-        Point location = geometryFactory.createPoint(new Coordinate(127.0, 37.5));
-        PlaceRegisterRequest request = createRegisterRequest();
-
-        given(userReader.getUser(userId)).willReturn(user);
-        given(geometryUtils.createPoint(request.longitude(), request.latitude())).willReturn(location);
-
-        // when
-        placeService.registerPlace(userId, request);
-
-        // then
-        verify(userReader).getUser(userId);
-        verify(geometryUtils).createPoint(request.longitude(), request.latitude());
-        verify(placeRepository).save(any(Place.class));
-        verify(placeDetailService).registerPlaceDetail(any(PlaceDetail.class));
-        verify(placeTagService).registerPlaceTags(any(Place.class), eq(request.tagIds()));
-    }
-
-    @Test
-    void 존재하지_않는_사용자로_등록_시_예외_발생() {
-        // given
-        Long userId = 999L;
-        PlaceRegisterRequest request = createRegisterRequest();
-
-        given(userReader.getUser(userId))
-                .willThrow(new BusinessException(ErrorCode.USER_NOT_FOUND));
-
-        // when & then
-        assertThatThrownBy(() -> placeService.registerPlace(userId, request))
-                .isInstanceOf(BusinessException.class);
-
-        verify(placeRepository, never()).save(any(Place.class));
     }
 }
