@@ -3,7 +3,9 @@ package io.dnd.goyo.domain.place.entity;
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -111,6 +113,25 @@ public class PlaceDetail extends BaseEntity {
         return Arrays.stream(SpaceSize.values())
                 .min(Comparator.comparingDouble(s -> Math.abs(s.getScore() - averageScore)))
                 .orElse(SpaceSize.MEDIUM);
+    }
+
+    public OutletScore getOutletScore() {
+        double averageScore = calculateAverageScore(this.totalOutletScore);
+        return Arrays.stream(OutletScore.values())
+                .min(Comparator.comparingDouble(o -> Math.abs(o.getScore() - averageScore)))
+                .orElse(OutletScore.AVERAGE);
+    }
+
+    public CrowdStatus getCrowdStatus() {
+        double averageScore = calculateAverageScore(this.totalCrowdScore);
+        return Arrays.stream(CrowdStatus.values())
+                .min(Comparator.comparingDouble(c -> Math.abs(c.getScore() - averageScore)))
+                .orElse(CrowdStatus.NORMAL);
+    }
+
+    public double getAverageRating() {
+        int count = this.reviewCount + 1;
+        return this.totalRating / count;
     }
 
     private double calculateAverageScore(int totalScore) {

@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
+    boolean existsByUserIdAndPlaceId(Long userId, Long placeId);
+
     @Query("SELECT w.place.id FROM Wishlist w WHERE w.user.id = :userId AND w.place.id IN :placeIds")
     List<Long> findPlaceIdsByUserIdAndPlaceIds(@Param("userId") Long userId,
             @Param("placeIds") List<Long> placeIds);
