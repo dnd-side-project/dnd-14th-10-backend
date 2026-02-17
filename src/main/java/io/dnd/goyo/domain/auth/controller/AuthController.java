@@ -35,7 +35,7 @@ public class AuthController {
             @Valid @RequestBody OAuthLoginRequest request
     ) {
         Provider oauthProvider = Provider.from(provider);
-        OAuthLoginResponse response = authService.oauthLogin(oauthProvider, request.code());
+        OAuthLoginResponse response = authService.oauthLogin(oauthProvider, request.code(), request.redirectUri());
         return ResponseEntity.ok(response);
     }
 

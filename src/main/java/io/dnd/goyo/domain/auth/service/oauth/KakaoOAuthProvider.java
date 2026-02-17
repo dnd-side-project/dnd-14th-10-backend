@@ -30,8 +30,9 @@ public class KakaoOAuthProvider implements OAuthProvider {
     }
 
     @Override
-    public OAuthUserInfo getUserInfo(String code) {
-        String accessToken = getAccessToken(code);
+    public OAuthUserInfo getUserInfo(String code, String redirectUri) {
+        validateRedirectUri(redirectUri);
+        String accessToken = getAccessToken(code, redirectUri);
         KakaoUserInfoResponse userInfo = fetchUserInfo(accessToken);
 
         return new OAuthUserInfo(
@@ -42,12 +43,19 @@ public class KakaoOAuthProvider implements OAuthProvider {
         );
     }
 
-    private String getAccessToken(String code) {
+    private void validateRedirectUri(String redirectUri) {
+        if (properties.allowedRedirectUris() == null
+                || !properties.allowedRedirectUris().contains(redirectUri)) {
+            throw new BusinessException(ErrorCode.INVALID_REDIRECT_URI);
+        }
+    }
+
+    private String getAccessToken(String code, String redirectUri) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("grant_type", "authorization_code");
         body.add("client_id", properties.clientId());
         body.add("client_secret", properties.clientSecret());
-        body.add("redirect_uri", properties.redirectUri());
+        body.add("redirect_uri", redirectUri);
         body.add("code", code);
 
         KakaoTokenResponse response = restClient.post()

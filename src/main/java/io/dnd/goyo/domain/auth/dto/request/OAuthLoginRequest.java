@@ -7,6 +7,10 @@ import jakarta.validation.constraints.NotBlank;
 public record OAuthLoginRequest(
         @Schema(description = "OAuth 인가 코드", example = "authorization_code_here")
         @NotBlank(message = "인가 코드는 필수입니다")
-        String code
+        String code,
+
+        @Schema(description = "리다이렉트 URI", example = "http://localhost:5173/oauth/kakao/callback")
+        @NotBlank(message = "리다이렉트 URI는 필수입니다")
+        String redirectUri
 ) {
 }
