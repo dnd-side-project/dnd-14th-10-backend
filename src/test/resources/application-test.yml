@@ -25,7 +25,6 @@ oauth:
   kakao:
     client-id: test-kakao-client-id
     client-secret: test-kakao-client-secret
-    redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:8080/test.html}
     allowed-redirect-uris:
       - http://localhost:8080/test.html
       - http://localhost:5173/oauth/kakao/callback
