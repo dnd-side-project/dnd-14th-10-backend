@@ -8,6 +8,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
@@ -38,7 +40,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -107,7 +108,6 @@ class PlaceControllerTest {
         }
 
         @Test
-        @WithMockUser
         void 공간_이름_누락_시_400_반환() throws Exception {
             // given
             Map<String, Object> request = new HashMap<>(createValidRequest());
@@ -123,7 +123,6 @@ class PlaceControllerTest {
         }
 
         @Test
-        @WithMockUser
         void 카테고리_누락_시_400_반환() throws Exception {
             // given
             Map<String, Object> request = new HashMap<>(createValidRequest());
@@ -139,7 +138,6 @@ class PlaceControllerTest {
         }
 
         @Test
-        @WithMockUser
         void 이미지_누락_시_400_반환() throws Exception {
             // given
             Map<String, Object> request = new HashMap<>(createValidRequest());
@@ -155,7 +153,6 @@ class PlaceControllerTest {
         }
 
         @Test
-        @WithMockUser
         void 이미지_빈_리스트_시_400_반환() throws Exception {
             // given
             Map<String, Object> request = new HashMap<>(createValidRequest());
@@ -268,6 +265,85 @@ class PlaceControllerTest {
                     "내부/남녀공용",
                     isWished
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("PATCH /api/places/{placeId}")
+    class UpdatePlace {
+
+        private Map<String, Object> createValidUpdateRequest() {
+            return Map.of(
+                    "name", "수정된 카페",
+                    "images", List.of(
+                            Map.of("imageKey", "place/uuid.jpg", "sequence", 0, "isRepresentative", true)
+                    )
+            );
+        }
+
+        @Test
+        void 공간_수정_성공_시_204_반환() throws Exception {
+            // given
+            Long placeId = 1L;
+            String request = objectMapper.writeValueAsString(createValidUpdateRequest());
+
+            // when & then
+            mockMvc.perform(patch("/api/places/{placeId}", placeId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
+                            .with(csrf()))
+                    .andExpect(status().isNoContent());
+
+            verify(placeService).updatePlace(eq(1L), eq(placeId), any(PlaceUpdateRequest.class));
+        }
+
+        @Test
+        void 존재하지_않는_공간_수정_시_404_반환() throws Exception {
+            // given
+            Long placeId = 999L;
+            doThrow(new BusinessException(ErrorCode.PLACE_NOT_FOUND))
+                    .when(placeService).updatePlace(eq(1L), eq(placeId), any(PlaceUpdateRequest.class));
+            String request = objectMapper.writeValueAsString(createValidUpdateRequest());
+
+            // when & then
+            mockMvc.perform(patch("/api/places/{placeId}", placeId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
+                            .with(csrf()))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void 다른_사용자가_수정_시도_시_403_반환() throws Exception {
+            // given
+            Long placeId = 1L;
+            doThrow(new BusinessException(ErrorCode.FORBIDDEN))
+                    .when(placeService).updatePlace(eq(1L), eq(placeId), any(PlaceUpdateRequest.class));
+            String request = objectMapper.writeValueAsString(createValidUpdateRequest());
+
+            // when & then
+            mockMvc.perform(patch("/api/places/{placeId}", placeId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        void 이미지_빈_리스트_시_400_반환() throws Exception {
+            // given
+            Long placeId = 1L;
+            Map<String, Object> request = new HashMap<>();
+            request.put("name", "수정된 카페");
+            request.put("images", List.of());
+
+            // when & then
+            mockMvc.perform(patch("/api/places/{placeId}", placeId)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.errors[0].field").value("images"));
         }
     }
 
