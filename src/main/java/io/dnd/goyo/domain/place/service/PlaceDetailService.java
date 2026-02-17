@@ -22,6 +22,7 @@ public class PlaceDetailService {
         placeDetailRepository.save(placeDetail);
     }
 
+    @Transactional
     public void updateScore(PlaceDetail placeDetail, Mood mood, SpaceSize spaceSize, OutletScore outletScore, CrowdStatus crowdStatus) {
         if (mood == null && spaceSize == null && outletScore == null && crowdStatus == null) {
             return;

@@ -46,8 +46,7 @@ public class PlaceController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long placeId
     ) {
-        Long userId = (userDetails != null) ? userDetails.userId() : null;
-        PlaceDetailResponse response = placeService.getPlaceDetail(userId, placeId);
+        PlaceDetailResponse response = placeService.getPlaceDetail(userDetails.userId(), placeId);
         return ResponseEntity.ok(response);
     }
 
