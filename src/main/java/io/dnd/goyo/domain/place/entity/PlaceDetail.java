@@ -51,6 +51,18 @@ public class PlaceDetail extends BaseEntity {
     private int totalQuietScore;
 
     @Column(nullable = false)
+    private int ownerOutletScore;
+
+    @Column(nullable = false)
+    private int ownerCrowdScore;
+
+    @Column(nullable = false)
+    private int ownerSpaceSizeScore;
+
+    @Column(nullable = false)
+    private int ownerQuietScore;
+
+    @Column(nullable = false)
     private int reviewCount;
 
     @Column(nullable = false)
@@ -85,6 +97,10 @@ public class PlaceDetail extends BaseEntity {
         this.totalCrowdScore = crowdScore;
         this.totalSpaceSizeScore = spaceSizeScore;
         this.totalQuietScore = quietScore;
+        this.ownerOutletScore = outletScore;
+        this.ownerCrowdScore = crowdScore;
+        this.ownerSpaceSizeScore = spaceSizeScore;
+        this.ownerQuietScore = quietScore;
         this.reviewCount = 0;
         this.wishCount = 0;
     }
@@ -164,20 +180,20 @@ public class PlaceDetail extends BaseEntity {
 
     public void updateScore(Mood newMood, SpaceSize newSpaceSize, OutletScore newOutletScore, CrowdStatus newCrowdStatus) {
         if (newMood != null) {
-            int oldScore = getMood().getScore();
-            this.totalQuietScore += newMood.getScore() - oldScore;
+            totalQuietScore += newMood.getScore() - ownerQuietScore;
+            ownerQuietScore = newMood.getScore();
         }
         if (newSpaceSize != null) {
-            int oldScore = getSpaceSize().getScore();
-            this.totalSpaceSizeScore += newSpaceSize.getScore() - oldScore;
+            totalSpaceSizeScore += newSpaceSize.getScore() - ownerSpaceSizeScore;
+            ownerSpaceSizeScore = newSpaceSize.getScore();
         }
         if (newOutletScore != null) {
-            int oldScore = getOutletScore().getScore();
-            this.totalOutletScore += newOutletScore.getScore() - oldScore;
+            totalOutletScore += newOutletScore.getScore() - ownerOutletScore;
+            ownerOutletScore = newOutletScore.getScore();
         }
         if (newCrowdStatus != null) {
-            int oldScore = getCrowdStatus().getScore();
-            this.totalCrowdScore += newCrowdStatus.getScore() - oldScore;
+            totalCrowdScore += newCrowdStatus.getScore() - ownerCrowdScore;
+            ownerCrowdScore = newCrowdStatus.getScore();
         }
     }
 }
