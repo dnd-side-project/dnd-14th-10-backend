@@ -247,7 +247,15 @@ public class Place extends BaseEntity {
             LocalTime closeTime,
             String restroomInfo
     ) {
-        validateOperatingHours(openTime, closeTime);
+        LocalTime newOpenTime = this.openTime;
+        if (openTime != null) {
+            newOpenTime = openTime;
+        }
+        LocalTime newCloseTime = this.closeTime;
+        if (closeTime != null) {
+            newCloseTime = closeTime;
+        }
+        validateOperatingHours(newOpenTime, newCloseTime);
         validateRestroomInfo(restroomInfo);
 
         if (name != null) {

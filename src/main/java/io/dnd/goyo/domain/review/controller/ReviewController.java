@@ -50,7 +50,7 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReview(reviewId));
     }
 
-    @Operation(summary = "공간 별 리뷰 목록 조회", description = "공간에 달린 리뷰 목록을 페이지네이션으로 조회합니다.")
+    @Operation(summary = "공간별 리뷰 목록 조회", description = "공간에 달린 리뷰 목록을 페이지네이션으로 조회합니다.")
     @GetMapping("/places/{placeId}/reviews")
     public ResponseEntity<Page<ReviewDetailResponse>> getReviewsByPlace(
             @PathVariable Long placeId,
