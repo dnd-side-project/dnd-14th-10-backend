@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,7 +47,7 @@ class PlaceTagServiceTest {
         @BeforeEach
         void setUp() {
             place = mock(Place.class);
-            given(place.getId()).willReturn(placeId);
+            lenient().when(place.getId()).thenReturn(placeId);
         }
 
         @Test
@@ -62,7 +63,8 @@ class PlaceTagServiceTest {
         void 새_태그만_추가되는_경우() {
             // given
             given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L));
-            given(tagRepository.findAllById(anyList())).willReturn(List.of(createTag(3L)));
+            Tag newTag = createTag();
+            given(tagRepository.findAllById(anyList())).willReturn(List.of(newTag));
 
             // when
             placeTagService.replacePlaceTags(place, List.of(1L, 2L, 3L));
@@ -89,7 +91,8 @@ class PlaceTagServiceTest {
         void 태그_추가와_삭제가_동시에_일어나는_경우() {
             // given
             given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L));
-            given(tagRepository.findAllById(anyList())).willReturn(List.of(createTag(3L)));
+            Tag newTag = createTag();
+            given(tagRepository.findAllById(anyList())).willReturn(List.of(newTag));
 
             // when
             placeTagService.replacePlaceTags(place, List.of(2L, 3L));
@@ -123,10 +126,8 @@ class PlaceTagServiceTest {
                     .isInstanceOf(BusinessException.class);
         }
 
-        private Tag createTag(Long id) {
-            Tag tag = mock(Tag.class);
-            given(tag.getId()).willReturn(id);
-            return tag;
+        private Tag createTag() {
+            return mock(Tag.class);
         }
     }
 }

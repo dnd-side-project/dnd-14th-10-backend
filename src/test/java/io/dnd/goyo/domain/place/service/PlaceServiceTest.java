@@ -305,6 +305,85 @@ class PlaceServiceTest {
         }
     }
 
+    @Nested
+    @DisplayName("장소 삭제")
+    class DeletePlace {
+
+        @Test
+        void 장소_삭제_성공() {
+            // given
+            Long userId = 1L;
+            Long placeId = 1L;
+
+            User user = mock(User.class);
+            given(user.getId()).willReturn(userId);
+
+            Place place = mock(Place.class);
+            given(place.getUser()).willReturn(user);
+            given(place.getStatus()).willReturn(PlaceStatus.ACTIVE);
+            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+
+            // when
+            placeService.deletePlace(userId, placeId);
+
+            // then
+            verify(place).delete();
+            verify(wishlistService).deleteByPlaceId(placeId);
+        }
+
+        @Test
+        void 존재하지_않는_장소_삭제_시_예외_발생() {
+            // given
+            given(placeRepository.findById(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> placeService.deletePlace(1L, 999L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
+        }
+
+        @Test
+        void 이미_삭제된_장소_삭제_시_예외_발생() {
+            // given
+            Long placeId = 1L;
+
+            Place place = mock(Place.class);
+            given(place.getStatus()).willReturn(PlaceStatus.DELETED);
+            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.deletePlace(1L, placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
+
+            verify(place, never()).delete();
+        }
+
+        @Test
+        void 다른_사용자가_삭제_시도_시_예외_발생() {
+            // given
+            Long ownerId = 1L;
+            Long otherUserId = 2L;
+            Long placeId = 1L;
+
+            User owner = mock(User.class);
+            given(owner.getId()).willReturn(ownerId);
+
+            Place place = mock(Place.class);
+            given(place.getStatus()).willReturn(PlaceStatus.ACTIVE);
+            given(place.getUser()).willReturn(owner);
+            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+
+            // when & then
+            assertThatThrownBy(() -> placeService.deletePlace(otherUserId, placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+
+            verify(place, never()).delete();
+            verify(wishlistService, never()).deleteByPlaceId(any());
+        }
+    }
+
     private static PlaceRegisterRequest createRegisterRequest() {
         return new PlaceRegisterRequest(
                 "테스트 카페",

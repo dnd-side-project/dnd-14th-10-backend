@@ -5,6 +5,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.mockito.Mockito.doThrow;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -266,6 +268,54 @@ class PlaceControllerTest {
                     "내부/남녀공용",
                     isWished
             );
+        }
+    }
+
+    @Nested
+    @DisplayName("DELETE /api/places/{placeId}")
+    class DeletePlace {
+
+        @Test
+        void 장소_삭제_성공_시_204_반환() throws Exception {
+            // given
+            Long placeId = 1L;
+
+            // when & then
+            mockMvc.perform(delete("/api/places/{placeId}", placeId)
+                            .with(csrf()))
+                    .andExpect(status().isNoContent());
+
+            verify(placeService).deletePlace(1L, placeId);
+        }
+
+        @Test
+        void 존재하지_않는_장소_삭제_시_404_반환() throws Exception {
+            // given
+            Long placeId = 999L;
+            doThrow(new BusinessException(ErrorCode.PLACE_NOT_FOUND))
+                    .when(placeService).deletePlace(1L, placeId);
+
+            // when & then
+            mockMvc.perform(delete("/api/places/{placeId}", placeId)
+                            .with(csrf()))
+                    .andExpect(status().isNotFound());
+
+            verify(placeService).deletePlace(1L, placeId);
+        }
+
+        @Test
+        void 다른_사용자가_삭제_시도_시_403_반환() throws Exception {
+            // given
+            Long placeId = 1L;
+            doThrow(new BusinessException(ErrorCode.FORBIDDEN))
+                    .when(placeService).deletePlace(1L, placeId);
+
+            // when & then
+            mockMvc.perform(delete("/api/places/{placeId}", placeId)
+                            .with(csrf()))
+                    .andExpect(status().isForbidden());
+
+            verify(placeService).deletePlace(1L, placeId);
         }
     }
 }
