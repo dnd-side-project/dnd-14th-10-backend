@@ -1,6 +1,7 @@
 package io.dnd.goyo.domain.place.controller;
 
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceRegisterResponse;
 import io.dnd.goyo.domain.place.service.PlaceService;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,5 +48,16 @@ public class PlaceController {
         Long userId = (userDetails != null) ? userDetails.userId() : null;
         PlaceDetailResponse response = placeService.getPlaceDetail(userId, placeId);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "장소 수정", description = "등록한 장소 정보를 수정합니다.")
+    @PatchMapping("/{placeId}")
+    public ResponseEntity<Void> updatePlace(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @PathVariable Long placeId,
+            @Valid @RequestBody PlaceUpdateRequest request
+    ) {
+        placeService.updatePlace(userDetails.userId(), placeId, request);
+        return ResponseEntity.noContent().build();
     }
 }

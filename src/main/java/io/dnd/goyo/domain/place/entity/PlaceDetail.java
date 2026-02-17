@@ -159,4 +159,23 @@ public class PlaceDetail extends BaseEntity {
         this.totalQuietScore -= scores.quietScore();
         this.reviewCount--;
     }
+
+    public void updateScore(Mood newMood, SpaceSize newSpaceSize, OutletScore newOutletScore, CrowdStatus newCrowdStatus) {
+        if (newMood != null) {
+            int oldScore = getMood().getScore();
+            this.totalQuietScore += newMood.getScore() - oldScore;
+        }
+        if (newSpaceSize != null) {
+            int oldScore = getSpaceSize().getScore();
+            this.totalSpaceSizeScore += newSpaceSize.getScore() - oldScore;
+        }
+        if (newOutletScore != null) {
+            int oldScore = getOutletScore().getScore();
+            this.totalOutletScore += newOutletScore.getScore() - oldScore;
+        }
+        if (newCrowdStatus != null) {
+            int oldScore = getCrowdStatus().getScore();
+            this.totalCrowdScore += newCrowdStatus.getScore() - oldScore;
+        }
+    }
 }

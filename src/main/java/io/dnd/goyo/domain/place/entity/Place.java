@@ -239,4 +239,41 @@ public class Place extends BaseEntity {
             throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("화장실 정보는 %d자 이내여야 합니다.", maxLength));
         }
     }
+
+    public void update(
+            String name,
+            Integer floorInfo,
+            LocalTime openTime,
+            LocalTime closeTime,
+            String restroomInfo
+    ) {
+        validateOperatingHours(openTime, closeTime);
+        validateRestroomInfo(restroomInfo);
+
+        if (name != null) {
+            validateName(name);
+            this.name = name;
+        }
+        if (floorInfo != null) {
+            this.floorInfo = floorInfo;
+        }
+        if (openTime != null) {
+            this.openTime = openTime;
+        }
+        if (closeTime != null) {
+            this.closeTime = closeTime;
+        }
+        if (restroomInfo != null) {
+            this.restroomInfo = restroomInfo;
+        }
+    }
+
+    public void replaceImages(List<PlaceImage> newImages) {
+        validateImagesNotEmpty(newImages);
+        validateRepresentativeImage(newImages);
+        validateImageSequence(newImages);
+
+        this.images.clear();
+        newImages.forEach(this::addImage);
+    }
 }

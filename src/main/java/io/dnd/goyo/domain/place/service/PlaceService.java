@@ -5,6 +5,7 @@ import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
@@ -26,6 +27,7 @@ public class PlaceService {
     private final PlaceRepository placeRepository;
     private final PlaceDetailService placeDetailService;
     private final PlaceTagService placeTagService;
+    private final PlaceImageService placeImageService;
     private final UserReader userReader;
     private final WishlistReader wishlistReader;
     private final GeometryUtils geometryUtils;
@@ -57,5 +59,24 @@ public class PlaceService {
         }
 
         return PlaceDetailResponse.from(place, isWished, fileStorage);
+    }
+
+    @Transactional
+    public void updatePlace(Long userId, Long placeId, PlaceUpdateRequest request) {
+        Place place = placeRepository.findByIdWithDetails(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+
+        validateOwner(userId, place);
+        place.update(request.name(), request.floorInfo(), request.openTime(), request.closeTime(), request.restroomInfo());
+        placeDetailService.updateScore(place.getPlaceDetail(), request.mood(), request.spaceSize(), request.outletScore(), request.crowdStatus());
+        placeTagService.replacePlaceTags(place, request.tagIds());
+        placeImageService.replaceImages(place, placeId, request.images());
+    }
+
+    private void validateOwner(Long userId, Place place) {
+        boolean isOwner = place.getUser().getId().equals(userId);
+        if (!isOwner) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "장소 수정 권한이 없습니다.");
+        }
     }
 }
