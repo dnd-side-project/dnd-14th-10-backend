@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.badge.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -17,6 +18,7 @@ import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.domain.user.service.UserReader;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -60,7 +62,7 @@ class BadgeEventListenerTest {
 
             given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
             given(userReader.getUser(userId)).willReturn(user);
-            given(badgeRepository.findByCode("REVIEW_1")).willReturn(Optional.of(badge));
+            given(badgeRepository.findByCodeIn(List.of("REVIEW_1"))).willReturn(List.of(badge));
             given(userBadgeRepository.existsByUserIdAndBadgeId(userId, badge.getId())).willReturn(false);
 
             ActivityEvent event = new ActivityEvent(userId, ActivityType.REVIEW, 1, 0);
@@ -70,6 +72,7 @@ class BadgeEventListenerTest {
 
             // then
             assertThat(userStats.getReviewCount()).isEqualTo(1);
+            assertThat(userStats.getBadgeCount()).isEqualTo(1);
             verify(userBadgeRepository).save(any(UserBadge.class));
         }
 
@@ -85,7 +88,7 @@ class BadgeEventListenerTest {
 
             given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
             given(userReader.getUser(userId)).willReturn(user);
-            given(badgeRepository.findByCode("REVIEW_1")).willReturn(Optional.of(badge));
+            given(badgeRepository.findByCodeIn(List.of("REVIEW_1"))).willReturn(List.of(badge));
             given(userBadgeRepository.existsByUserIdAndBadgeId(userId, badge.getId())).willReturn(true);
 
             ActivityEvent event = new ActivityEvent(userId, ActivityType.REVIEW, 1, 0);
@@ -94,6 +97,7 @@ class BadgeEventListenerTest {
             badgeEventListener.handleActivity(event);
 
             // then
+            assertThat(userStats.getBadgeCount()).isEqualTo(0);
             verify(userBadgeRepository, never()).save(any(UserBadge.class));
         }
 
@@ -131,7 +135,7 @@ class BadgeEventListenerTest {
 
             given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
             given(userReader.getUser(userId)).willReturn(user);
-            given(badgeRepository.findByCode("REVIEW_1")).willReturn(Optional.empty());
+            given(badgeRepository.findByCodeIn(anyList())).willReturn(List.of());
 
             ActivityEvent event = new ActivityEvent(userId, ActivityType.REVIEW, 1, 1);
 
@@ -180,7 +184,7 @@ class BadgeEventListenerTest {
 
             given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
             given(userReader.getUser(userId)).willReturn(user);
-            given(badgeRepository.findByCode("PLACE_1")).willReturn(Optional.of(badge));
+            given(badgeRepository.findByCodeIn(List.of("PLACE_1"))).willReturn(List.of(badge));
             given(userBadgeRepository.existsByUserIdAndBadgeId(userId, badge.getId())).willReturn(false);
 
             ActivityEvent event = new ActivityEvent(userId, ActivityType.PLACE, 1, 1);
@@ -191,6 +195,7 @@ class BadgeEventListenerTest {
             // then
             assertThat(userStats.getPlaceCount()).isEqualTo(1);
             assertThat(userStats.getImageCount()).isEqualTo(1);
+            assertThat(userStats.getBadgeCount()).isEqualTo(1);
             verify(userBadgeRepository).save(any(UserBadge.class));
         }
     }

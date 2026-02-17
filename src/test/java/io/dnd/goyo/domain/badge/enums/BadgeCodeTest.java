@@ -43,4 +43,34 @@ class BadgeCodeTest {
         assertThat(imageBadges).extracting(BadgeCode::getThreshold)
                 .containsExactly(5, 30, 80);
     }
+
+    @Test
+    @DisplayName("모든 뱃지 코드에 displayName이 존재")
+    void 모든_뱃지_코드에_displayName이_존재() {
+        for (BadgeCode badgeCode : BadgeCode.values()) {
+            assertThat(badgeCode.getDisplayName()).isNotBlank();
+        }
+    }
+
+    @Test
+    @DisplayName("REVIEW 타입 뱃지의 displayName 검증")
+    void REVIEW_타입_뱃지의_displayName_검증() {
+        // when
+        List<BadgeCode> reviewBadges = BadgeCode.getByActivityType(ActivityType.REVIEW);
+
+        // then
+        assertThat(reviewBadges).extracting(BadgeCode::getDisplayName)
+                .containsExactly("첫 리뷰", "리뷰 25개 작성", "리뷰 80개 작성");
+    }
+
+    @Test
+    @DisplayName("동일한 캐시 인스턴스를 반환")
+    void 동일한_캐시_인스턴스를_반환() {
+        // when
+        List<BadgeCode> first = BadgeCode.getByActivityType(ActivityType.REVIEW);
+        List<BadgeCode> second = BadgeCode.getByActivityType(ActivityType.REVIEW);
+
+        // then
+        assertThat(first).isSameAs(second);
+    }
 }

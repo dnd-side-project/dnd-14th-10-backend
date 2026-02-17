@@ -71,13 +71,13 @@ public class BadgeEventListener {
         if (event.countDelta() > 0) {
             int currentCount = getCurrentCount(userStats, event.activityType());
             List<BadgeCode> badgeCodes = BadgeCode.getByActivityType(event.activityType());
-            awardBadgesIfEligible(userId, badgeCodes, currentCount);
+            awardBadgesIfEligible(userId, badgeCodes, currentCount, userStats);
         }
 
         if (event.imageDelta() > 0) {
             int imageCount = userStats.getImageCount();
             List<BadgeCode> imageBadgeCodes = BadgeCode.getByActivityType(ActivityType.IMAGE);
-            awardBadgesIfEligible(userId, imageBadgeCodes, imageCount);
+            awardBadgesIfEligible(userId, imageBadgeCodes, imageCount, userStats);
         }
     }
 
@@ -89,21 +89,25 @@ public class BadgeEventListener {
         };
     }
 
-    private void awardBadgesIfEligible(Long userId, List<BadgeCode> badgeCodes, int currentCount) {
-        User user = userReader.getUser(userId);
+    private void awardBadgesIfEligible(Long userId, List<BadgeCode> badgeCodes, int currentCount, UserStats userStats) {
+        List<String> eligibleCodes = badgeCodes.stream()
+                .filter(bc -> currentCount >= bc.getThreshold())
+                .map(BadgeCode::getCode)
+                .toList();
 
-        for (BadgeCode badgeCode : badgeCodes) {
-            if (currentCount >= badgeCode.getThreshold()) {
-                badgeRepository.findByCode(badgeCode.getCode()).ifPresent(badge ->
-                        awardBadgeIfNotExists(user, badge)
-                );
-            }
+        if (eligibleCodes.isEmpty()) return;
+
+        User user = userReader.getUser(userId);
+        List<Badge> badges = badgeRepository.findByCodeIn(eligibleCodes);
+        for (Badge badge : badges) {
+            awardBadgeIfNotExists(user, badge, userStats);
         }
     }
 
-    private void awardBadgeIfNotExists(User user, Badge badge) {
+    private void awardBadgeIfNotExists(User user, Badge badge, UserStats userStats) {
         if (!userBadgeRepository.existsByUserIdAndBadgeId(user.getId(), badge.getId())) {
             userBadgeRepository.save(UserBadge.of(user, badge));
+            userStats.incrementBadgeCount();
             log.info("Badge awarded: userId={}, badgeCode={}", user.getId(), badge.getCode());
         }
     }

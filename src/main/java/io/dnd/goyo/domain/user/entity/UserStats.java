@@ -78,14 +78,14 @@ public class UserStats extends BaseEntity {
     }
 
     public void decrementReviewCount() {
-        this.reviewCount--;
+        this.reviewCount = Math.max(0, this.reviewCount - 1);
     }
 
     public void decrementPlaceCount() {
-        this.placeCount--;
+        this.placeCount = Math.max(0, this.placeCount - 1);
     }
 
     public void decrementImageCount() {
-        this.imageCount--;
+        this.imageCount = Math.max(0, this.imageCount - 1);
     }
 }

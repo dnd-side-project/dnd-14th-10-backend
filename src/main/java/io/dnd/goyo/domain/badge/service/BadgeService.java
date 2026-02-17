@@ -57,7 +57,7 @@ public class BadgeService {
                     UserBadge userBadge = achievedBadgeMap.get(badgeCode.getCode());
                     return new BadgeProgress(
                             badgeCode.getCode(),
-                            badgeCode.name(),
+                            badgeCode.getDisplayName(),
                             badgeCode.getThreshold(),
                             userBadge != null,
                             userBadge != null ? userBadge.getCreatedAt() : null
