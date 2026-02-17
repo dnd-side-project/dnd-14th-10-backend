@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Place", description = "장소 관련 API")
+@Tag(name = "Place", description = "공간 관련 API")
 @RestController
 @RequestMapping("/api/places")
 @RequiredArgsConstructor
@@ -30,7 +30,7 @@ public class PlaceController {
 
     private final PlaceService placeService;
 
-    @Operation(summary = "장소 제보(등록)", description = "새로운 장소를 제보합니다.")
+    @Operation(summary = "공간 제보(등록)", description = "새로운 공간을 제보합니다.")
     @PostMapping
     public ResponseEntity<PlaceRegisterResponse> registerPlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -40,7 +40,7 @@ public class PlaceController {
         return ResponseEntity.status(HttpStatus.CREATED).body(PlaceRegisterResponse.from(placeId));
     }
 
-    @Operation(summary = "장소 상세 조회", description = "장소의 상세 정보를 조회합니다.")
+    @Operation(summary = "공간 상세 조회", description = "공간의 상세 정보를 조회합니다.")
     @GetMapping("/{placeId}")
     public ResponseEntity<PlaceDetailResponse> getPlaceDetail(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -51,7 +51,7 @@ public class PlaceController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "장소 수정", description = "등록한 장소 정보를 수정합니다.")
+    @Operation(summary = "공간 수정", description = "등록한 공간 정보를 수정합니다.")
     @PatchMapping("/{placeId}")
     public ResponseEntity<Void> updatePlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -62,7 +62,7 @@ public class PlaceController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "장소 삭제", description = "등록한 장소를 삭제합니다.")
+    @Operation(summary = "공간 삭제", description = "등록한 공간을 삭제합니다.")
     @DeleteMapping("/{placeId}")
     public ResponseEntity<Void> deletePlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,

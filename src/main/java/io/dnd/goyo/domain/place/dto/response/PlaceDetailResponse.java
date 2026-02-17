@@ -16,10 +16,10 @@ import java.util.List;
 import org.locationtech.jts.geom.Point;
 
 public record PlaceDetailResponse(
-        @Schema(description = "장소 ID", example = "1")
+        @Schema(description = "공간 ID", example = "1")
         Long id,
 
-        @Schema(description = "장소 이름", example = "고작 아지트 강남점")
+        @Schema(description = "공간 이름", example = "고작 아지트 강남점")
         String name,
 
         @Schema(description = "카테고리", example = "CAFE")

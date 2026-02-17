@@ -69,7 +69,7 @@ class UserStatsTest {
         }
 
         @Test
-        void 장소_카운트_증가() {
+        void 공간_카운트_증가() {
             // given
             User user = mock(User.class);
             UserStats userStats = UserStats.of(user);

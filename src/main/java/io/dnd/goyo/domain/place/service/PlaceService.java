@@ -93,7 +93,7 @@ public class PlaceService {
     private void validateOwner(Long userId, Place place) {
         boolean isOwner = place.getUser().getId().equals(userId);
         if (!isOwner) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "장소 수정 권한이 없습니다.");
+            throw new BusinessException(ErrorCode.FORBIDDEN, "공간 수정 권한이 없습니다.");
         }
     }
 }

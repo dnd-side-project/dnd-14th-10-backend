@@ -89,7 +89,7 @@ class PlaceControllerTest {
     class RegisterPlace {
 
         @Test
-        void 장소_등록_성공_시_201_반환() throws Exception {
+        void 공간_등록_성공_시_201_반환() throws Exception {
             // given
             given(placeService.registerPlace(eq(1L), any(PlaceRegisterRequest.class)))
                     .willReturn(100L);
@@ -108,7 +108,7 @@ class PlaceControllerTest {
 
         @Test
         @WithMockUser
-        void 장소_이름_누락_시_400_반환() throws Exception {
+        void 공간_이름_누락_시_400_반환() throws Exception {
             // given
             Map<String, Object> request = new HashMap<>(createValidRequest());
             request.remove("name");
@@ -176,7 +176,7 @@ class PlaceControllerTest {
     class GetPlaceDetail {
 
         @Test
-        void 회원_찜한_장소_조회_성공() throws Exception {
+        void 회원_찜한_공간_조회_성공() throws Exception {
             // given
             Long placeId = 1L;
             PlaceDetailResponse response = createPlaceDetailResponse(placeId, true);
@@ -197,7 +197,7 @@ class PlaceControllerTest {
         }
 
         @Test
-        void 회원_찜하지_않은_장소_조회_성공() throws Exception {
+        void 회원_찜하지_않은_공간_조회_성공() throws Exception {
             // given
             Long placeId = 2L;
             PlaceDetailResponse response = createPlaceDetailResponse(placeId, false);
@@ -214,7 +214,7 @@ class PlaceControllerTest {
         }
 
         @Test
-        void 존재하지_않는_장소_조회_실패() throws Exception {
+        void 존재하지_않는_공간_조회_실패() throws Exception {
             // given
             Long placeId = 999L;
             given(placeService.getPlaceDetail(1L, placeId))
@@ -276,7 +276,7 @@ class PlaceControllerTest {
     class DeletePlace {
 
         @Test
-        void 장소_삭제_성공_시_204_반환() throws Exception {
+        void 공간_삭제_성공_시_204_반환() throws Exception {
             // given
             Long placeId = 1L;
 
@@ -289,7 +289,7 @@ class PlaceControllerTest {
         }
 
         @Test
-        void 존재하지_않는_장소_삭제_시_404_반환() throws Exception {
+        void 존재하지_않는_공간_삭제_시_404_반환() throws Exception {
             // given
             Long placeId = 999L;
             doThrow(new BusinessException(ErrorCode.PLACE_NOT_FOUND))

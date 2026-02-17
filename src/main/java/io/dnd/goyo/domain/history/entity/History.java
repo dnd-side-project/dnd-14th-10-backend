@@ -64,7 +64,7 @@ public class History extends BaseEntity {
 
     private static void validatePlace(Place place) {
         if (place == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 정보는 필수입니다.");
         }
     }
 

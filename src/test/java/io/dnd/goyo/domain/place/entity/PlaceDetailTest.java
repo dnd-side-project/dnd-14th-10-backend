@@ -23,14 +23,14 @@ class PlaceDetailTest {
     class CreatePlaceDetail {
 
         @Test
-        void 장소_정보가_null이면_예외_발생() {
+        void 공간_정보가_null이면_예외_발생() {
             // given
             Place place = null;
 
             // when & then
             assertThatThrownBy(() -> PlaceDetail.of(place, 50, 50, 50, 50))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 정보는 필수입니다");
+                    .hasMessageContaining("공간 정보는 필수입니다");
         }
 
         @ParameterizedTest
@@ -184,7 +184,7 @@ class PlaceDetailTest {
     }
 
     @Nested
-    @DisplayName("장소 점수 수정 시")
+    @DisplayName("공간 점수 수정 시")
     class UpdateScore {
 
         @Test

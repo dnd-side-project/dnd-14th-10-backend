@@ -177,12 +177,12 @@ public class Place extends BaseEntity {
 
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 이름은 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 이름은 필수입니다.");
         }
         int maxLength = 50;
         if (name.length() > maxLength) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("장소 이름은 %d자 이내여야 합니다.", maxLength));
+                    String.format("공간 이름은 %d자 이내여야 합니다.", maxLength));
         }
     }
 

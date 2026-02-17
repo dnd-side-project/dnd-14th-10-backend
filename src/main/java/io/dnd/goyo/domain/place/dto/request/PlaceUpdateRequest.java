@@ -11,9 +11,10 @@ import jakarta.validation.constraints.Size;
 import java.time.LocalTime;
 import java.util.List;
 
-@Schema(description = "장소 수정 요청")
+
+@Schema(description = "공간 수정 요청")
 public record PlaceUpdateRequest(
-        @Schema(description = "장소 이름", example = "고작 아지트 강남점")
+        @Schema(description = "공간 이름", example = "고작 아지트 강남점")
         String name,
 
         @Schema(description = "층수", example = "2")

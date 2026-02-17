@@ -136,7 +136,7 @@ class ReviewServiceTest {
         }
 
         @Test
-        void 존재하지_않는_장소에_리뷰_작성_시_예외() {
+        void 존재하지_않는_공간에_리뷰_작성_시_예외() {
             // given
             Long userId = 1L;
             Long placeId = 999L;

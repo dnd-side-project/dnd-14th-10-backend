@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.Objects;
 import org.locationtech.jts.geom.Point;
 
-@Schema(description = "장소 등록 요청")
+@Schema(description = "공간 등록 요청")
 public record PlaceRegisterRequest(
-        @Schema(description = "장소 이름", example = "고작 아지트")
-        @NotBlank(message = "장소 이름은 필수입니다")
+        @Schema(description = "공간 이름", example = "고작 아지트")
+        @NotBlank(message = "공간 이름은 필수입니다")
         String name,
 
-        @Schema(description = "장소 카테고리", example = "CAFE")
+        @Schema(description = "공간 카테고리", example = "CAFE")
         @NotNull(message = "카테고리는 필수입니다")
         PlaceCategory category,
 
@@ -64,8 +64,8 @@ public record PlaceRegisterRequest(
         @NotNull(message = "콘센트 만족도는 필수입니다")
         OutletScore outletScore,
 
-        @Schema(description = "장소 크기", example = "MEDIUM")
-        @NotNull(message = "장소 크기는 필수입니다")
+        @Schema(description = "공간 크기", example = "MEDIUM")
+        @NotNull(message = "공간 크기는 필수입니다")
         SpaceSize spaceSize,
 
         @Schema(description = "혼잡도", example = "RELAX")

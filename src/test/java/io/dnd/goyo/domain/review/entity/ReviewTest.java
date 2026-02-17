@@ -40,12 +40,12 @@ class ReviewTest {
         }
 
         @Test
-        void 장소_정보가_null이면_예외_발생() {
+        void 공간_정보가_null이면_예외_발생() {
             // when & then
             assertThatThrownBy(() -> Review.create(mock(User.class), null, 4.0, Mood.CALM,
                     OutletScore.MANY, CrowdStatus.NORMAL, SpaceSize.MEDIUM, null, null))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 정보는 필수입니다");
+                    .hasMessageContaining("공간 정보는 필수입니다");
         }
 
         @ParameterizedTest

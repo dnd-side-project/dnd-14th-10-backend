@@ -57,7 +57,7 @@ public class PlaceImageService {
                 try {
                     fileStorage.deleteObjects(orphanedKeys);
                 } catch (Exception e) {
-                    log.warn("장소 이미지 MinIO 삭제 실패 (placeId: {}): {}", placeId, e.getMessage());
+                    log.warn("공간 이미지 MinIO 삭제 실패 (placeId: {}): {}", placeId, e.getMessage());
                 }
             }
         });

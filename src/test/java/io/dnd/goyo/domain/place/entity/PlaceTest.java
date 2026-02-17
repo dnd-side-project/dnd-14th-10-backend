@@ -71,7 +71,7 @@ class PlaceTest {
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 이름은 필수입니다");
+                    .hasMessageContaining("공간 이름은 필수입니다");
         }
 
         @Test
@@ -83,7 +83,7 @@ class PlaceTest {
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 이름은 50자 이내여야 합니다");
+                    .hasMessageContaining("공간 이름은 50자 이내여야 합니다");
         }
 
         @Test

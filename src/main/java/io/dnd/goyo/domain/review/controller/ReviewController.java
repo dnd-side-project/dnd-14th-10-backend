@@ -34,7 +34,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @Operation(summary = "리뷰 작성", description = "장소에 대한 리뷰를 작성합니다.")
+    @Operation(summary = "리뷰 작성", description = "공간에 대한 리뷰를 작성합니다.")
     @PostMapping("/reviews")
     public ResponseEntity<ReviewCreateResponse> createReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -50,7 +50,7 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReview(reviewId));
     }
 
-    @Operation(summary = "장소별 리뷰 목록 조회", description = "장소에 달린 리뷰 목록을 페이지네이션으로 조회합니다.")
+    @Operation(summary = "공간 별 리뷰 목록 조회", description = "공간에 달린 리뷰 목록을 페이지네이션으로 조회합니다.")
     @GetMapping("/places/{placeId}/reviews")
     public ResponseEntity<Page<ReviewDetailResponse>> getReviewsByPlace(
             @PathVariable Long placeId,

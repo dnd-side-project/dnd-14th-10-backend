@@ -83,11 +83,11 @@ class PlaceServiceTest {
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     @Nested
-    @DisplayName("장소 등록")
+    @DisplayName("공간 등록")
     class RegisterPlace {
 
         @Test
-        void 장소_등록_성공() {
+        void 공간_등록_성공() {
             // given
             Long userId = 1L;
             User user = mock(User.class);
@@ -126,11 +126,11 @@ class PlaceServiceTest {
     }
 
     @Nested
-    @DisplayName("장소 상세 조회")
+    @DisplayName("공간 상세 조회")
     class GetPlaceDetail {
 
         @Test
-        void 장소_상세_조회_성공_모든_필드_검증() {
+        void 공간_상세_조회_성공_모든_필드_검증() {
             // given
             Long userId = 1L;
             Long placeId = 1L;
@@ -164,7 +164,7 @@ class PlaceServiceTest {
         }
 
         @Test
-        void 존재하지_않는_장소_조회_예외() {
+        void 존재하지_않는_공간_조회_예외() {
             // given
             Long placeId = 999L;
             given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.empty());
@@ -228,11 +228,11 @@ class PlaceServiceTest {
     }
 
     @Nested
-    @DisplayName("장소 수정")
+    @DisplayName("공간 수정")
     class UpdatePlace {
 
         @Test
-        void 장소_수정_성공() {
+        void 공간_수정_성공() {
             // given
             Long userId = 1L;
             Long placeId = 1L;
@@ -258,7 +258,7 @@ class PlaceServiceTest {
         }
 
         @Test
-        void 존재하지_않는_장소_수정_시_예외_발생() {
+        void 존재하지_않는_공간_수정_시_예외_발생() {
             // given
             given(placeRepository.findByIdWithDetails(999L)).willReturn(Optional.empty());
 
@@ -306,11 +306,11 @@ class PlaceServiceTest {
     }
 
     @Nested
-    @DisplayName("장소 삭제")
+    @DisplayName("공간 삭제")
     class DeletePlace {
 
         @Test
-        void 장소_삭제_성공() {
+        void 공간_삭제_성공() {
             // given
             Long userId = 1L;
             Long placeId = 1L;
@@ -332,7 +332,7 @@ class PlaceServiceTest {
         }
 
         @Test
-        void 존재하지_않는_장소_삭제_시_예외_발생() {
+        void 존재하지_않는_공간_삭제_시_예외_발생() {
             // given
             given(placeRepository.findById(999L)).willReturn(Optional.empty());
 
@@ -343,7 +343,7 @@ class PlaceServiceTest {
         }
 
         @Test
-        void 이미_삭제된_장소_삭제_시_예외_발생() {
+        void 이미_삭제된_공간_삭제_시_예외_발생() {
             // given
             Long placeId = 1L;
 

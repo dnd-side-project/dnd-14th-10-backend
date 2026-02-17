@@ -29,14 +29,14 @@ class WishlistTest {
         }
 
         @Test
-        void 장소_정보가_null이면_예외_발생() {
+        void 공간_정보가_null이면_예외_발생() {
             // given
             User user = mock(User.class);
 
             // when & then
             assertThatThrownBy(() -> Wishlist.of(user, null))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 정보가 누락되었습니다.");
+                    .hasMessageContaining("공간 정보가 누락되었습니다.");
         }
 
         @Test
