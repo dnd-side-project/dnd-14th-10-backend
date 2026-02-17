@@ -38,6 +38,9 @@ public class UserStats extends BaseEntity {
     @Column(nullable = false)
     private int badgeCount;
 
+    @Column(nullable = false)
+    private int imageCount;
+
     public static UserStats of(User user) {
         return new UserStats(user);
     }
@@ -49,6 +52,7 @@ public class UserStats extends BaseEntity {
         this.reviewCount = 0;
         this.placeCount = 0;
         this.badgeCount = 0;
+        this.imageCount = 0;
     }
 
     private static void validateUser(User user) {
@@ -67,5 +71,21 @@ public class UserStats extends BaseEntity {
 
     public void incrementBadgeCount() {
         this.badgeCount++;
+    }
+
+    public void incrementImageCount() {
+        this.imageCount++;
+    }
+
+    public void decrementReviewCount() {
+        this.reviewCount = Math.max(0, this.reviewCount - 1);
+    }
+
+    public void decrementPlaceCount() {
+        this.placeCount = Math.max(0, this.placeCount - 1);
+    }
+
+    public void decrementImageCount() {
+        this.imageCount = Math.max(0, this.imageCount - 1);
     }
 }

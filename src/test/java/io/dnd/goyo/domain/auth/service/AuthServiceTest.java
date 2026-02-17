@@ -21,7 +21,9 @@ import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
 import io.dnd.goyo.domain.user.enums.UserStatus;
+import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import io.dnd.goyo.security.jwt.JwtTokenProvider.SignupTokenInfo;
 import java.time.LocalDate;
@@ -41,6 +43,9 @@ class AuthServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private UserStatsRepository userStatsRepository;
+
+    @Mock
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
@@ -48,7 +53,7 @@ class AuthServiceTest {
 
     private AuthService createAuthService() {
         given(kakaoOAuthProvider.getProvider()).willReturn(Provider.KAKAO);
-        return new AuthService(List.of(kakaoOAuthProvider), userRepository, jwtTokenProvider);
+        return new AuthService(List.of(kakaoOAuthProvider), userRepository, userStatsRepository, jwtTokenProvider);
     }
 
     private User createActiveUser() {
