@@ -270,6 +270,7 @@ public class Place extends BaseEntity {
 
     public void delete() {
         this.status = PlaceStatus.DELETED;
+        this.images.clear();
     }
 
     public void replaceImages(List<PlaceImage> newImages) {

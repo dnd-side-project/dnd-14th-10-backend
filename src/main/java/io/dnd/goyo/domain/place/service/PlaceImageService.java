@@ -47,6 +47,13 @@ public class PlaceImageService {
         scheduleOrphanedImagesDeletion(orphanedKeys, placeId);
     }
 
+    public void deleteAllImages(Place place, Long placeId) {
+        List<String> keys = place.getImages().stream()
+                .map(PlaceImage::getImageKey)
+                .toList();
+        scheduleOrphanedImagesDeletion(keys, placeId);
+    }
+
     private void scheduleOrphanedImagesDeletion(List<String> orphanedKeys, Long placeId) {
         if (orphanedKeys.isEmpty()) {
             return;

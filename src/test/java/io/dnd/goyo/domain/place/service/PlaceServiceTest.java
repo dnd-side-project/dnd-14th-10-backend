@@ -29,7 +29,6 @@ import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
-import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import java.time.LocalTime;
@@ -320,13 +319,13 @@ class PlaceServiceTest {
 
             Place place = mock(Place.class);
             given(place.getUser()).willReturn(user);
-            given(place.getStatus()).willReturn(PlaceStatus.ACTIVE);
-            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
 
             // when
             placeService.deletePlace(userId, placeId);
 
             // then
+            verify(placeImageService).deleteAllImages(place, placeId);
             verify(place).delete();
             verify(wishlistService).deleteByPlaceId(placeId);
         }
@@ -334,7 +333,7 @@ class PlaceServiceTest {
         @Test
         void 존재하지_않는_공간_삭제_시_예외_발생() {
             // given
-            given(placeRepository.findById(999L)).willReturn(Optional.empty());
+            given(placeRepository.findByIdWithDetails(999L)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> placeService.deletePlace(1L, 999L))
@@ -346,17 +345,12 @@ class PlaceServiceTest {
         void 이미_삭제된_공간_삭제_시_예외_발생() {
             // given
             Long placeId = 1L;
-
-            Place place = mock(Place.class);
-            given(place.getStatus()).willReturn(PlaceStatus.DELETED);
-            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> placeService.deletePlace(1L, placeId))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
-
-            verify(place, never()).delete();
         }
 
         @Test
@@ -370,9 +364,8 @@ class PlaceServiceTest {
             given(owner.getId()).willReturn(ownerId);
 
             Place place = mock(Place.class);
-            given(place.getStatus()).willReturn(PlaceStatus.ACTIVE);
             given(place.getUser()).willReturn(owner);
-            given(placeRepository.findById(placeId)).willReturn(Optional.of(place));
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
 
             // when & then
             assertThatThrownBy(() -> placeService.deletePlace(otherUserId, placeId))

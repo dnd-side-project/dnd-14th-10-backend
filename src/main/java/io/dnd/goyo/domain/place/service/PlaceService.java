@@ -9,7 +9,6 @@ import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
-import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.user.entity.User;
@@ -78,14 +77,11 @@ public class PlaceService {
 
     @Transactional
     public void deletePlace(Long userId, Long placeId) {
-        Place place = placeRepository.findById(placeId)
+        Place place = placeRepository.findByIdWithDetails(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
 
-        if (place.getStatus() == PlaceStatus.DELETED) {
-            throw new BusinessException(ErrorCode.PLACE_NOT_FOUND);
-        }
-
         validateOwner(userId, place);
+        placeImageService.deleteAllImages(place, placeId);
         place.delete();
         wishlistService.deleteByPlaceId(placeId);
     }
