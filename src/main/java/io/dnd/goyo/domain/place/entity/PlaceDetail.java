@@ -130,8 +130,10 @@ public class PlaceDetail extends BaseEntity {
     }
 
     public double getAverageRating() {
-        int count = this.reviewCount + 1;
-        return this.totalRating / count;
+        if (this.reviewCount == 0) {
+            return 0.0;
+        }
+        return this.totalRating / this.reviewCount;
     }
 
     private double calculateAverageScore(int totalScore) {
