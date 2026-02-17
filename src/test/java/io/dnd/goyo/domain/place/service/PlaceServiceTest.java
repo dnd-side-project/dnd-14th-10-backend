@@ -288,7 +288,7 @@ class PlaceServiceTest {
             // when & then
             assertThatThrownBy(() -> placeService.updatePlace(otherUserId, placeId, createUpdateRequest()))
                     .isInstanceOf(BusinessException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_OWNER);
         }
 
         private PlaceUpdateRequest createUpdateRequest() {
@@ -362,7 +362,7 @@ class PlaceServiceTest {
             // when & then
             assertThatThrownBy(() -> placeService.deletePlace(otherUserId, placeId))
                     .isInstanceOf(BusinessException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN);
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_OWNER);
 
             verify(place, never()).delete();
             verify(wishlistService, never()).deleteByPlaceId(any());

@@ -128,7 +128,7 @@ class UserStatsTest {
         }
 
         @Test
-        void 장소_카운트_감소() {
+        void 공간_카운트_감소() {
             // given
             User user = mock(User.class);
             UserStats userStats = UserStats.of(user);
@@ -169,7 +169,7 @@ class UserStatsTest {
         }
 
         @Test
-        void 장소_카운트_0에서_감소해도_0_유지() {
+        void 공간_카운트_0에서_감소해도_0_유지() {
             // given
             User user = mock(User.class);
             UserStats userStats = UserStats.of(user);

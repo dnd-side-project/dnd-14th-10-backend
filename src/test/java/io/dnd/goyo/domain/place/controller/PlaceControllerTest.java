@@ -317,7 +317,7 @@ class PlaceControllerTest {
         void 다른_사용자가_수정_시도_시_403_반환() throws Exception {
             // given
             Long placeId = 1L;
-            doThrow(new BusinessException(ErrorCode.FORBIDDEN))
+            doThrow(new BusinessException(ErrorCode.PLACE_NOT_OWNER))
                     .when(placeService).updatePlace(eq(1L), eq(placeId), any(PlaceUpdateRequest.class));
             String request = objectMapper.writeValueAsString(createValidUpdateRequest());
 
@@ -383,7 +383,7 @@ class PlaceControllerTest {
         void 다른_사용자가_삭제_시도_시_403_반환() throws Exception {
             // given
             Long placeId = 1L;
-            doThrow(new BusinessException(ErrorCode.FORBIDDEN))
+            doThrow(new BusinessException(ErrorCode.PLACE_NOT_OWNER))
                     .when(placeService).deletePlace(1L, placeId);
 
             // when & then
