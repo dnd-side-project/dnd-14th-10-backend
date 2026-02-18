@@ -39,7 +39,12 @@ public class SecurityConfig {
                             "/api/places/recommendations/new",
                             "/api/places/recommendations/random-theme"
                     ).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/places/*").permitAll()
+                    .requestMatchers(HttpMethod.GET,
+                            "/api/places/*",
+                            "/api/places/*/wish-count",
+                            "/api/reviews/*",
+                            "/api/places/*/reviews"
+                    ).permitAll()
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

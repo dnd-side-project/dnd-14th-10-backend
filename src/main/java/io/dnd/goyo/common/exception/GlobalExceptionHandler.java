@@ -83,6 +83,11 @@ public class GlobalExceptionHandler {
                     .status(ErrorCode.DUPLICATE_NICKNAME.getStatus())
                     .body(ErrorResponse.of(ErrorCode.DUPLICATE_NICKNAME));
             }
+            if ("uk_wishlist_user_place".equals(constraintName)) {
+                return ResponseEntity
+                    .status(ErrorCode.WISHLIST_ALREADY_EXISTS.getStatus())
+                    .body(ErrorResponse.of(ErrorCode.WISHLIST_ALREADY_EXISTS));
+            }
             if (constraintName != null && constraintName.startsWith("uk_")) {
                 return ResponseEntity
                     .status(ErrorCode.DUPLICATE_RESOURCE.getStatus())

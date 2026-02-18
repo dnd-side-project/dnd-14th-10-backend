@@ -5,6 +5,10 @@ import io.dnd.goyo.domain.wishlist.dto.TagWithCreatedAtDto;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -31,6 +35,11 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
             + "WHERE w.user.id = :userId AND w.createdAt >= :since")
     List<TagWithCreatedAtDto> findTagsWithCreatedAt(@Param("userId") Long userId,
             @Param("since") LocalDateTime since);
+
+    Optional<Wishlist> findByUserIdAndPlaceId(Long userId, Long placeId);
+
+    @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
+    Page<Wishlist> findAllByUserId(Long userId, Pageable pageable);
 
     @Query(value = """
             SELECT pt.tag_id AS tagId, COUNT(DISTINCT w.user_id) AS popularity
