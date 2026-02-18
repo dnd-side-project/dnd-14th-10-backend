@@ -91,6 +91,9 @@ public class PlaceRecommendationController {
     }
 
     private Long getUserId(CustomUserDetails userDetails) {
-        return userDetails != null ? userDetails.userId() : null;
+        if (userDetails == null) {
+            return null;
+        }
+        return userDetails.userId();
     }
 }
