@@ -32,7 +32,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
             double maxScore,
             int limit
     ) {
-        if (!ALLOWED_SCORE_COLUMNS.contains(scoreColumn)) {
+        if (scoreColumn == null || !ALLOWED_SCORE_COLUMNS.contains(scoreColumn)) {
             throw new BusinessException(ErrorCode.INVALID_INPUT);
         }
 
