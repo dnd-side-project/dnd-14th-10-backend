@@ -1,6 +1,6 @@
 package io.dnd.goyo.domain.place.enums;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
@@ -17,9 +17,9 @@ public enum RandomThemeType {
     private final double minScore;
     private final double maxScore;
 
-    public static RandomThemeType pick(Random random) {
+    public static RandomThemeType pick() {
         RandomThemeType[] values = values();
-        return values[random.nextInt(values.length)];
+        return values[ThreadLocalRandom.current().nextInt(values.length)];
     }
 
     private static double topRangeMin(int rangeCount) {

@@ -21,7 +21,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -42,8 +41,6 @@ public class PlaceRecommendationService {
     private static final double USER_TAG_WEIGHT = 0.6;
     private static final double GROUP_TAG_WEIGHT = 0.4;
     private static final double DISTANCE_DECAY_METERS = 3000.0;
-
-    private static final Random RANDOM = new Random();
 
     private final PlaceRepository placeRepository;
     private final WishlistReader wishlistReader;
@@ -140,7 +137,7 @@ public class PlaceRecommendationService {
             Integer radiusMeters
     ) {
         double radius = resolveRadius(radiusMeters);
-        RandomThemeType theme = RandomThemeType.pick(RANDOM);
+        RandomThemeType theme = RandomThemeType.pick();
         List<Long> placeIds = findThemePlaceIds(theme, longitude, latitude, radius, category);
 
         if (placeIds.isEmpty()) {
