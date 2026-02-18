@@ -38,10 +38,8 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     Optional<Wishlist> findByUserIdAndPlaceId(Long userId, Long placeId);
 
-    @EntityGraph(attributePaths = {"place", "place.placeDetail"})
+    @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
     Page<Wishlist> findAllByUserId(Long userId, Pageable pageable);
-
-    int countByPlaceId(Long placeId);
 
     @Query(value = """
             SELECT pt.tag_id AS tagId, COUNT(DISTINCT w.user_id) AS popularity

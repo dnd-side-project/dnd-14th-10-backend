@@ -66,20 +66,18 @@ class WishlistServiceTest {
             User user = mock(User.class);
             Place place = mock(Place.class);
             given(place.getId()).willReturn(placeId);
-            PlaceDetail placeDetail = mock(PlaceDetail.class);
             WishlistAddRequest request = new WishlistAddRequest(placeId);
 
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
             given(wishlistReader.isWished(userId, placeId)).willReturn(false);
-            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
 
             // when
             wishlistService.addWishlist(userId, request);
 
             // then
             verify(wishlistRepository).save(any(Wishlist.class));
-            verify(placeDetail).incrementWishCount();
+            verify(placeDetailRepository).incrementWishCount(placeId);
         }
 
         @Test
@@ -184,18 +182,16 @@ class WishlistServiceTest {
             Long userId = 1L;
             Long placeId = 10L;
             Wishlist wishlist = mock(Wishlist.class);
-            PlaceDetail placeDetail = mock(PlaceDetail.class);
 
             given(wishlistRepository.findByUserIdAndPlaceId(userId, placeId))
                     .willReturn(Optional.of(wishlist));
-            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
 
             // when
             wishlistService.removeWishlist(userId, placeId);
 
             // then
             verify(wishlistRepository).delete(wishlist);
-            verify(placeDetail).decrementWishCount();
+            verify(placeDetailRepository).decrementWishCount(placeId);
         }
 
         @Test
@@ -222,10 +218,10 @@ class WishlistServiceTest {
         void 찜_수_조회_성공() {
             // given
             Long placeId = 10L;
-            Place place = mock(Place.class);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
 
-            given(placeReader.getPlace(placeId)).willReturn(place);
-            given(wishlistRepository.countByPlaceId(placeId)).willReturn(5);
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(placeDetail.getWishCount()).willReturn(5);
 
             // when
             WishCountResponse response = wishlistService.getWishCount(placeId);

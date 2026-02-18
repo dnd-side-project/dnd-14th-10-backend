@@ -47,8 +47,7 @@ public class WishlistService {
         Wishlist wishlist = Wishlist.of(user, place);
         wishlistRepository.save(wishlist);
 
-        PlaceDetail placeDetail = getPlaceDetail(place.getId());
-        placeDetail.incrementWishCount();
+        placeDetailRepository.incrementWishCount(place.getId());
 
         return wishlist.getId();
     }
@@ -65,19 +64,12 @@ public class WishlistService {
 
         wishlistRepository.delete(wishlist);
 
-        PlaceDetail placeDetail = getPlaceDetail(placeId);
-        placeDetail.decrementWishCount();
+        placeDetailRepository.decrementWishCount(placeId);
     }
 
     public WishCountResponse getWishCount(Long placeId) {
-        placeReader.getPlace(placeId);
-        int count = wishlistRepository.countByPlaceId(placeId);
-        return WishCountResponse.of(placeId, count);
-    }
-
-    private PlaceDetail getPlaceDetail(Long placeId) {
-        return placeDetailRepository.findByPlaceId(placeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
-                        "공간 상세 정보가 누락되었습니다."));
+        PlaceDetail placeDetail = placeDetailRepository.findByPlaceId(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+        return WishCountResponse.of(placeId, placeDetail.getWishCount());
     }
 }
