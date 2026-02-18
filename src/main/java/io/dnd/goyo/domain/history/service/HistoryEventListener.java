@@ -7,7 +7,6 @@ import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
-import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,15 +27,17 @@ public class HistoryEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void handlePlaceViewed(PlaceViewedEvent event) {
-        Optional<History> existing = historyRepository.findByUserIdAndPlaceId(
-                event.userId(), event.placeId());
-
-        if (existing.isPresent()) {
-            existing.get().updateViewedAt();
-        } else {
-            User user = userReader.getUser(event.userId());
-            Place place = placeReader.getPlace(event.placeId());
-            historyRepository.save(History.of(user, place));
+        try {
+            historyRepository.findByUserIdAndPlaceId(event.userId(), event.placeId())
+                    .ifPresentOrElse(
+                            History::updateViewedAt,
+                            () -> {
+                                User user = userReader.getUser(event.userId());
+                                Place place = placeReader.getPlace(event.placeId());
+                                historyRepository.save(History.of(user, place));
+                            });
+        } catch (Exception e) {
+            log.error("히스토리 저장 실패: userId={}, placeId={}", event.userId(), event.placeId(), e);
         }
     }
 }

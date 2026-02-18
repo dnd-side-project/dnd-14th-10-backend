@@ -11,6 +11,6 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
 
     Optional<History> findByUserIdAndPlaceId(Long userId, Long placeId);
 
-    @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
+    @EntityGraph(attributePaths = {"place", "place.placeDetail"})
     Page<History> findAllByUserId(Long userId, Pageable pageable);
 }

@@ -18,14 +18,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "History", description = "조회 기록 관련 API")
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/histories")
 @RequiredArgsConstructor
 public class HistoryController {
 
     private final HistoryService historyService;
 
     @Operation(summary = "내 조회 기록 조회", description = "로그인한 사용자의 공간 조회 기록을 페이지네이션으로 조회합니다.")
-    @GetMapping("/histories/me")
+    @GetMapping("/me")
     public ResponseEntity<Page<HistoryItemResponse>> getMyHistories(
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PageableDefault(size = 10, sort = "viewedAt", direction = Sort.Direction.DESC) Pageable pageable
