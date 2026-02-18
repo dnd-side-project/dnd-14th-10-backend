@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ReviewCreateRequest(
-        @NotNull(message = "장소 ID는 필수입니다")
+        @NotNull(message = "공간 ID는 필수입니다")
         Long placeId,
 
         @NotNull(message = "평점은 필수입니다")

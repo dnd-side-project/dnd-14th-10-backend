@@ -30,6 +30,11 @@ public class WishlistService {
     private final PlaceReader placeReader;
 
     @Transactional
+    public void deleteByPlaceId(Long placeId) {
+        wishlistRepository.deleteAllByPlaceId(placeId);
+    }
+
+    @Transactional
     public Long addWishlist(Long userId, WishlistAddRequest request) {
         User user = userReader.getUser(userId);
         Place place = placeReader.getPlace(request.placeId());

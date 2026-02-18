@@ -6,6 +6,7 @@ import static org.mockito.Mockito.mock;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.user.entity.User;
 import java.time.LocalTime;
 import java.util.List;
@@ -71,7 +72,7 @@ class PlaceTest {
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 이름은 필수입니다");
+                    .hasMessageContaining("공간 이름은 필수입니다");
         }
 
         @Test
@@ -83,7 +84,7 @@ class PlaceTest {
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 이름은 50자 이내여야 합니다");
+                    .hasMessageContaining("공간 이름은 50자 이내여야 합니다");
         }
 
         @Test
@@ -256,6 +257,39 @@ class PlaceTest {
             assertThat(place.getImages()).hasSize(2);
             assertThat(place.getImages().getFirst().getImageKey()).isEqualTo("place/1.jpg");
             assertThat(place.getImages().getFirst().isRepresentativeFlag()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("공간 삭제 시")
+    class DeletePlace {
+
+        @Test
+        void 삭제하면_상태가_DELETED로_변경() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+
+            // when
+            place.delete();
+
+            // then
+            assertThat(place.getStatus()).isEqualTo(PlaceStatus.DELETED);
+        }
+
+        @Test
+        void 삭제하면_이미지_목록이_비워진다() {
+            // given
+            Place place = createValidPlaceBuilder().build();
+            place.addImages(List.of(
+                    PlaceImage.of("place/1.jpg", true, 0),
+                    PlaceImage.of("place/2.jpg", false, 1)
+            ));
+
+            // when
+            place.delete();
+
+            // then
+            assertThat(place.getImages()).isEmpty();
         }
     }
 }

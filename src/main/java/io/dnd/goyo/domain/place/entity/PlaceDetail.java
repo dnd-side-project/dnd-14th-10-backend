@@ -3,7 +3,9 @@ package io.dnd.goyo.domain.place.entity;
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -49,6 +51,18 @@ public class PlaceDetail extends BaseEntity {
     private int totalQuietScore;
 
     @Column(nullable = false)
+    private int ownerOutletScore;
+
+    @Column(nullable = false)
+    private int ownerCrowdScore;
+
+    @Column(nullable = false)
+    private int ownerSpaceSizeScore;
+
+    @Column(nullable = false)
+    private int ownerQuietScore;
+
+    @Column(nullable = false)
     private int reviewCount;
 
     @Column(nullable = false)
@@ -83,13 +97,17 @@ public class PlaceDetail extends BaseEntity {
         this.totalCrowdScore = crowdScore;
         this.totalSpaceSizeScore = spaceSizeScore;
         this.totalQuietScore = quietScore;
+        this.ownerOutletScore = outletScore;
+        this.ownerCrowdScore = crowdScore;
+        this.ownerSpaceSizeScore = spaceSizeScore;
+        this.ownerQuietScore = quietScore;
         this.reviewCount = 0;
         this.wishCount = 0;
     }
 
     private static void validatePlace(Place place) {
         if (place == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 정보는 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 정보는 필수입니다.");
         }
     }
 
@@ -111,6 +129,27 @@ public class PlaceDetail extends BaseEntity {
         return Arrays.stream(SpaceSize.values())
                 .min(Comparator.comparingDouble(s -> Math.abs(s.getScore() - averageScore)))
                 .orElse(SpaceSize.MEDIUM);
+    }
+
+    public OutletScore getOutletScore() {
+        double averageScore = calculateAverageScore(this.totalOutletScore);
+        return Arrays.stream(OutletScore.values())
+                .min(Comparator.comparingDouble(o -> Math.abs(o.getScore() - averageScore)))
+                .orElse(OutletScore.AVERAGE);
+    }
+
+    public CrowdStatus getCrowdStatus() {
+        double averageScore = calculateAverageScore(this.totalCrowdScore);
+        return Arrays.stream(CrowdStatus.values())
+                .min(Comparator.comparingDouble(c -> Math.abs(c.getScore() - averageScore)))
+                .orElse(CrowdStatus.NORMAL);
+    }
+
+    public double getAverageRating() {
+        if (this.reviewCount == 0) {
+            return 0.0;
+        }
+        return this.totalRating / this.reviewCount;
     }
 
     private double calculateAverageScore(int totalScore) {
@@ -147,5 +186,24 @@ public class PlaceDetail extends BaseEntity {
         this.totalSpaceSizeScore -= scores.spaceSizeScore();
         this.totalQuietScore -= scores.quietScore();
         this.reviewCount--;
+    }
+
+    public void updateScore(Mood newMood, SpaceSize newSpaceSize, OutletScore newOutletScore, CrowdStatus newCrowdStatus) {
+        if (newMood != null) {
+            totalQuietScore += newMood.getScore() - ownerQuietScore;
+            ownerQuietScore = newMood.getScore();
+        }
+        if (newSpaceSize != null) {
+            totalSpaceSizeScore += newSpaceSize.getScore() - ownerSpaceSizeScore;
+            ownerSpaceSizeScore = newSpaceSize.getScore();
+        }
+        if (newOutletScore != null) {
+            totalOutletScore += newOutletScore.getScore() - ownerOutletScore;
+            ownerOutletScore = newOutletScore.getScore();
+        }
+        if (newCrowdStatus != null) {
+            totalCrowdScore += newCrowdStatus.getScore() - ownerCrowdScore;
+            ownerCrowdScore = newCrowdStatus.getScore();
+        }
     }
 }

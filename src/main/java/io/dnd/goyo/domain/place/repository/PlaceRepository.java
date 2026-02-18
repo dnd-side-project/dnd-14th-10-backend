@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.place.repository;
 
 import io.dnd.goyo.domain.place.entity.Place;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,8 +12,14 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +
             "LEFT JOIN FETCH p.images " +
-            "WHERE p.id IN :ids")
+            "WHERE p.id IN :ids AND p.status = 'ACTIVE'")
     List<Place> findAllByIdWithDetails(@Param("ids") List<Long> ids);
+
+    @Query("SELECT DISTINCT p FROM Place p " +
+            "JOIN FETCH p.placeDetail " +
+            "LEFT JOIN FETCH p.images " +
+            "WHERE p.id = :id AND p.status = 'ACTIVE'")
+    Optional<Place> findByIdWithDetails(@Param("id") Long id);
 
     @Query(value = """
             SELECT p.id FROM places p

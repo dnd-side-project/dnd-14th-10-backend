@@ -168,7 +168,7 @@ class PlaceRecommendationIntegrationTest {
         }
 
         @Test
-        void 찜한_장소_표시() {
+        void 찜한_공간_표시() {
             // given
             Place place = savePlace("광화문 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 1101005200L);
             saveWishlist(user, place);
@@ -271,7 +271,7 @@ class PlaceRecommendationIntegrationTest {
         }
 
         @Test
-        void 인기_공간_찜한_장소와_안_찜한_장소_구분() {
+        void 인기_공간_찜한_공간과_안_찜한_공간_구분() {
             // given
             Place wishedPlace = savePlaceWithDetails("찜한 카페", PlaceCategory.CAFE, 126.9769, 37.5759, 1101005200L, 50, 30, 120.0);
             savePlaceWithDetails("안찜한 카페", PlaceCategory.CAFE, 126.9836, 37.5700, 1101005300L, 30, 10, 40.0);
@@ -392,7 +392,7 @@ class PlaceRecommendationIntegrationTest {
         }
 
         @Test
-        void 비슷한_성향_공간_찜하거나_리뷰한_장소_제외() {
+        void 비슷한_성향_공간_찜하거나_리뷰한_공간_제외() {
             // given
             Tag quiet = saveTag("조용한");
 

@@ -10,10 +10,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
+
+    boolean existsByUserIdAndPlaceId(Long userId, Long placeId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Wishlist w WHERE w.place.id = :placeId")
+    void deleteAllByPlaceId(@Param("placeId") Long placeId);
 
     @Query("SELECT w.place.id FROM Wishlist w WHERE w.user.id = :userId AND w.place.id IN :placeIds")
     List<Long> findPlaceIdsByUserIdAndPlaceIds(@Param("userId") Long userId,
@@ -28,8 +35,6 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
             + "WHERE w.user.id = :userId AND w.createdAt >= :since")
     List<TagWithCreatedAtDto> findTagsWithCreatedAt(@Param("userId") Long userId,
             @Param("since") LocalDateTime since);
-
-    boolean existsByUserIdAndPlaceId(Long userId, Long placeId);
 
     Optional<Wishlist> findByUserIdAndPlaceId(Long userId, Long placeId);
 

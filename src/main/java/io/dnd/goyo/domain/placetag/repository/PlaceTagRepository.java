@@ -4,6 +4,7 @@ import io.dnd.goyo.domain.placetag.dto.PlaceTagMappingDto;
 import io.dnd.goyo.domain.placetag.entity.PlaceTag;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -32,4 +33,11 @@ public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
     @Query("SELECT new io.dnd.goyo.domain.placetag.dto.PlaceTagMappingDto(pt.place.id, pt.tag.id) " +
             "FROM PlaceTag pt WHERE pt.place.id IN :placeIds")
     List<PlaceTagMappingDto> findPlaceTagMappings(@Param("placeIds") List<Long> placeIds);
+
+    @Query("SELECT pt.tag.id FROM PlaceTag pt WHERE pt.place.id = :placeId")
+    List<Long> findTagIdsByPlaceId(@Param("placeId") Long placeId);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM PlaceTag pt WHERE pt.place.id = :placeId AND pt.tag.id IN :tagIds")
+    void deleteByPlaceIdAndTagIdIn(@Param("placeId") Long placeId, @Param("tagIds") List<Long> tagIds);
 }

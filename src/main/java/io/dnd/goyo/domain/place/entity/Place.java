@@ -179,12 +179,12 @@ public class Place extends BaseEntity {
 
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "장소 이름은 필수입니다.");
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "공간 이름은 필수입니다.");
         }
         int maxLength = 50;
         if (name.length() > maxLength) {
             throw new BusinessException(ErrorCode.INVALID_INPUT,
-                    String.format("장소 이름은 %d자 이내여야 합니다.", maxLength));
+                    String.format("공간 이름은 %d자 이내여야 합니다.", maxLength));
         }
     }
 
@@ -240,5 +240,55 @@ public class Place extends BaseEntity {
         if (restroomInfo != null && restroomInfo.length() > maxLength) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, String.format("화장실 정보는 %d자 이내여야 합니다.", maxLength));
         }
+    }
+
+    public void update(
+            String name,
+            Integer floorInfo,
+            LocalTime openTime,
+            LocalTime closeTime,
+            String restroomInfo
+    ) {
+        LocalTime newOpenTime = this.openTime;
+        if (openTime != null) {
+            newOpenTime = openTime;
+        }
+        LocalTime newCloseTime = this.closeTime;
+        if (closeTime != null) {
+            newCloseTime = closeTime;
+        }
+        validateOperatingHours(newOpenTime, newCloseTime);
+        validateRestroomInfo(restroomInfo);
+
+        if (name != null) {
+            validateName(name);
+            this.name = name;
+        }
+        if (floorInfo != null) {
+            this.floorInfo = floorInfo;
+        }
+        if (openTime != null) {
+            this.openTime = openTime;
+        }
+        if (closeTime != null) {
+            this.closeTime = closeTime;
+        }
+        if (restroomInfo != null) {
+            this.restroomInfo = restroomInfo;
+        }
+    }
+
+    public void delete() {
+        this.status = PlaceStatus.DELETED;
+        this.images.clear();
+    }
+
+    public void replaceImages(List<PlaceImage> newImages) {
+        validateImagesNotEmpty(newImages);
+        validateRepresentativeImage(newImages);
+        validateImageSequence(newImages);
+
+        this.images.clear();
+        newImages.forEach(this::addImage);
     }
 }
