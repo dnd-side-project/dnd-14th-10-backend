@@ -127,6 +127,16 @@ public class PlaceDetail extends BaseEntity {
         this.reviewCount++;
     }
 
+    public void incrementWishCount() {
+        this.wishCount++;
+    }
+
+    public void decrementWishCount() {
+        if (this.wishCount > 0) {
+            this.wishCount--;
+        }
+    }
+
     public void removeReviewScores(ReviewScores scores) {
         if (this.reviewCount <= 0) {
             return;

@@ -36,7 +36,11 @@ public enum ErrorCode {
     REVIEW_NOT_OWNER(HttpStatus.FORBIDDEN, "REVIEW_002", "리뷰 작성자만 수정/삭제할 수 있습니다"),
 
     // Badge
-    BADGE_NOT_FOUND(HttpStatus.NOT_FOUND, "BADGE_001", "뱃지를 찾을 수 없습니다");
+    BADGE_NOT_FOUND(HttpStatus.NOT_FOUND, "BADGE_001", "뱃지를 찾을 수 없습니다"),
+
+    // Wishlist
+    WISHLIST_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_001", "이미 찜한 장소입니다"),
+    WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "WISHLIST_002", "찜 목록에 없는 장소입니다");
 
     private final HttpStatus status;
     private final String code;

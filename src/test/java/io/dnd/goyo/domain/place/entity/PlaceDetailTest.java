@@ -101,6 +101,51 @@ class PlaceDetailTest {
     }
 
     @Nested
+    @DisplayName("찜 수 관리 시")
+    class WishCountManagement {
+
+        @Test
+        void 찜_수_증가_성공() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.incrementWishCount();
+
+            // then
+            assertThat(placeDetail.getWishCount()).isEqualTo(1);
+        }
+
+        @Test
+        void 찜_수_감소_성공() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+            placeDetail.incrementWishCount();
+
+            // when
+            placeDetail.decrementWishCount();
+
+            // then
+            assertThat(placeDetail.getWishCount()).isEqualTo(0);
+        }
+
+        @Test
+        void 찜_수가_0일_때_감소_시_음수_방지() {
+            // given
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = PlaceDetail.of(place, 50, 50, 50, 50);
+
+            // when
+            placeDetail.decrementWishCount();
+
+            // then
+            assertThat(placeDetail.getWishCount()).isEqualTo(0);
+        }
+    }
+
+    @Nested
     @DisplayName("리뷰 점수 관리 시")
     class ReviewScoreManagement {
 
