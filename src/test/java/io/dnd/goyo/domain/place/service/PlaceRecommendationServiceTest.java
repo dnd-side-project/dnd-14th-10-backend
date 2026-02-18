@@ -422,6 +422,7 @@ class PlaceRecommendationServiceTest {
         assertThat(result.themeType()).isNotNull();
         assertThat(result.themeValue()).isNotNull();
         assertThat(result.places()).isEmpty();
+        verify(placeRepository, never()).findAllByIdWithDetails(any());
     }
 
     private User createUser(Long id, Gender gender, int age) {
