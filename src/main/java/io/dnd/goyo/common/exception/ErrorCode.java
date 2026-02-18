@@ -29,7 +29,8 @@ public enum ErrorCode {
     USER_ALREADY_DELETED(HttpStatus.BAD_REQUEST, "USER_002", "이미 탈퇴한 사용자입니다"),
 
     // Place
-    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_001", "장소를 찾을 수 없습니다"),
+    PLACE_NOT_FOUND(HttpStatus.NOT_FOUND, "PLACE_001", "공간을 찾을 수 없습니다"),
+    PLACE_NOT_OWNER(HttpStatus.FORBIDDEN, "PLACE_002", "공간 작성자만 수정/삭제할 수 있습니다"),
 
     // Review
     REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_001", "리뷰를 찾을 수 없습니다"),

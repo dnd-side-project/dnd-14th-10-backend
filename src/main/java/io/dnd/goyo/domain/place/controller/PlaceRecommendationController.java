@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-@Tag(name = "Place Recommendation", description = "장소 추천 관련 API")
+@Tag(name = "Place Recommendation", description = "공간 추천 관련 API")
 @RestController
 @RequestMapping("/api/places/recommendations")
 @RequiredArgsConstructor

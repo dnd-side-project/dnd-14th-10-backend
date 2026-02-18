@@ -18,14 +18,14 @@ class PlaceTagTest {
     class CreatePlaceTag {
 
         @Test
-        void 장소_정보가_null이면_예외_발생() {
+        void 공간_정보가_null이면_예외_발생() {
             // given
             Tag tag = mock(Tag.class);
 
             // when & then
             assertThatThrownBy(() -> PlaceTag.of(null, tag))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("장소 정보는 필수입니다");
+                    .hasMessageContaining("공간 정보는 필수입니다");
         }
 
         @Test

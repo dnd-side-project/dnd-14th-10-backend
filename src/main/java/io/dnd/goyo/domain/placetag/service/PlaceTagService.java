@@ -7,7 +7,9 @@ import io.dnd.goyo.domain.placetag.entity.PlaceTag;
 import io.dnd.goyo.domain.placetag.repository.PlaceTagRepository;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +39,41 @@ public class PlaceTagService {
                 .toList();
 
         placeTagRepository.saveAll(placeTags);
+    }
+
+    @Transactional
+    public void replacePlaceTags(Place place, List<Long> tagIds) {
+        if (tagIds == null) {
+            return;
+        }
+
+        Set<Long> newTagIds = new HashSet<>(tagIds);
+        Set<Long> existingTagIds = new HashSet<>(placeTagRepository.findTagIdsByPlaceId(place.getId()));
+
+        Set<Long> toRemove = new HashSet<>(existingTagIds);
+        toRemove.removeAll(newTagIds);
+
+        Set<Long> toAdd = new HashSet<>(newTagIds);
+        toAdd.removeAll(existingTagIds);
+
+        deleteTags(place.getId(), toRemove);
+        addTags(place, toAdd);
+    }
+
+    private void deleteTags(Long placeId, Set<Long> tagIdsToRemove) {
+        if (!tagIdsToRemove.isEmpty()) {
+            placeTagRepository.deleteByPlaceIdAndTagIdIn(placeId, List.copyOf(tagIdsToRemove));
+        }
+    }
+
+    private void addTags(Place place, Set<Long> tagIdsToAdd) {
+        if (!tagIdsToAdd.isEmpty()) {
+            List<Tag> tags = findAndValidateTags(List.copyOf(tagIdsToAdd));
+            List<PlaceTag> placeTags = tags.stream()
+                    .map(tag -> PlaceTag.of(place, tag))
+                    .toList();
+            placeTagRepository.saveAll(placeTags);
+        }
     }
 
     private List<Tag> findAndValidateTags(List<Long> tagIds) {

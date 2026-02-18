@@ -48,7 +48,7 @@ class TagTest {
         }
 
         @Test
-        void 장소_태그_정상적인_값으로_생성_가능() {
+        void 공간_태그_정상적인_값으로_생성_가능() {
             // given & when
             Tag tag = Tag.of(TagType.PLACE, "조용한");
 

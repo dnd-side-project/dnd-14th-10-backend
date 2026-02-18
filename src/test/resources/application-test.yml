@@ -14,6 +14,7 @@ minio:
   secret-key: test
   bucket: test-bucket
   presigned-url-expiry-minutes: 10
+  public-url-base: http://localhost:9000/test-bucket
 
 jwt:
   secret: local-test-secret-key-must-be-at-least-32-bytes-long
