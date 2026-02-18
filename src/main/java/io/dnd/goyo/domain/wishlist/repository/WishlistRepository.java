@@ -33,7 +33,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     Optional<Wishlist> findByUserIdAndPlaceId(Long userId, Long placeId);
 
-    @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
+    @EntityGraph(attributePaths = {"place", "place.placeDetail"})
     Page<Wishlist> findAllByUserId(Long userId, Pageable pageable);
 
     int countByPlaceId(Long placeId);

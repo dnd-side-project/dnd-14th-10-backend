@@ -71,6 +71,7 @@ public class WishlistService {
 
     private PlaceDetail getPlaceDetail(Long placeId) {
         return placeDetailRepository.findByPlaceId(placeId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR,
+                        "공간 상세 정보가 누락되었습니다."));
     }
 }

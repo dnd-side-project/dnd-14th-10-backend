@@ -31,7 +31,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.test.context.support.WithMockUser;
+
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -74,7 +74,6 @@ class WishlistControllerTest {
     }
 
     @Test
-    @WithMockUser
     void placeId_누락_시_400_반환() throws Exception {
         mockMvc.perform(post("/api/wishlists")
                         .contentType(MediaType.APPLICATION_JSON)
