@@ -2,10 +2,9 @@ package io.dnd.goyo.domain.auth.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.auth.dto.AuthTokens;
 import io.dnd.goyo.domain.auth.dto.request.SignupRequest;
-import io.dnd.goyo.domain.auth.dto.response.LoginResponse;
 import io.dnd.goyo.domain.auth.dto.response.OAuthLoginResponse;
-import io.dnd.goyo.domain.auth.dto.response.TokenResponse;
 import io.dnd.goyo.domain.auth.dto.response.UserInfoResponse;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthProvider;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
@@ -17,6 +16,7 @@ import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import io.dnd.goyo.security.jwt.JwtTokenProvider.RefreshTokenInfo;
 import io.dnd.goyo.security.jwt.JwtTokenProvider.SignupTokenInfo;
 import java.util.List;
 import java.util.Map;
@@ -34,18 +34,21 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserStatsRepository userStatsRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenVersionService tokenVersionService;
 
     public AuthService(
             List<OAuthProvider> oauthProviderList,
             UserRepository userRepository,
             UserStatsRepository userStatsRepository,
-            JwtTokenProvider jwtTokenProvider
+            JwtTokenProvider jwtTokenProvider,
+            TokenVersionService tokenVersionService
     ) {
         this.oauthProviders = oauthProviderList.stream()
                 .collect(Collectors.toMap(OAuthProvider::getProvider, Function.identity()));
         this.userRepository = userRepository;
         this.userStatsRepository = userStatsRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenVersionService = tokenVersionService;
     }
 
     public OAuthLoginResponse oauthLogin(Provider provider, String code, String redirectUri) {
@@ -65,7 +68,7 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse signup(SignupRequest request) {
+    public AuthTokens signup(SignupRequest request) {
         SignupTokenInfo tokenInfo = jwtTokenProvider.parseSignupToken(request.signupToken());
         Provider provider = tokenInfo.provider();
         String providerId = tokenInfo.providerId();
@@ -90,25 +93,34 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         userStatsRepository.save(UserStats.of(savedUser));
 
-        return createLoginResponse(savedUser);
+        return createAuthTokens(savedUser);
     }
 
-    public TokenResponse refresh(String refreshToken) {
-        Long userId = jwtTokenProvider.parseRefreshToken(refreshToken);
+    @Transactional
+    public AuthTokens refresh(String refreshToken) {
+        RefreshTokenInfo tokenInfo = jwtTokenProvider.parseRefreshToken(refreshToken);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(tokenInfo.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         validateUserStatus(user);
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        if (tokenInfo.tokenVersion() != user.getTokenVersion()) {
+            tokenVersionService.incrementTokenVersionInNewTransaction(tokenInfo.userId());
+            throw new BusinessException(ErrorCode.TOKEN_REUSED);
+        }
 
-        return new TokenResponse(
-                newAccessToken,
-                newRefreshToken,
-                jwtTokenProvider.getAccessTokenExpiration()
-        );
+        user.incrementTokenVersion();
+
+        return createTokenPair(user);
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshTokenInfo tokenInfo = jwtTokenProvider.parseRefreshToken(refreshToken);
+        User user = userRepository.findById(tokenInfo.userId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.incrementTokenVersion();
     }
 
     private OAuthProvider getOAuthProvider(Provider provider) {
@@ -129,14 +141,19 @@ public class AuthService {
         }
     }
 
-    private OAuthLoginResponse createLoginResponseForExistingUser(User user) {
+    private AuthTokens createTokenPair(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
+        return new AuthTokens(accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiration());
+    }
+
+    private OAuthLoginResponse createLoginResponseForExistingUser(User user) {
+        AuthTokens tokens = createTokenPair(user);
 
         return OAuthLoginResponse.forExistingUser(
-                accessToken,
-                refreshToken,
-                jwtTokenProvider.getAccessTokenExpiration(),
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                tokens.expiresIn(),
                 UserInfoResponse.from(user)
         );
     }
@@ -148,14 +165,13 @@ public class AuthService {
         return OAuthLoginResponse.forNewUser(signupToken, userInfo);
     }
 
-    private LoginResponse createLoginResponse(User user) {
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+    private AuthTokens createAuthTokens(User user) {
+        AuthTokens tokens = createTokenPair(user);
 
-        return new LoginResponse(
-                accessToken,
-                refreshToken,
-                jwtTokenProvider.getAccessTokenExpiration(),
+        return new AuthTokens(
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                tokens.expiresIn(),
                 UserInfoResponse.from(user)
         );
     }

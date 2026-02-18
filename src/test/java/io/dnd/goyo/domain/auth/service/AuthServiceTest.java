@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.auth.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
@@ -10,10 +11,9 @@ import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.auth.dto.AuthTokens;
 import io.dnd.goyo.domain.auth.dto.request.SignupRequest;
-import io.dnd.goyo.domain.auth.dto.response.LoginResponse;
 import io.dnd.goyo.domain.auth.dto.response.OAuthLoginResponse;
-import io.dnd.goyo.domain.auth.dto.response.TokenResponse;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthProvider;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
 import io.dnd.goyo.domain.user.entity.User;
@@ -25,6 +25,7 @@ import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import io.dnd.goyo.security.jwt.JwtTokenProvider.RefreshTokenInfo;
 import io.dnd.goyo.security.jwt.JwtTokenProvider.SignupTokenInfo;
 import java.time.LocalDate;
 import java.util.List;
@@ -49,11 +50,14 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
+    private TokenVersionService tokenVersionService;
+
+    @Mock
     private OAuthProvider kakaoOAuthProvider;
 
     private AuthService createAuthService() {
         given(kakaoOAuthProvider.getProvider()).willReturn(Provider.KAKAO);
-        return new AuthService(List.of(kakaoOAuthProvider), userRepository, userStatsRepository, jwtTokenProvider);
+        return new AuthService(List.of(kakaoOAuthProvider), userRepository, userStatsRepository, jwtTokenProvider, tokenVersionService);
     }
 
     private User createActiveUser() {
@@ -82,7 +86,7 @@ class AuthServiceTest {
             given(userRepository.findByProviderAndProviderId(Provider.KAKAO, "kakao_123"))
                     .willReturn(Optional.of(user));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
-            given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh_token");
+            given(jwtTokenProvider.createRefreshToken(any(), anyInt())).willReturn("refresh_token");
             given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1800000L);
 
             // when
@@ -164,15 +168,15 @@ class AuthServiceTest {
             given(userRepository.existsByNicknameAndStatusNot("고요한여행자", UserStatus.DELETED)).willReturn(false);
             given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
-            given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh_token");
+            given(jwtTokenProvider.createRefreshToken(any(), anyInt())).willReturn("refresh_token");
             given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1800000L);
 
             // when
-            LoginResponse response = authService.signup(request);
+            AuthTokens result = authService.signup(request);
 
             // then
-            assertThat(response.accessToken()).isEqualTo("access_token");
-            assertThat(response.refreshToken()).isEqualTo("refresh_token");
+            assertThat(result.accessToken()).isEqualTo("access_token");
+            assertThat(result.refreshToken()).isEqualTo("refresh_token");
             verify(userRepository).save(any(User.class));
         }
 
@@ -190,14 +194,14 @@ class AuthServiceTest {
             given(userRepository.existsByNicknameAndStatusNot("고요한여행자", UserStatus.DELETED)).willReturn(false);
             given(userRepository.save(any(User.class))).willAnswer(invocation -> invocation.getArgument(0));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
-            given(jwtTokenProvider.createRefreshToken(any())).willReturn("refresh_token");
+            given(jwtTokenProvider.createRefreshToken(any(), anyInt())).willReturn("refresh_token");
             given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1800000L);
 
             // when
-            LoginResponse response = authService.signup(request);
+            AuthTokens result = authService.signup(request);
 
             // then
-            assertThat(response).isNotNull();
+            assertThat(result).isNotNull();
             verify(userRepository).save(any(User.class));
         }
 
@@ -244,24 +248,47 @@ class AuthServiceTest {
     class Refresh {
 
         @Test
-        void 정상_요청이면_새_토큰_반환() {
+        void 정상_요청이면_새_토큰_반환_및_버전_증가() {
             // given
             AuthService authService = createAuthService();
             User user = createActiveUser();
 
-            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(1L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token"))
+                    .willReturn(new RefreshTokenInfo(1L, 0));
             given(userRepository.findById(1L)).willReturn(Optional.of(user));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("new_access_token");
-            given(jwtTokenProvider.createRefreshToken(any())).willReturn("new_refresh_token");
+            given(jwtTokenProvider.createRefreshToken(any(), anyInt())).willReturn("new_refresh_token");
             given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1800000L);
 
             // when
-            TokenResponse response = authService.refresh("refresh_token");
+            AuthTokens result = authService.refresh("refresh_token");
 
             // then
-            assertThat(response.accessToken()).isEqualTo("new_access_token");
-            assertThat(response.refreshToken()).isEqualTo("new_refresh_token");
-            assertThat(response.expiresIn()).isEqualTo(1800000L);
+            assertThat(result.accessToken()).isEqualTo("new_access_token");
+            assertThat(result.refreshToken()).isEqualTo("new_refresh_token");
+            assertThat(result.expiresIn()).isEqualTo(1800000L);
+            assertThat(user.getTokenVersion()).isEqualTo(1);
+        }
+
+        @Test
+        void 토큰_버전_불일치_시_TOKEN_REUSED_예외_발생() {
+            // given
+            AuthService authService = createAuthService();
+            User user = createActiveUser();
+            Long userId = user.getId();
+            // user tokenVersion = 0, but token has version 5 (mismatch)
+
+            given(jwtTokenProvider.parseRefreshToken("reused_token"))
+                    .willReturn(new RefreshTokenInfo(1L, 5));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+            // when & then
+            assertThatThrownBy(() -> authService.refresh("reused_token"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
+
+            // tokenVersion increment should be delegated to TokenVersionService (REQUIRES_NEW)
+            verify(tokenVersionService).incrementTokenVersionInNewTransaction(1L);
         }
 
         @Test
@@ -269,7 +296,8 @@ class AuthServiceTest {
             // given
             AuthService authService = createAuthService();
 
-            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(999L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token"))
+                    .willReturn(new RefreshTokenInfo(999L, 0));
             given(userRepository.findById(999L)).willReturn(Optional.empty());
 
             // when & then
@@ -285,7 +313,8 @@ class AuthServiceTest {
             User blockedUser = org.mockito.Mockito.mock(User.class);
             given(blockedUser.getStatus()).willReturn(UserStatus.BLOCKED);
 
-            given(jwtTokenProvider.parseRefreshToken("refresh_token")).willReturn(1L);
+            given(jwtTokenProvider.parseRefreshToken("refresh_token"))
+                    .willReturn(new RefreshTokenInfo(1L, 0));
             given(userRepository.findById(1L)).willReturn(Optional.of(blockedUser));
 
             // when & then
@@ -306,6 +335,43 @@ class AuthServiceTest {
             assertThatThrownBy(() -> authService.refresh("access_token_used_as_refresh"))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_TOKEN);
+        }
+    }
+
+    @Nested
+    @DisplayName("로그아웃 시")
+    class Logout {
+
+        @Test
+        void 정상_요청이면_토큰_버전_증가() {
+            // given
+            AuthService authService = createAuthService();
+            User user = createActiveUser();
+
+            given(jwtTokenProvider.parseRefreshToken("refresh_token"))
+                    .willReturn(new RefreshTokenInfo(1L, 0));
+            given(userRepository.findById(1L)).willReturn(Optional.of(user));
+
+            // when
+            authService.logout("refresh_token");
+
+            // then
+            assertThat(user.getTokenVersion()).isEqualTo(1);
+        }
+
+        @Test
+        void 존재하지_않는_사용자면_예외_발생() {
+            // given
+            AuthService authService = createAuthService();
+
+            given(jwtTokenProvider.parseRefreshToken("refresh_token"))
+                    .willReturn(new RefreshTokenInfo(999L, 0));
+            given(userRepository.findById(999L)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> authService.logout("refresh_token"))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
     }
 }

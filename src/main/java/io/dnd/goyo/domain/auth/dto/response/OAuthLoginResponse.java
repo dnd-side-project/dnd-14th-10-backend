@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.auth.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -13,7 +14,7 @@ public record OAuthLoginResponse(
         @Schema(description = "액세스 토큰 (기존 사용자만)")
         String accessToken,
 
-        @Schema(description = "리프레시 토큰 (기존 사용자만)")
+        @JsonIgnore
         String refreshToken,
 
         @Schema(description = "액세스 토큰 만료 시간 (기존 사용자만, 밀리초)")

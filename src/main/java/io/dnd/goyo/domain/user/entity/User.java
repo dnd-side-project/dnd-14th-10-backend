@@ -78,6 +78,9 @@ public class User extends BaseEntity {
     @Column(name = "region_code")
     private Long regionCode;
 
+    @Column(nullable = false, columnDefinition = "integer default 0")
+    private int tokenVersion = 0;
+
     @Builder
     private User(
             String name,
@@ -178,6 +181,10 @@ public class User extends BaseEntity {
 
     public void updateProfileImg(String profileImg) {
         this.profileImg = profileImg;
+    }
+
+    public void incrementTokenVersion() {
+        this.tokenVersion++;
     }
 
     public void withdraw() {

@@ -3,22 +3,24 @@ package io.dnd.goyo.domain.auth.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dnd.goyo.domain.auth.dto.AuthTokens;
 import io.dnd.goyo.domain.auth.dto.request.SignupRequest;
-import io.dnd.goyo.domain.auth.dto.response.LoginResponse;
 import io.dnd.goyo.domain.auth.dto.response.OAuthLoginResponse;
-import io.dnd.goyo.domain.auth.dto.response.TokenResponse;
 import io.dnd.goyo.domain.auth.dto.response.UserInfoResponse;
 import io.dnd.goyo.domain.auth.service.AuthService;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
-import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.Provider;
+import io.dnd.goyo.security.cookie.RefreshTokenCookieUtils;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
@@ -46,6 +48,9 @@ class AuthControllerTest {
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
+    @MockitoBean
+    private RefreshTokenCookieUtils cookieUtils;
+
     @Nested
     @DisplayName("POST /api/auth/oauth/{provider}")
     class OAuthLogin {
@@ -69,7 +74,10 @@ class AuthControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isNewUser").value(false))
                     .andExpect(jsonPath("$.accessToken").value("access_token"))
+                    .andExpect(jsonPath("$.refreshToken").doesNotExist())
                     .andExpect(jsonPath("$.user.nickname").value("고요한여행자"));
+
+            verify(cookieUtils).addRefreshTokenCookie(any(), eq("refresh_token"));
         }
 
         @Test
@@ -127,11 +135,11 @@ class AuthControllerTest {
         @WithMockUser
         void 회원가입_성공_시_201_반환() throws Exception {
             // given
-            LoginResponse response = new LoginResponse(
+            AuthTokens authTokens = new AuthTokens(
                     "access_token", "refresh_token", 1800000L,
                     new UserInfoResponse(1L, "고요한여행자", null)
             );
-            given(authService.signup(any(SignupRequest.class))).willReturn(response);
+            given(authService.signup(any(SignupRequest.class))).willReturn(authTokens);
             String request = objectMapper.writeValueAsString(createValidSignupRequest());
 
             // when & then
@@ -142,6 +150,8 @@ class AuthControllerTest {
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.accessToken").value("access_token"))
                     .andExpect(jsonPath("$.user.nickname").value("고요한여행자"));
+
+            verify(cookieUtils).addRefreshTokenCookie(any(), eq("refresh_token"));
         }
 
         @Test
@@ -215,35 +225,69 @@ class AuthControllerTest {
 
         @Test
         @WithMockUser
-        void 토큰_갱신_성공_시_200_반환() throws Exception {
+        void 쿠키_기반_토큰_갱신_성공_시_200_반환() throws Exception {
             // given
-            TokenResponse response = new TokenResponse("new_access_token", "new_refresh_token", 1800000L);
-            given(authService.refresh(any(String.class))).willReturn(response);
-            String request = objectMapper.writeValueAsString(Map.of("refreshToken", "refresh_token"));
+            AuthTokens authTokens = new AuthTokens("new_access_token", "new_refresh_token", 1800000L);
+            given(authService.refresh("refresh_token")).willReturn(authTokens);
+            given(cookieUtils.extractRefreshToken(any())).willReturn("refresh_token");
 
             // when & then
             mockMvc.perform(post("/api/auth/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(request)
+                            .cookie(new Cookie("refresh_token", "refresh_token"))
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.accessToken").value("new_access_token"))
-                    .andExpect(jsonPath("$.refreshToken").value("new_refresh_token"));
+                    .andExpect(jsonPath("$.refreshToken").doesNotExist());
+
+            verify(cookieUtils).addRefreshTokenCookie(any(), eq("new_refresh_token"));
         }
 
         @Test
         @WithMockUser
-        void refreshToken_누락_시_400_반환() throws Exception {
+        void 쿠키_없으면_401_반환() throws Exception {
             // given
-            String request = objectMapper.writeValueAsString(Map.of());
+            given(cookieUtils.extractRefreshToken(any())).willReturn(null);
 
             // when & then
             mockMvc.perform(post("/api/auth/refresh")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(request)
                             .with(csrf()))
-                    .andExpect(status().isBadRequest())
-                    .andExpect(jsonPath("$.errors[0].field").value("refreshToken"));
+                    .andExpect(status().isUnauthorized());
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/auth/logout")
+    class Logout {
+
+        @Test
+        @WithMockUser
+        void 로그아웃_성공_시_204_반환() throws Exception {
+            // given
+            given(cookieUtils.extractRefreshToken(any())).willReturn("refresh_token");
+
+            // when & then
+            mockMvc.perform(post("/api/auth/logout")
+                            .cookie(new Cookie("refresh_token", "refresh_token"))
+                            .with(csrf()))
+                    .andExpect(status().isNoContent());
+
+            verify(authService).logout("refresh_token");
+            verify(cookieUtils).clearRefreshTokenCookie(any());
+        }
+
+        @Test
+        @WithMockUser
+        void 쿠키_없어도_로그아웃_성공() throws Exception {
+            // given
+            given(cookieUtils.extractRefreshToken(any())).willReturn(null);
+
+            // when & then
+            mockMvc.perform(post("/api/auth/logout")
+                            .with(csrf()))
+                    .andExpect(status().isNoContent());
+
+            verify(authService, never()).logout(any());
+            verify(cookieUtils).clearRefreshTokenCookie(any());
         }
     }
 }
