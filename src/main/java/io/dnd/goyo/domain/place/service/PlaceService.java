@@ -13,6 +13,7 @@ import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.badge.enums.ActivityType;
 import io.dnd.goyo.domain.badge.event.ActivityEvent;
+import io.dnd.goyo.domain.history.event.PlaceViewedEvent;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
@@ -64,6 +65,10 @@ public class PlaceService {
         boolean isWished = false;
         if (userId != null) {
             isWished = wishlistReader.isWished(userId, placeId);
+        }
+
+        if (userId != null) {
+            eventPublisher.publishEvent(new PlaceViewedEvent(userId, placeId));
         }
 
         return PlaceDetailResponse.from(place, isWished, fileStorage);
