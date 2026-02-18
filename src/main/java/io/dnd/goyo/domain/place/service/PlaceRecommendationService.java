@@ -2,9 +2,15 @@ package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
+import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.RegionCode;
+import io.dnd.goyo.domain.place.enums.CrowdStatus;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
+import io.dnd.goyo.domain.place.enums.RandomThemeType;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagReader;
 import io.dnd.goyo.domain.review.service.ReviewReader;
@@ -19,6 +25,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +46,14 @@ public class PlaceRecommendationService {
     private static final double USER_TAG_WEIGHT = 0.6;
     private static final double GROUP_TAG_WEIGHT = 0.4;
     private static final double DISTANCE_DECAY_METERS = 3000.0;
+
+    private static final double SCORE_MAX = 100.0;
+    private static final double MOOD_SILENT_MIN = 100.0 * (Mood.values().length - 1) / Mood.values().length;
+    private static final double SPACE_LARGE_MIN = 100.0 * (SpaceSize.values().length - 1) / SpaceSize.values().length;
+    private static final double OUTLET_MANY_MIN = 100.0 * (OutletScore.values().length - 1) / OutletScore.values().length;
+    private static final double CROWD_RELAX_MAX = 100.0 / CrowdStatus.values().length;
+
+    private static final Random RANDOM = new Random();
 
     private final PlaceRepository placeRepository;
     private final WishlistReader wishlistReader;
@@ -126,6 +141,68 @@ public class PlaceRecommendationService {
         Set<Long> wishedSet = findWishedPlaceIds(userId, scoredPlaceIds);
 
         return createPlaceSummaries(scoredPlaceIds, candidatePlaceMap, wishedSet);
+    }
+
+    public ThemeRecommendationResponse getRandomThemePlaces(
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        RandomThemeType theme = RandomThemeType.pick(RANDOM);
+        List<Long> placeIds = findThemePlaceIds(theme, longitude, latitude, radius, category);
+
+        if (placeIds.isEmpty()) {
+            return new ThemeRecommendationResponse(theme.name(), theme.getThemeValue(), List.of());
+        }
+
+        Map<Long, Place> placeMap = findPlacesMap(placeIds);
+        List<PlaceSummaryResponse> places = createPlaceSummaries(placeIds, placeMap, Set.of());
+
+        return new ThemeRecommendationResponse(theme.name(), theme.getThemeValue(), places);
+    }
+
+    private List<Long> findThemePlaceIds(
+            RandomThemeType theme,
+            double longitude,
+            double latitude,
+            double radius,
+            PlaceCategory category
+    ) {
+        String categoryName = category.name();
+        return switch (theme) {
+            case MOOD -> placeRepository.findByMoodScore(longitude, latitude, radius, categoryName, MOOD_SILENT_MIN, SCORE_MAX, LIMIT);
+            case SPACE_SIZE -> placeRepository.findBySpaceSizeScore(longitude, latitude, radius, categoryName, SPACE_LARGE_MIN, SCORE_MAX, LIMIT);
+            case OUTLET -> placeRepository.findByOutletScore(longitude, latitude, radius, categoryName, OUTLET_MANY_MIN, SCORE_MAX, LIMIT);
+            case CROWD -> placeRepository.findByCrowdScore(longitude, latitude, radius, categoryName, 0.0, CROWD_RELAX_MAX, LIMIT);
+        };
+    }
+
+    private List<Long> findNewPlaceIds(
+            double longitude,
+            double latitude,
+            long regionCode,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        return placeRepository.findNewPlaceIdsByRegionCode(
+                longitude, latitude, radius, regionCode, category.name(), RECENT_DAYS, LIMIT
+        );
+    }
+
+    private List<Long> findPopularPlaceIds(
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        return placeRepository.findPopularPlaceIds(
+                longitude, latitude, radius, category.name(),
+                BAYESIAN_MIN_REVIEWS, BAYESIAN_PRIOR_RATING, LIMIT
+        );
     }
 
     private List<Long> findCandidatePlaceIds(
@@ -224,36 +301,8 @@ public class PlaceRecommendationService {
         return (userScore * USER_TAG_WEIGHT + groupScore * GROUP_TAG_WEIGHT) * distanceDecay;
     }
 
-    private List<Long> findPopularPlaceIds(
-            double longitude,
-            double latitude,
-            PlaceCategory category,
-            Integer radiusMeters
-    ) {
-        double radius = DEFAULT_RADIUS_METERS;
-        if (radiusMeters != null) {
-            radius = radiusMeters;
-        }
-        return placeRepository.findPopularPlaceIds(
-                longitude, latitude, radius, category.name(),
-                BAYESIAN_MIN_REVIEWS, BAYESIAN_PRIOR_RATING, LIMIT
-        );
-    }
-
-    private List<Long> findNewPlaceIds(
-            double longitude,
-            double latitude,
-            long regionCode,
-            PlaceCategory category,
-            Integer radiusMeters
-    ) {
-        double radius = DEFAULT_RADIUS_METERS;
-        if (radiusMeters != null) {
-            radius = radiusMeters;
-        }
-        return placeRepository.findNewPlaceIdsByRegionCode(
-                longitude, latitude, radius, regionCode, category.name(), RECENT_DAYS, LIMIT
-        );
+    private double resolveRadius(Integer radiusMeters) {
+        return radiusMeters != null ? radiusMeters : DEFAULT_RADIUS_METERS;
     }
 
     private Map<Long, Place> findPlacesMap(List<Long> placeIds) {
@@ -275,6 +324,9 @@ public class PlaceRecommendationService {
     }
 
     private Set<Long> findWishedPlaceIds(Long userId, List<Long> placeIds) {
+        if (userId == null) {
+            return Set.of();
+        }
         return new HashSet<>(wishlistReader.getWishedPlaceIds(userId, placeIds));
     }
 

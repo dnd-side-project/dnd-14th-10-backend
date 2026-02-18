@@ -33,6 +33,11 @@ public class SecurityConfig {
                     .requestMatchers("/api/actuator/**").permitAll()
                     .requestMatchers("/api/auth/**").permitAll()
                     .requestMatchers("/test.html", "/static/**").permitAll()
+                    .requestMatchers(
+                            "/api/places/recommendations/popular",
+                            "/api/places/recommendations/new",
+                            "/api/places/recommendations/random-theme"
+                    ).permitAll()
                     .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

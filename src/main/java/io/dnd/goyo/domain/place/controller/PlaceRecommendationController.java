@@ -1,6 +1,7 @@
 package io.dnd.goyo.domain.place.controller;
 
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
+import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.service.PlaceRecommendationService;
 import io.dnd.goyo.security.CustomUserDetails;
@@ -36,8 +37,9 @@ public class PlaceRecommendationController {
             @RequestParam PlaceCategory category,
             @RequestParam(required = false) Integer radiusMeters
     ) {
+        Long userId = getUserId(userDetails);
         List<PlaceSummaryResponse> places = placeRecommendationService.getNewPlaces(
-                userDetails.userId(), longitude, latitude, regionCode, category, radiusMeters
+                userId, longitude, latitude, regionCode, category, radiusMeters
         );
         return ResponseEntity.ok(places);
     }
@@ -51,8 +53,9 @@ public class PlaceRecommendationController {
             @RequestParam double longitude,
             @RequestParam double latitude
     ) {
+        Long userId = getUserId(userDetails);
         List<PlaceSummaryResponse> places = placeRecommendationService.getSimilarPlaces(
-                userDetails.userId(), regionCode, category, longitude, latitude
+                userId, regionCode, category, longitude, latitude
         );
         return ResponseEntity.ok(places);
     }
@@ -66,9 +69,28 @@ public class PlaceRecommendationController {
             @RequestParam PlaceCategory category,
             @RequestParam(required = false) Integer radiusMeters
     ) {
+        Long userId = getUserId(userDetails);
         List<PlaceSummaryResponse> places = placeRecommendationService.getPopularPlaces(
-                userDetails.userId(), longitude, latitude, category, radiusMeters
+                userId, longitude, latitude, category, radiusMeters
         );
         return ResponseEntity.ok(places);
+    }
+
+    @Operation(summary = "랜덤 태그 추천(4개)", description = "비회원을 위한 랜덤 태그 기반 공간 추천입니다.")
+    @GetMapping("/random-theme")
+    public ResponseEntity<ThemeRecommendationResponse> getRandomThemePlaces(
+            @RequestParam double longitude,
+            @RequestParam double latitude,
+            @RequestParam PlaceCategory category,
+            @RequestParam(required = false) Integer radiusMeters
+    ) {
+        ThemeRecommendationResponse response = placeRecommendationService.getRandomThemePlaces(
+                longitude, latitude, category, radiusMeters
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    private Long getUserId(CustomUserDetails userDetails) {
+        return userDetails != null ? userDetails.userId() : null;
     }
 }
