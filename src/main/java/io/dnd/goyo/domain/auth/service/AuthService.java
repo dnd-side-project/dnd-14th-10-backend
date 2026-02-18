@@ -2,10 +2,9 @@ package io.dnd.goyo.domain.auth.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.auth.dto.AuthTokens;
 import io.dnd.goyo.domain.auth.dto.request.SignupRequest;
-import io.dnd.goyo.domain.auth.dto.response.LoginResponse;
 import io.dnd.goyo.domain.auth.dto.response.OAuthLoginResponse;
-import io.dnd.goyo.domain.auth.dto.response.TokenResponse;
 import io.dnd.goyo.domain.auth.dto.response.UserInfoResponse;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthProvider;
 import io.dnd.goyo.domain.auth.service.oauth.OAuthUserInfo;
@@ -17,6 +16,7 @@ import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import io.dnd.goyo.security.jwt.JwtTokenProvider.RefreshTokenInfo;
 import io.dnd.goyo.security.jwt.JwtTokenProvider.SignupTokenInfo;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +65,7 @@ public class AuthService {
     }
 
     @Transactional
-    public LoginResponse signup(SignupRequest request) {
+    public AuthTokens signup(SignupRequest request) {
         SignupTokenInfo tokenInfo = jwtTokenProvider.parseSignupToken(request.signupToken());
         Provider provider = tokenInfo.provider();
         String providerId = tokenInfo.providerId();
@@ -90,25 +90,37 @@ public class AuthService {
         User savedUser = userRepository.save(user);
         userStatsRepository.save(UserStats.of(savedUser));
 
-        return createLoginResponse(savedUser);
+        return createAuthTokens(savedUser);
     }
 
-    public TokenResponse refresh(String refreshToken) {
-        Long userId = jwtTokenProvider.parseRefreshToken(refreshToken);
+    @Transactional
+    public AuthTokens refresh(String refreshToken) {
+        RefreshTokenInfo tokenInfo = jwtTokenProvider.parseRefreshToken(refreshToken);
 
-        User user = userRepository.findById(userId)
+        User user = userRepository.findById(tokenInfo.userId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         validateUserStatus(user);
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        if (tokenInfo.tokenVersion() != user.getTokenVersion()) {
+            user.incrementTokenVersion();
+            throw new BusinessException(ErrorCode.TOKEN_REUSED);
+        }
 
-        return new TokenResponse(
-                newAccessToken,
-                newRefreshToken,
-                jwtTokenProvider.getAccessTokenExpiration()
-        );
+        user.incrementTokenVersion();
+
+        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
+
+        return new AuthTokens(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiration());
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        RefreshTokenInfo tokenInfo = jwtTokenProvider.parseRefreshToken(refreshToken);
+        User user = userRepository.findById(tokenInfo.userId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+        user.incrementTokenVersion();
     }
 
     private OAuthProvider getOAuthProvider(Provider provider) {
@@ -131,7 +143,7 @@ public class AuthService {
 
     private OAuthLoginResponse createLoginResponseForExistingUser(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
 
         return OAuthLoginResponse.forExistingUser(
                 accessToken,
@@ -148,11 +160,11 @@ public class AuthService {
         return OAuthLoginResponse.forNewUser(signupToken, userInfo);
     }
 
-    private LoginResponse createLoginResponse(User user) {
+    private AuthTokens createAuthTokens(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
 
-        return new LoginResponse(
+        return new AuthTokens(
                 accessToken,
                 refreshToken,
                 jwtTokenProvider.getAccessTokenExpiration(),

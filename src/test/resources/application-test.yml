@@ -8,6 +8,12 @@ spring:
         format_sql: true
     open-in-view: false
 
+cookie:
+  domain: localhost
+  secure: false
+  same-site: Lax
+  max-age: 604800
+
 minio:
   endpoint: http://localhost:9000
   access-key: test
