@@ -27,6 +27,12 @@ spring:
         show_sql: true
     open-in-view: false
 
+cookie:
+  domain: ${COOKIE_DOMAIN:gojak.co.kr}
+  secure: true
+  same-site: Lax
+  max-age: 604800
+
 minio:
   endpoint: ${MINIO_ENDPOINT}
   access-key: ${MINIO_ACCESS_KEY}

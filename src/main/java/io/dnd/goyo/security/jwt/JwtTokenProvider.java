@@ -46,26 +46,34 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createRefreshToken(Long userId) {
+    public String createRefreshToken(Long userId, int tokenVersion) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtProperties.refreshTokenExpiration());
 
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("type", "refresh")
+                .claim("ver", tokenVersion)
                 .issuedAt(now)
                 .expiration(expiry)
                 .signWith(secretKey)
                 .compact();
     }
 
-    public Long parseRefreshToken(String token) {
+    public record RefreshTokenInfo(Long userId, int tokenVersion) {}
+
+    public RefreshTokenInfo parseRefreshToken(String token) {
         Claims claims = getClaims(token);
         String type = claims.get("type", String.class);
         if (!"refresh".equals(type)) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
-        return Long.parseLong(claims.getSubject());
+        Long userId = Long.parseLong(claims.getSubject());
+        Integer version = claims.get("ver", Integer.class);
+        if (version == null) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
+        return new RefreshTokenInfo(userId, version);
     }
 
     public String createSignupToken(Provider provider, String providerId) {

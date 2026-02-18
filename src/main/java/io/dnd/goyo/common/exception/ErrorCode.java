@@ -23,6 +23,7 @@ public enum ErrorCode {
     DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "AUTH_007", "이미 사용중인 닉네임입니다"),
     INVALID_SIGNUP_TOKEN(HttpStatus.BAD_REQUEST, "AUTH_008", "유효하지 않은 회원가입 토큰입니다"),
     INVALID_REDIRECT_URI(HttpStatus.BAD_REQUEST, "AUTH_009", "허용되지 않은 리다이렉트 URI입니다"),
+    TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "AUTH_010", "재사용된 토큰입니다"),
 
     // User
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_001", "사용자를 찾을 수 없습니다"),
