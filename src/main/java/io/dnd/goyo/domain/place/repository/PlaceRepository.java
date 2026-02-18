@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PlaceRepository extends JpaRepository<Place, Long> {
+public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
 
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +
@@ -73,122 +73,6 @@ public interface PlaceRepository extends JpaRepository<Place, Long> {
             @Param("category") String category,
             @Param("minReviews") int minReviews,
             @Param("priorRating") double priorRating,
-            @Param("limit") int limit
-    );
-
-    @Query(value = """
-            SELECT p.id FROM places p
-            JOIN place_details pd ON pd.place_id = p.id
-            WHERE ST_DWithin(
-                CAST(p.location AS geography),
-                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
-                :radiusMeters
-            )
-            AND p.category = :category
-            AND p.status = 'ACTIVE'
-            AND (pd.total_quiet_score::float / (pd.review_count + 1)) >= :minScore
-            AND (pd.total_quiet_score::float / (pd.review_count + 1)) <= :maxScore
-            ORDER BY (pd.wish_count + pd.review_count) DESC,
-                ST_Distance(
-                    CAST(p.location AS geography),
-                    CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
-                ) ASC
-            LIMIT :limit
-            """, nativeQuery = true)
-    List<Long> findByMoodScore(
-            @Param("longitude") double longitude,
-            @Param("latitude") double latitude,
-            @Param("radiusMeters") double radiusMeters,
-            @Param("category") String category,
-            @Param("minScore") double minScore,
-            @Param("maxScore") double maxScore,
-            @Param("limit") int limit
-    );
-
-    @Query(value = """
-            SELECT p.id FROM places p
-            JOIN place_details pd ON pd.place_id = p.id
-            WHERE ST_DWithin(
-                CAST(p.location AS geography),
-                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
-                :radiusMeters
-            )
-            AND p.category = :category
-            AND p.status = 'ACTIVE'
-            AND (pd.total_space_size_score::float / (pd.review_count + 1)) >= :minScore
-            AND (pd.total_space_size_score::float / (pd.review_count + 1)) <= :maxScore
-            ORDER BY (pd.wish_count + pd.review_count) DESC,
-                ST_Distance(
-                    CAST(p.location AS geography),
-                    CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
-                ) ASC
-            LIMIT :limit
-            """, nativeQuery = true)
-    List<Long> findBySpaceSizeScore(
-            @Param("longitude") double longitude,
-            @Param("latitude") double latitude,
-            @Param("radiusMeters") double radiusMeters,
-            @Param("category") String category,
-            @Param("minScore") double minScore,
-            @Param("maxScore") double maxScore,
-            @Param("limit") int limit
-    );
-
-    @Query(value = """
-            SELECT p.id FROM places p
-            JOIN place_details pd ON pd.place_id = p.id
-            WHERE ST_DWithin(
-                CAST(p.location AS geography),
-                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
-                :radiusMeters
-            )
-            AND p.category = :category
-            AND p.status = 'ACTIVE'
-            AND (pd.total_outlet_score::float / (pd.review_count + 1)) >= :minScore
-            AND (pd.total_outlet_score::float / (pd.review_count + 1)) <= :maxScore
-            ORDER BY (pd.wish_count + pd.review_count) DESC,
-                ST_Distance(
-                    CAST(p.location AS geography),
-                    CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
-                ) ASC
-            LIMIT :limit
-            """, nativeQuery = true)
-    List<Long> findByOutletScore(
-            @Param("longitude") double longitude,
-            @Param("latitude") double latitude,
-            @Param("radiusMeters") double radiusMeters,
-            @Param("category") String category,
-            @Param("minScore") double minScore,
-            @Param("maxScore") double maxScore,
-            @Param("limit") int limit
-    );
-
-    @Query(value = """
-            SELECT p.id FROM places p
-            JOIN place_details pd ON pd.place_id = p.id
-            WHERE ST_DWithin(
-                CAST(p.location AS geography),
-                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
-                :radiusMeters
-            )
-            AND p.category = :category
-            AND p.status = 'ACTIVE'
-            AND (pd.total_crowd_score::float / (pd.review_count + 1)) >= :minScore
-            AND (pd.total_crowd_score::float / (pd.review_count + 1)) < :maxScore
-            ORDER BY (pd.wish_count + pd.review_count) DESC,
-                ST_Distance(
-                    CAST(p.location AS geography),
-                    CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
-                ) ASC
-            LIMIT :limit
-            """, nativeQuery = true)
-    List<Long> findByCrowdScore(
-            @Param("longitude") double longitude,
-            @Param("latitude") double latitude,
-            @Param("radiusMeters") double radiusMeters,
-            @Param("category") String category,
-            @Param("minScore") double minScore,
-            @Param("maxScore") double maxScore,
             @Param("limit") int limit
     );
 }

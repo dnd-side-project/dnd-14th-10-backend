@@ -391,13 +391,7 @@ class PlaceRecommendationServiceTest {
         Place place = createPlace(10L, "카페A", 126.9769, 37.5759);
         List<Long> placeIds = List.of(10L);
 
-        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(placeIds);
-        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(placeIds);
-        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(placeIds);
-        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+        lenient().when(placeRepository.findByThemeScore(anyDouble(), anyDouble(), anyDouble(), any(), any(), anyDouble(), anyDouble(), anyInt()))
                 .thenReturn(placeIds);
         given(placeRepository.findAllByIdWithDetails(placeIds)).willReturn(List.of(place));
 
@@ -416,13 +410,7 @@ class PlaceRecommendationServiceTest {
     @Test
     void 랜덤_테마_추천_결과_없으면_빈_places_반환() {
         // given
-        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+        lenient().when(placeRepository.findByThemeScore(anyDouble(), anyDouble(), anyDouble(), any(), any(), anyDouble(), anyDouble(), anyInt()))
                 .thenReturn(List.of());
 
         // when
@@ -433,27 +421,6 @@ class PlaceRecommendationServiceTest {
         // then
         assertThat(result.themeType()).isNotNull();
         assertThat(result.themeValue()).isNotNull();
-        assertThat(result.places()).isEmpty();
-    }
-
-    @Test
-    void 랜덤_테마_커스텀_반경_적용() {
-        // given
-        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
-                .thenReturn(List.of());
-
-        // when
-        ThemeRecommendationResponse result = placeRecommendationService.getRandomThemePlaces(
-                126.978, 37.566, PlaceCategory.CAFE, 5000
-        );
-
-        // then
         assertThat(result.places()).isEmpty();
     }
 

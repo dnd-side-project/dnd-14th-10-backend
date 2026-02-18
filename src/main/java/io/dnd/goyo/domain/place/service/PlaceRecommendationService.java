@@ -5,12 +5,8 @@ import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.RegionCode;
-import io.dnd.goyo.domain.place.enums.CrowdStatus;
-import io.dnd.goyo.domain.place.enums.Mood;
-import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.RandomThemeType;
-import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagReader;
 import io.dnd.goyo.domain.review.service.ReviewReader;
@@ -46,12 +42,6 @@ public class PlaceRecommendationService {
     private static final double USER_TAG_WEIGHT = 0.6;
     private static final double GROUP_TAG_WEIGHT = 0.4;
     private static final double DISTANCE_DECAY_METERS = 3000.0;
-
-    private static final double SCORE_MAX = 100.0;
-    private static final double MOOD_SILENT_MIN = 100.0 * (Mood.values().length - 1) / Mood.values().length;
-    private static final double SPACE_LARGE_MIN = 100.0 * (SpaceSize.values().length - 1) / SpaceSize.values().length;
-    private static final double OUTLET_MANY_MIN = 100.0 * (OutletScore.values().length - 1) / OutletScore.values().length;
-    private static final double CROWD_RELAX_MAX = 100.0 / CrowdStatus.values().length;
 
     private static final Random RANDOM = new Random();
 
@@ -170,13 +160,10 @@ public class PlaceRecommendationService {
             double radius,
             PlaceCategory category
     ) {
-        String categoryName = category.name();
-        return switch (theme) {
-            case MOOD -> placeRepository.findByMoodScore(longitude, latitude, radius, categoryName, MOOD_SILENT_MIN, SCORE_MAX, LIMIT);
-            case SPACE_SIZE -> placeRepository.findBySpaceSizeScore(longitude, latitude, radius, categoryName, SPACE_LARGE_MIN, SCORE_MAX, LIMIT);
-            case OUTLET -> placeRepository.findByOutletScore(longitude, latitude, radius, categoryName, OUTLET_MANY_MIN, SCORE_MAX, LIMIT);
-            case CROWD -> placeRepository.findByCrowdScore(longitude, latitude, radius, categoryName, 0.0, CROWD_RELAX_MAX, LIMIT);
-        };
+        return placeRepository.findByThemeScore(
+                longitude, latitude, radius, category.name(),
+                theme.getScoreColumn(), theme.getMinScore(), theme.getMaxScore(), LIMIT
+        );
     }
 
     private List<Long> findNewPlaceIds(
