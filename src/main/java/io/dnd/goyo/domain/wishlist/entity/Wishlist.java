@@ -58,7 +58,7 @@ public class Wishlist extends BaseEntity {
 
     private static void validatePlace(Place place) {
         if (place == null) {
-            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "장소 정보가 누락되었습니다.");
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "공간 정보가 누락되었습니다.");
         }
     }
 }

@@ -33,7 +33,7 @@ public class WishlistController {
 
     private final WishlistService wishlistService;
 
-    @Operation(summary = "찜 추가", description = "장소를 찜 목록에 추가합니다.")
+    @Operation(summary = "찜 추가", description = "공간을 찜 목록에 추가합니다.")
     @PostMapping("/wishlists")
     public ResponseEntity<WishlistAddResponse> addWishlist(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -52,7 +52,7 @@ public class WishlistController {
         return ResponseEntity.ok(wishlistService.getMyWishlists(userDetails.userId(), pageable));
     }
 
-    @Operation(summary = "찜 삭제", description = "장소를 찜 목록에서 삭제합니다.")
+    @Operation(summary = "찜 삭제", description = "공간을 찜 목록에서 삭제합니다.")
     @DeleteMapping("/wishlists/places/{placeId}")
     public ResponseEntity<Void> removeWishlist(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -62,7 +62,7 @@ public class WishlistController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "장소 찜 수 조회", description = "특정 장소의 찜 수를 조회합니다.")
+    @Operation(summary = "공간 찜 수 조회", description = "특정 공간의 찜 수를 조회합니다.")
     @GetMapping("/places/{placeId}/wish-count")
     public ResponseEntity<WishCountResponse> getWishCount(@PathVariable Long placeId) {
         return ResponseEntity.ok(wishlistService.getWishCount(placeId));

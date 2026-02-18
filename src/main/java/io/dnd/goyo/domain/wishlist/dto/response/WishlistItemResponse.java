@@ -13,9 +13,9 @@ import java.time.LocalDateTime;
 public record WishlistItemResponse(
         @Schema(description = "찜 ID", example = "1")
         Long wishlistId,
-        @Schema(description = "장소 ID", example = "10")
+        @Schema(description = "공간 ID", example = "10")
         Long placeId,
-        @Schema(description = "장소 이름", example = "고작 아지트")
+        @Schema(description = "공간 이름", example = "고작 아지트")
         String placeName,
         @Schema(description = "카테고리", example = "CAFE")
         PlaceCategory category,

@@ -39,8 +39,8 @@ public enum ErrorCode {
     BADGE_NOT_FOUND(HttpStatus.NOT_FOUND, "BADGE_001", "뱃지를 찾을 수 없습니다"),
 
     // Wishlist
-    WISHLIST_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_001", "이미 찜한 장소입니다"),
-    WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "WISHLIST_002", "찜 목록에 없는 장소입니다");
+    WISHLIST_ALREADY_EXISTS(HttpStatus.CONFLICT, "WISHLIST_001", "이미 찜한 공간입니다"),
+    WISHLIST_NOT_FOUND(HttpStatus.NOT_FOUND, "WISHLIST_002", "찜 목록에 없는 공간입니다");
 
     private final HttpStatus status;
     private final String code;

@@ -99,7 +99,7 @@ class WishlistServiceTest {
         }
 
         @Test
-        void 존재하지_않는_장소_찜_시_예외() {
+        void 존재하지_않는_공간_찜_시_예외() {
             // given
             Long userId = 1L;
             Long placeId = 999L;
