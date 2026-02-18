@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.auth.controller;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -285,6 +286,7 @@ class AuthControllerTest {
                             .with(csrf()))
                     .andExpect(status().isNoContent());
 
+            verify(authService, never()).logout(any());
             verify(cookieUtils).clearRefreshTokenCookie(any());
         }
     }

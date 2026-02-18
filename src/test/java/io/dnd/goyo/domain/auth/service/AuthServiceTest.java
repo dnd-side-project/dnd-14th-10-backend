@@ -50,11 +50,14 @@ class AuthServiceTest {
     private JwtTokenProvider jwtTokenProvider;
 
     @Mock
+    private TokenVersionService tokenVersionService;
+
+    @Mock
     private OAuthProvider kakaoOAuthProvider;
 
     private AuthService createAuthService() {
         given(kakaoOAuthProvider.getProvider()).willReturn(Provider.KAKAO);
-        return new AuthService(List.of(kakaoOAuthProvider), userRepository, userStatsRepository, jwtTokenProvider);
+        return new AuthService(List.of(kakaoOAuthProvider), userRepository, userStatsRepository, jwtTokenProvider, tokenVersionService);
     }
 
     private User createActiveUser() {
@@ -272,6 +275,7 @@ class AuthServiceTest {
             // given
             AuthService authService = createAuthService();
             User user = createActiveUser();
+            Long userId = user.getId();
             // user tokenVersion = 0, but token has version 5 (mismatch)
 
             given(jwtTokenProvider.parseRefreshToken("reused_token"))
@@ -283,8 +287,8 @@ class AuthServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.TOKEN_REUSED);
 
-            // tokenVersion should have been incremented to invalidate all tokens
-            assertThat(user.getTokenVersion()).isEqualTo(1);
+            // tokenVersion increment should be delegated to TokenVersionService (REQUIRES_NEW)
+            verify(tokenVersionService).incrementTokenVersionInNewTransaction(1L);
         }
 
         @Test

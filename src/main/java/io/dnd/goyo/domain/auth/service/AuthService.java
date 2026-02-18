@@ -34,18 +34,21 @@ public class AuthService {
     private final UserRepository userRepository;
     private final UserStatsRepository userStatsRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final TokenVersionService tokenVersionService;
 
     public AuthService(
             List<OAuthProvider> oauthProviderList,
             UserRepository userRepository,
             UserStatsRepository userStatsRepository,
-            JwtTokenProvider jwtTokenProvider
+            JwtTokenProvider jwtTokenProvider,
+            TokenVersionService tokenVersionService
     ) {
         this.oauthProviders = oauthProviderList.stream()
                 .collect(Collectors.toMap(OAuthProvider::getProvider, Function.identity()));
         this.userRepository = userRepository;
         this.userStatsRepository = userStatsRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.tokenVersionService = tokenVersionService;
     }
 
     public OAuthLoginResponse oauthLogin(Provider provider, String code, String redirectUri) {
@@ -103,16 +106,13 @@ public class AuthService {
         validateUserStatus(user);
 
         if (tokenInfo.tokenVersion() != user.getTokenVersion()) {
-            user.incrementTokenVersion();
+            tokenVersionService.incrementTokenVersionInNewTransaction(tokenInfo.userId());
             throw new BusinessException(ErrorCode.TOKEN_REUSED);
         }
 
         user.incrementTokenVersion();
 
-        String newAccessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String newRefreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
-
-        return new AuthTokens(newAccessToken, newRefreshToken, jwtTokenProvider.getAccessTokenExpiration());
+        return createTokenPair(user);
     }
 
     @Transactional
@@ -141,14 +141,19 @@ public class AuthService {
         }
     }
 
-    private OAuthLoginResponse createLoginResponseForExistingUser(User user) {
+    private AuthTokens createTokenPair(User user) {
         String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
         String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
+        return new AuthTokens(accessToken, refreshToken, jwtTokenProvider.getAccessTokenExpiration());
+    }
+
+    private OAuthLoginResponse createLoginResponseForExistingUser(User user) {
+        AuthTokens tokens = createTokenPair(user);
 
         return OAuthLoginResponse.forExistingUser(
-                accessToken,
-                refreshToken,
-                jwtTokenProvider.getAccessTokenExpiration(),
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                tokens.expiresIn(),
                 UserInfoResponse.from(user)
         );
     }
@@ -161,13 +166,12 @@ public class AuthService {
     }
 
     private AuthTokens createAuthTokens(User user) {
-        String accessToken = jwtTokenProvider.createAccessToken(user.getId(), user.getRole());
-        String refreshToken = jwtTokenProvider.createRefreshToken(user.getId(), user.getTokenVersion());
+        AuthTokens tokens = createTokenPair(user);
 
         return new AuthTokens(
-                accessToken,
-                refreshToken,
-                jwtTokenProvider.getAccessTokenExpiration(),
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                tokens.expiresIn(),
                 UserInfoResponse.from(user)
         );
     }

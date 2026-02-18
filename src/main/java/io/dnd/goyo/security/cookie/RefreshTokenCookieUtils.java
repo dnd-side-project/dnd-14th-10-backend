@@ -18,27 +18,24 @@ public class RefreshTokenCookieUtils {
     private final CookieProperties properties;
 
     public void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, refreshToken)
-                .httpOnly(true)
-                .secure(properties.secure())
-                .sameSite(properties.sameSite())
-                .path(COOKIE_PATH)
-                .maxAge(properties.maxAge())
-                .domain(properties.domain())
-                .build();
+        ResponseCookie cookie = buildCookie(refreshToken, properties.maxAge());
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public void clearRefreshTokenCookie(HttpServletResponse response) {
-        ResponseCookie cookie = ResponseCookie.from(COOKIE_NAME, "")
+        ResponseCookie cookie = buildCookie("", 0);
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
+    private ResponseCookie buildCookie(String value, long maxAge) {
+        return ResponseCookie.from(COOKIE_NAME, value)
                 .httpOnly(true)
                 .secure(properties.secure())
                 .sameSite(properties.sameSite())
                 .path(COOKIE_PATH)
-                .maxAge(0)
+                .maxAge(maxAge)
                 .domain(properties.domain())
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
     public String extractRefreshToken(HttpServletRequest request) {

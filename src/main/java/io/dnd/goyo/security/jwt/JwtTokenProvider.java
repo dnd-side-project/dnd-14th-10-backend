@@ -69,7 +69,10 @@ public class JwtTokenProvider {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
         }
         Long userId = Long.parseLong(claims.getSubject());
-        int version = claims.get("ver", Integer.class);
+        Integer version = claims.get("ver", Integer.class);
+        if (version == null) {
+            throw new BusinessException(ErrorCode.INVALID_TOKEN);
+        }
         return new RefreshTokenInfo(userId, version);
     }
 

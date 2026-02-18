@@ -78,7 +78,7 @@ public class User extends BaseEntity {
     @Column(name = "region_code")
     private Long regionCode;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "integer default 0")
     private int tokenVersion = 0;
 
     @Builder
@@ -114,7 +114,6 @@ public class User extends BaseEntity {
         this.status = UserStatus.ACTIVE;
         this.locationConsent = locationConsent;
         this.regionCode = regionCode;
-        this.tokenVersion = 0;
     }
 
     private static final int NAME_MAX_LENGTH = 30;
