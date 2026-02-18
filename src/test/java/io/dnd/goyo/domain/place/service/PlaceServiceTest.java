@@ -12,6 +12,7 @@ import static org.mockito.Mockito.verify;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.common.storage.FileStorage;
+import io.dnd.goyo.domain.history.event.PlaceViewedEvent;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceImageRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
@@ -164,6 +165,7 @@ class PlaceServiceTest {
 
             verify(placeRepository).findByIdWithDetails(placeId);
             verify(wishlistReader).isWished(userId, placeId);
+            verify(eventPublisher).publishEvent(any(PlaceViewedEvent.class));
         }
 
         @Test
