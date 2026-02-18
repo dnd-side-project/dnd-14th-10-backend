@@ -51,6 +51,9 @@ class WishlistServiceTest {
     @Mock
     private PlaceReader placeReader;
 
+    @Mock
+    private WishlistReader wishlistReader;
+
     @Nested
     @DisplayName("찜 추가")
     class AddWishlist {
@@ -68,7 +71,7 @@ class WishlistServiceTest {
 
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
-            given(wishlistRepository.existsByUserIdAndPlaceId(userId, placeId)).willReturn(false);
+            given(wishlistReader.isWished(userId, placeId)).willReturn(false);
             given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
 
             // when
@@ -90,7 +93,7 @@ class WishlistServiceTest {
 
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
-            given(wishlistRepository.existsByUserIdAndPlaceId(userId, placeId)).willReturn(true);
+            given(wishlistReader.isWished(userId, placeId)).willReturn(true);
 
             // when & then
             assertThatThrownBy(() -> wishlistService.addWishlist(userId, request))

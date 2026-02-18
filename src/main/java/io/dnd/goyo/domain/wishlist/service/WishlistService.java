@@ -28,6 +28,7 @@ public class WishlistService {
     private final PlaceDetailRepository placeDetailRepository;
     private final UserReader userReader;
     private final PlaceReader placeReader;
+    private final WishlistReader wishlistReader;
 
     @Transactional
     public void deleteByPlaceId(Long placeId) {
@@ -39,7 +40,7 @@ public class WishlistService {
         User user = userReader.getUser(userId);
         Place place = placeReader.getPlace(request.placeId());
 
-        if (wishlistRepository.existsByUserIdAndPlaceId(userId, request.placeId())) {
+        if (wishlistReader.isWished(userId, request.placeId())) {
             throw new BusinessException(ErrorCode.WISHLIST_ALREADY_EXISTS);
         }
 
