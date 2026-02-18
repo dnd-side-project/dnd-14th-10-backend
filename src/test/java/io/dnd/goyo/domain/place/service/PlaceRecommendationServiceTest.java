@@ -2,15 +2,19 @@ package io.dnd.goyo.domain.place.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
+import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.entity.PlaceImage;
@@ -379,6 +383,78 @@ class PlaceRecommendationServiceTest {
         assertThat(result.get(0).id()).isEqualTo(30L);
         assertThat(result.get(1).id()).isEqualTo(40L);
         assertThat(result.get(2).id()).isEqualTo(50L);
+    }
+
+    @Test
+    void 랜덤_테마_추천_결과_있으면_ThemeRecommendationResponse_반환() {
+        // given
+        Place place = createPlace(10L, "카페A", 126.9769, 37.5759);
+        List<Long> placeIds = List.of(10L);
+
+        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(placeIds);
+        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(placeIds);
+        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(placeIds);
+        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(placeIds);
+        given(placeRepository.findAllByIdWithDetails(placeIds)).willReturn(List.of(place));
+
+        // when
+        ThemeRecommendationResponse result = placeRecommendationService.getRandomThemePlaces(
+                126.978, 37.566, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result.themeType()).isNotNull();
+        assertThat(result.themeValue()).isNotNull();
+        assertThat(result.places()).hasSize(1);
+        assertThat(result.places().getFirst().id()).isEqualTo(10L);
+    }
+
+    @Test
+    void 랜덤_테마_추천_결과_없으면_빈_places_반환() {
+        // given
+        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), anyDouble(), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+
+        // when
+        ThemeRecommendationResponse result = placeRecommendationService.getRandomThemePlaces(
+                126.978, 37.566, PlaceCategory.CAFE, null
+        );
+
+        // then
+        assertThat(result.themeType()).isNotNull();
+        assertThat(result.themeValue()).isNotNull();
+        assertThat(result.places()).isEmpty();
+    }
+
+    @Test
+    void 랜덤_테마_커스텀_반경_적용() {
+        // given
+        lenient().when(placeRepository.findByMoodScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findBySpaceSizeScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findByOutletScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+        lenient().when(placeRepository.findByCrowdScore(anyDouble(), anyDouble(), eq(5000.0), any(), anyDouble(), anyDouble(), anyInt()))
+                .thenReturn(List.of());
+
+        // when
+        ThemeRecommendationResponse result = placeRecommendationService.getRandomThemePlaces(
+                126.978, 37.566, PlaceCategory.CAFE, 5000
+        );
+
+        // then
+        assertThat(result.places()).isEmpty();
     }
 
     private User createUser(Long id, Gender gender, int age) {
