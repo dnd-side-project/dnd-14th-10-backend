@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import io.dnd.goyo.common.annotation.WithMockCustomUser;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
+import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
@@ -198,6 +199,64 @@ class PlaceRecommendationControllerTest {
         mockMvc.perform(get("/api/places/recommendations/similar")
                         .param("regionCode", "1101010100")
                         .param("category", "CAFE"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 랜덤_테마_추천_성공_시_200_반환() throws Exception {
+        // given
+        long regionCode = 1101010100L;
+        PlaceSummaryResponse placeResponse = new PlaceSummaryResponse(
+                1L, "테스트 카페", PlaceCategory.CAFE, "청계천로 101",
+                regionCode, "images/test.jpg", 37.566, 126.978,
+                Mood.CALM, SpaceSize.MEDIUM, false
+        );
+        ThemeRecommendationResponse response = new ThemeRecommendationResponse(
+                "MOOD", "SILENT", List.of(placeResponse)
+        );
+
+        given(placeRecommendationService.getRandomThemePlaces(
+                eq(126.978), eq(37.566), eq(PlaceCategory.CAFE), isNull()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/random-theme")
+                        .param("longitude", "126.978")
+                        .param("latitude", "37.566")
+                        .param("category", "CAFE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.themeType").value("MOOD"))
+                .andExpect(jsonPath("$.themeValue").value("SILENT"))
+                .andExpect(jsonPath("$.places[0].id").value(1));
+    }
+
+    @Test
+    void 랜덤_테마_결과_없으면_빈_places_반환() throws Exception {
+        // given
+        ThemeRecommendationResponse response = new ThemeRecommendationResponse(
+                "CROWD", "RELAX", List.of()
+        );
+
+        given(placeRecommendationService.getRandomThemePlaces(
+                eq(126.978), eq(37.566), eq(PlaceCategory.CAFE), isNull()
+        )).willReturn(response);
+
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/random-theme")
+                        .param("longitude", "126.978")
+                        .param("latitude", "37.566")
+                        .param("category", "CAFE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.themeType").value("CROWD"))
+                .andExpect(jsonPath("$.themeValue").value("RELAX"))
+                .andExpect(jsonPath("$.places").isEmpty());
+    }
+
+    @Test
+    void 랜덤_테마_필수_파라미터_누락_시_400_반환() throws Exception {
+        // when & then
+        mockMvc.perform(get("/api/places/recommendations/random-theme")
+                        .param("longitude", "126.978"))
                 .andExpect(status().isBadRequest());
     }
 }

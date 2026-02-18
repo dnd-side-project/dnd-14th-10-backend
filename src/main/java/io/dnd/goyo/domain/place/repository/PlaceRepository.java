@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface PlaceRepository extends JpaRepository<Place, Long> {
+public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
 
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +

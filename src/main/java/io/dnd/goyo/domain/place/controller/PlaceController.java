@@ -46,7 +46,8 @@ public class PlaceController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @PathVariable Long placeId
     ) {
-        PlaceDetailResponse response = placeService.getPlaceDetail(userDetails.userId(), placeId);
+        Long userId = getUserId(userDetails);
+        PlaceDetailResponse response = placeService.getPlaceDetail(userId, placeId);
         return ResponseEntity.ok(response);
     }
 
@@ -69,5 +70,9 @@ public class PlaceController {
     ) {
         placeService.deletePlace(userDetails.userId(), placeId);
         return ResponseEntity.noContent().build();
+    }
+
+    private Long getUserId(CustomUserDetails userDetails) {
+        return userDetails != null ? userDetails.userId() : null;
     }
 }

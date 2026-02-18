@@ -2,9 +2,11 @@ package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
+import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.RegionCode;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
+import io.dnd.goyo.domain.place.enums.RandomThemeType;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagReader;
 import io.dnd.goyo.domain.review.service.ReviewReader;
@@ -128,6 +130,65 @@ public class PlaceRecommendationService {
         return createPlaceSummaries(scoredPlaceIds, candidatePlaceMap, wishedSet);
     }
 
+    public ThemeRecommendationResponse getRandomThemePlaces(
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        RandomThemeType theme = RandomThemeType.pick();
+        List<Long> placeIds = findThemePlaceIds(theme, longitude, latitude, radius, category);
+
+        if (placeIds.isEmpty()) {
+            return new ThemeRecommendationResponse(theme.name(), theme.getThemeValue(), List.of());
+        }
+
+        Map<Long, Place> placeMap = findPlacesMap(placeIds);
+        List<PlaceSummaryResponse> places = createPlaceSummaries(placeIds, placeMap, Set.of());
+
+        return new ThemeRecommendationResponse(theme.name(), theme.getThemeValue(), places);
+    }
+
+    private List<Long> findThemePlaceIds(
+            RandomThemeType theme,
+            double longitude,
+            double latitude,
+            double radius,
+            PlaceCategory category
+    ) {
+        return placeRepository.findByThemeScore(
+                longitude, latitude, radius, category.name(),
+                theme.getScoreColumn(), theme.getMinScore(), theme.getMaxScore(), LIMIT
+        );
+    }
+
+    private List<Long> findNewPlaceIds(
+            double longitude,
+            double latitude,
+            long regionCode,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        return placeRepository.findNewPlaceIdsByRegionCode(
+                longitude, latitude, radius, regionCode, category.name(), RECENT_DAYS, LIMIT
+        );
+    }
+
+    private List<Long> findPopularPlaceIds(
+            double longitude,
+            double latitude,
+            PlaceCategory category,
+            Integer radiusMeters
+    ) {
+        double radius = resolveRadius(radiusMeters);
+        return placeRepository.findPopularPlaceIds(
+                longitude, latitude, radius, category.name(),
+                BAYESIAN_MIN_REVIEWS, BAYESIAN_PRIOR_RATING, LIMIT
+        );
+    }
+
     private List<Long> findCandidatePlaceIds(
             Long userId,
             LocalDateTime since,
@@ -224,36 +285,8 @@ public class PlaceRecommendationService {
         return (userScore * USER_TAG_WEIGHT + groupScore * GROUP_TAG_WEIGHT) * distanceDecay;
     }
 
-    private List<Long> findPopularPlaceIds(
-            double longitude,
-            double latitude,
-            PlaceCategory category,
-            Integer radiusMeters
-    ) {
-        double radius = DEFAULT_RADIUS_METERS;
-        if (radiusMeters != null) {
-            radius = radiusMeters;
-        }
-        return placeRepository.findPopularPlaceIds(
-                longitude, latitude, radius, category.name(),
-                BAYESIAN_MIN_REVIEWS, BAYESIAN_PRIOR_RATING, LIMIT
-        );
-    }
-
-    private List<Long> findNewPlaceIds(
-            double longitude,
-            double latitude,
-            long regionCode,
-            PlaceCategory category,
-            Integer radiusMeters
-    ) {
-        double radius = DEFAULT_RADIUS_METERS;
-        if (radiusMeters != null) {
-            radius = radiusMeters;
-        }
-        return placeRepository.findNewPlaceIdsByRegionCode(
-                longitude, latitude, radius, regionCode, category.name(), RECENT_DAYS, LIMIT
-        );
+    private double resolveRadius(Integer radiusMeters) {
+        return radiusMeters != null ? radiusMeters : DEFAULT_RADIUS_METERS;
     }
 
     private Map<Long, Place> findPlacesMap(List<Long> placeIds) {
@@ -275,6 +308,9 @@ public class PlaceRecommendationService {
     }
 
     private Set<Long> findWishedPlaceIds(Long userId, List<Long> placeIds) {
+        if (userId == null) {
+            return Set.of();
+        }
         return new HashSet<>(wishlistReader.getWishedPlaceIds(userId, placeIds));
     }
 
