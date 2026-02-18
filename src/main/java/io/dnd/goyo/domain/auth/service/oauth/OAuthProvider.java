@@ -6,5 +6,5 @@ public interface OAuthProvider {
 
     Provider getProvider();
 
-    OAuthUserInfo getUserInfo(String code);
+    OAuthUserInfo getUserInfo(String code, String redirectUri);
 }

@@ -48,9 +48,9 @@ public class AuthService {
         this.jwtTokenProvider = jwtTokenProvider;
     }
 
-    public OAuthLoginResponse oauthLogin(Provider provider, String code) {
+    public OAuthLoginResponse oauthLogin(Provider provider, String code, String redirectUri) {
         OAuthProvider oauthProvider = getOAuthProvider(provider);
-        OAuthUserInfo userInfo = oauthProvider.getUserInfo(code);
+        OAuthUserInfo userInfo = oauthProvider.getUserInfo(code, redirectUri);
 
         Optional<User> existingUser = userRepository.findByProviderAndProviderId(
                 userInfo.provider(), userInfo.providerId());

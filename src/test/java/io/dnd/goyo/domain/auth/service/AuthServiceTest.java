@@ -78,7 +78,7 @@ class AuthServiceTest {
             User user = createActiveUser();
             OAuthUserInfo userInfo = new OAuthUserInfo(Provider.KAKAO, "kakao_123", "김고요", null);
 
-            given(kakaoOAuthProvider.getUserInfo("auth_code")).willReturn(userInfo);
+            given(kakaoOAuthProvider.getUserInfo("auth_code", "http://localhost:8080/test.html")).willReturn(userInfo);
             given(userRepository.findByProviderAndProviderId(Provider.KAKAO, "kakao_123"))
                     .willReturn(Optional.of(user));
             given(jwtTokenProvider.createAccessToken(any(), any())).willReturn("access_token");
@@ -86,7 +86,7 @@ class AuthServiceTest {
             given(jwtTokenProvider.getAccessTokenExpiration()).willReturn(1800000L);
 
             // when
-            OAuthLoginResponse response = authService.oauthLogin(Provider.KAKAO, "auth_code");
+            OAuthLoginResponse response = authService.oauthLogin(Provider.KAKAO, "auth_code", "http://localhost:8080/test.html");
 
             // then
             assertThat(response.isNewUser()).isFalse();
@@ -101,14 +101,14 @@ class AuthServiceTest {
             AuthService authService = createAuthService();
             OAuthUserInfo userInfo = new OAuthUserInfo(Provider.KAKAO, "kakao_new", "새유저", "profile.jpg");
 
-            given(kakaoOAuthProvider.getUserInfo("auth_code")).willReturn(userInfo);
+            given(kakaoOAuthProvider.getUserInfo("auth_code", "http://localhost:8080/test.html")).willReturn(userInfo);
             given(userRepository.findByProviderAndProviderId(Provider.KAKAO, "kakao_new"))
                     .willReturn(Optional.empty());
             given(jwtTokenProvider.createSignupToken(Provider.KAKAO, "kakao_new"))
                     .willReturn("signup_token");
 
             // when
-            OAuthLoginResponse response = authService.oauthLogin(Provider.KAKAO, "auth_code");
+            OAuthLoginResponse response = authService.oauthLogin(Provider.KAKAO, "auth_code", "http://localhost:8080/test.html");
 
             // then
             assertThat(response.isNewUser()).isTrue();
@@ -124,12 +124,12 @@ class AuthServiceTest {
             given(blockedUser.getStatus()).willReturn(UserStatus.BLOCKED);
             OAuthUserInfo userInfo = new OAuthUserInfo(Provider.KAKAO, "kakao_blocked", "차단유저", null);
 
-            given(kakaoOAuthProvider.getUserInfo("auth_code")).willReturn(userInfo);
+            given(kakaoOAuthProvider.getUserInfo("auth_code", "http://localhost:8080/test.html")).willReturn(userInfo);
             given(userRepository.findByProviderAndProviderId(Provider.KAKAO, "kakao_blocked"))
                     .willReturn(Optional.of(blockedUser));
 
             // when & then
-            assertThatThrownBy(() -> authService.oauthLogin(Provider.KAKAO, "auth_code"))
+            assertThatThrownBy(() -> authService.oauthLogin(Provider.KAKAO, "auth_code", "http://localhost:8080/test.html"))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_BLOCKED);
         }
@@ -140,7 +140,7 @@ class AuthServiceTest {
             AuthService authService = createAuthService();
 
             // when & then
-            assertThatThrownBy(() -> authService.oauthLogin(Provider.NAVER, "auth_code"))
+            assertThatThrownBy(() -> authService.oauthLogin(Provider.NAVER, "auth_code", "http://localhost:8080/test.html"))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("지원하지 않는 OAuth 제공자입니다");
         }

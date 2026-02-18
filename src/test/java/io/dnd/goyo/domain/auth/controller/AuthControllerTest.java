@@ -58,8 +58,8 @@ class AuthControllerTest {
                     "access_token", "refresh_token", 1800000L,
                     new UserInfoResponse(1L, "고요한여행자", null)
             );
-            given(authService.oauthLogin(eq(Provider.KAKAO), any(String.class))).willReturn(response);
-            String request = objectMapper.writeValueAsString(Map.of("code", "auth_code"));
+            given(authService.oauthLogin(eq(Provider.KAKAO), any(String.class), any(String.class))).willReturn(response);
+            String request = objectMapper.writeValueAsString(Map.of("code", "auth_code", "redirectUri", "http://localhost:8080/test.html"));
 
             // when & then
             mockMvc.perform(post("/api/auth/oauth/kakao")
@@ -78,8 +78,8 @@ class AuthControllerTest {
             // given
             OAuthUserInfo userInfo = new OAuthUserInfo(Provider.KAKAO, "kakao_new", "새유저", "profile.jpg");
             OAuthLoginResponse response = OAuthLoginResponse.forNewUser("signup_token", userInfo);
-            given(authService.oauthLogin(eq(Provider.KAKAO), any(String.class))).willReturn(response);
-            String request = objectMapper.writeValueAsString(Map.of("code", "auth_code"));
+            given(authService.oauthLogin(eq(Provider.KAKAO), any(String.class), any(String.class))).willReturn(response);
+            String request = objectMapper.writeValueAsString(Map.of("code", "auth_code", "redirectUri", "http://localhost:8080/test.html"));
 
             // when & then
             mockMvc.perform(post("/api/auth/oauth/kakao")
@@ -95,7 +95,7 @@ class AuthControllerTest {
         @WithMockUser
         void 인가코드_누락_시_400_반환() throws Exception {
             // given
-            String request = objectMapper.writeValueAsString(Map.of());
+            String request = objectMapper.writeValueAsString(Map.of("redirectUri", "http://localhost:8080/test.html"));
 
             // when & then
             mockMvc.perform(post("/api/auth/oauth/kakao")
