@@ -1,23 +1,27 @@
 package io.dnd.goyo.domain.user.controller;
 
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
+import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
 import io.dnd.goyo.domain.user.enums.Gender;
+import io.dnd.goyo.domain.user.enums.WithdrawReason;
 import io.dnd.goyo.domain.user.service.UserService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -78,17 +82,76 @@ class UserControllerTest {
     }
 
     @Nested
-    @DisplayName("DELETE /api/users/me")
+    @DisplayName("POST /api/users/me/withdraw")
     class Withdraw {
 
         @Test
         void 회원_탈퇴_성공_시_204_반환() throws Exception {
+            // given
+            String request = objectMapper.writeValueAsString(
+                    Map.of("reason", "LOW_USAGE"));
+
             // when & then
-            mockMvc.perform(delete("/api/users/me")
+            mockMvc.perform(post("/api/users/me/withdraw")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
                             .with(csrf()))
                     .andExpect(status().isNoContent());
 
-            verify(userService).withdraw(1L);
+            verify(userService).withdraw(eq(1L), eq(WithdrawReason.LOW_USAGE), isNull());
+        }
+
+        @Test
+        void 기타_사유로_탈퇴_성공_시_204_반환() throws Exception {
+            // given
+            String request = objectMapper.writeValueAsString(
+                    Map.of("reason", "OTHER", "detail", "다른 앱 사용"));
+
+            // when & then
+            mockMvc.perform(post("/api/users/me/withdraw")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
+                            .with(csrf()))
+                    .andExpect(status().isNoContent());
+
+            verify(userService).withdraw(eq(1L), eq(WithdrawReason.OTHER), eq("다른 앱 사용"));
+        }
+
+        @Test
+        void 사유_누락_시_400_반환() throws Exception {
+            // given
+            String request = "{}";
+
+            // when & then
+            mockMvc.perform(post("/api/users/me/withdraw")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(request)
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/users/withdraw-reasons")
+    class GetWithdrawReasons {
+
+        @Test
+        void 탈퇴_사유_목록_조회_시_200_반환() throws Exception {
+            // given
+            List<WithdrawReasonResponse> reasons = List.of(
+                    WithdrawReasonResponse.from(WithdrawReason.LOW_USAGE),
+                    WithdrawReasonResponse.from(WithdrawReason.PRIVACY_CONCERN),
+                    WithdrawReasonResponse.from(WithdrawReason.OTHER)
+            );
+            given(userService.getWithdrawReasons()).willReturn(reasons);
+
+            // when & then
+            mockMvc.perform(get("/api/users/withdraw-reasons")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.length()").value(3))
+                    .andExpect(jsonPath("$[0].code").value("LOW_USAGE"))
+                    .andExpect(jsonPath("$[2].code").value("OTHER"));
         }
     }
 

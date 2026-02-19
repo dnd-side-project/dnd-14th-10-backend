@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.user.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -9,13 +10,18 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
+import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
 import io.dnd.goyo.domain.user.entity.User;
+import io.dnd.goyo.domain.user.entity.UserWithdraw;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
 import io.dnd.goyo.domain.user.enums.UserStatus;
+import io.dnd.goyo.domain.user.enums.WithdrawReason;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserWithdrawRepository;
 import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,6 +41,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserWithdrawRepository userWithdrawRepository;
 
     private static User createValidUser() {
         return User.builder()
@@ -281,11 +290,43 @@ class UserServiceTest {
             given(userReader.getUser(userId)).willReturn(user);
 
             // when
-            userService.withdraw(userId);
+            userService.withdraw(userId, WithdrawReason.LOW_USAGE, null);
 
             // then
             assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
             assertThat(user.getNickname()).startsWith("deleted_");
+            verify(userWithdrawRepository).save(any(UserWithdraw.class));
+        }
+
+        @Test
+        void 기타_사유로_탈퇴_성공() {
+            // given
+            Long userId = 1L;
+            User user = createValidUser();
+            given(userReader.getUser(userId)).willReturn(user);
+
+            // when
+            userService.withdraw(userId, WithdrawReason.OTHER, "다른 앱을 사용하려고요");
+
+            // then
+            assertThat(user.getStatus()).isEqualTo(UserStatus.DELETED);
+            verify(userWithdrawRepository).save(any(UserWithdraw.class));
+        }
+    }
+
+    @Nested
+    @DisplayName("탈퇴 사유 목록 조회")
+    class GetWithdrawReasons {
+
+        @Test
+        void 탈퇴_사유_목록_5개_반환() {
+            // when
+            List<WithdrawReasonResponse> reasons = userService.getWithdrawReasons();
+
+            // then
+            assertThat(reasons).hasSize(3);
+            assertThat(reasons.get(0).code()).isEqualTo("LOW_USAGE");
+            assertThat(reasons.get(2).code()).isEqualTo("OTHER");
         }
     }
 }
