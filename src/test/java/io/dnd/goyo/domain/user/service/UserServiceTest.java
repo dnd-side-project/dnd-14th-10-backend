@@ -319,7 +319,7 @@ class UserServiceTest {
     class GetWithdrawReasons {
 
         @Test
-        void 탈퇴_사유_목록_5개_반환() {
+        void 탈퇴_사유_목록_조회_성공() {
             // when
             List<WithdrawReasonResponse> reasons = userService.getWithdrawReasons();
 
