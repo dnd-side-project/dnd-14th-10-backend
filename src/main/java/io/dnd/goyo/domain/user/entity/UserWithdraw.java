@@ -39,7 +39,7 @@ public class UserWithdraw extends BaseEntity {
     @Column(nullable = false)
     private WithdrawReason reason;
 
-    @Column(length = 500)
+    @Column(length = 1000)
     private String detail;
 
     private UserWithdraw(User user, WithdrawReason reason, String detail) {
