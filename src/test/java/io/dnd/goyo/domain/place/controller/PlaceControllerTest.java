@@ -26,6 +26,7 @@ import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
+import io.dnd.goyo.domain.place.service.PlaceSearchService;
 import io.dnd.goyo.domain.place.service.PlaceService;
 import java.time.LocalTime;
 import java.util.HashMap;
@@ -54,6 +55,9 @@ class PlaceControllerTest {
 
     @MockitoBean
     private PlaceService placeService;
+
+    @MockitoBean
+    private PlaceSearchService placeSearchService;
 
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;

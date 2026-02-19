@@ -1,8 +1,19 @@
 package io.dnd.goyo.domain.place.repository;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
+import io.dnd.goyo.domain.place.entity.QPlace;
+import io.dnd.goyo.domain.place.entity.QPlaceDetail;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.place.enums.RandomThemeType;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import jakarta.persistence.EntityManager;
 import java.util.Arrays;
 import java.util.List;
@@ -16,10 +27,97 @@ import org.springframework.stereotype.Repository;
 public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
 
     private final EntityManager entityManager;
+    private final JPAQueryFactory queryFactory;
 
     private static final Set<String> ALLOWED_SCORE_COLUMNS = Arrays.stream(RandomThemeType.values())
             .map(RandomThemeType::getScoreColumn)
             .collect(Collectors.toUnmodifiableSet());
+
+    private static final double MOOD_NOISY_MAX = 37.5;
+    private static final double MOOD_CHATTING_MAX = 62.5;
+    private static final double MOOD_CALM_MAX = 87.5;
+
+    private static final double SPACE_SMALL_MAX = 33.33;
+    private static final double SPACE_MEDIUM_MAX = 66.67;
+
+    private static final long REGION_CODE_MULTIPLIER = 100000L;
+    private static final long REGION_CODE_RANGE = 99999L;
+
+    @Override
+    public List<Long> findByFilter(PlaceFilterRequest request, int size) {
+        QPlace place = QPlace.place;
+        QPlaceDetail placeDetail = QPlaceDetail.placeDetail;
+
+        NumberExpression<Double> moodAvg = placeDetail.totalQuietScore.doubleValue().divide(placeDetail.reviewCount.add(1));
+        NumberExpression<Double> spaceSizeAvg = placeDetail.totalSpaceSizeScore.doubleValue().divide(placeDetail.reviewCount.add(1));
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(place.status.eq(PlaceStatus.ACTIVE));
+
+        if (request.category() != null) {
+            builder.and(place.category.eq(request.category()));
+        }
+
+        if (request.spaceSize() != null) {
+            builder.and(buildSpaceSizeCondition(spaceSizeAvg, request.spaceSize()));
+        }
+
+        if (request.moods() != null && !request.moods().isEmpty()) {
+            builder.and(buildMoodsCondition(moodAvg, request.moods()));
+        }
+
+        if (request.regionCodes() != null && !request.regionCodes().isEmpty()) {
+            builder.and(buildRegionCodesCondition(place, request.regionCodes()));
+        }
+
+        if (request.lastPlaceId() != null) {
+            builder.and(place.id.lt(request.lastPlaceId()));
+        }
+
+        return queryFactory
+                .select(place.id)
+                .from(place)
+                .join(place.placeDetail, placeDetail)
+                .where(builder)
+                .orderBy(place.id.desc())
+                .limit(size + 1)
+                .fetch();
+    }
+
+    private BooleanExpression buildSpaceSizeCondition(NumberExpression<Double> spaceSizeAvg, SpaceSize spaceSize) {
+        return switch (spaceSize) {
+            case SMALL  -> spaceSizeAvg.lt(SPACE_SMALL_MAX);
+            case MEDIUM -> spaceSizeAvg.goe(SPACE_SMALL_MAX).and(spaceSizeAvg.lt(SPACE_MEDIUM_MAX));
+            case LARGE  -> spaceSizeAvg.goe(SPACE_MEDIUM_MAX);
+        };
+    }
+
+    private Predicate buildMoodsCondition(NumberExpression<Double> moodAvg, List<Mood> moods) {
+        BooleanBuilder moodBuilder = new BooleanBuilder();
+        for (Mood mood : moods) {
+            moodBuilder.or(buildMoodCondition(moodAvg, mood));
+        }
+        return moodBuilder;
+    }
+
+    private BooleanExpression buildMoodCondition(NumberExpression<Double> moodAvg, Mood mood) {
+        return switch (mood) {
+            case NOISY    -> moodAvg.lt(MOOD_NOISY_MAX);
+            case CHATTING -> moodAvg.goe(MOOD_NOISY_MAX).and(moodAvg.lt(MOOD_CHATTING_MAX));
+            case CALM     -> moodAvg.goe(MOOD_CHATTING_MAX).and(moodAvg.lt(MOOD_CALM_MAX));
+            case SILENT   -> moodAvg.goe(MOOD_CALM_MAX);
+        };
+    }
+
+    private Predicate buildRegionCodesCondition(QPlace place, List<Long> regionCodes) {
+        BooleanBuilder regionBuilder = new BooleanBuilder();
+        for (Long code : regionCodes) {
+            long rangeStart = code * REGION_CODE_MULTIPLIER;
+            long rangeEnd = rangeStart + REGION_CODE_RANGE;
+            regionBuilder.or(place.regionCode.value.between(rangeStart, rangeEnd));
+        }
+        return regionBuilder;
+    }
 
     @Override
     public List<Long> findByThemeScore(

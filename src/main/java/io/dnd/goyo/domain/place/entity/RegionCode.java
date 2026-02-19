@@ -5,16 +5,24 @@ import io.dnd.goyo.common.exception.ErrorCode;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
-public record RegionCode(
-        Long value
-) {
+public class RegionCode {
+
     private static final int SI_GUN_GU_CODE_LENGTH = 5;
     private static final int LEGAL_DONG_CODE_LENGTH = 10;
 
-    public RegionCode {
+    private Long value;
+
+    protected RegionCode() {}
+
+    public RegionCode(Long value) {
         validateIsNotNull(value);
         validateIsPositive(value);
         validateCodeLength(value);
+        this.value = value;
+    }
+
+    public Long value() {
+        return value;
     }
 
     public int getSiGunGuCode() {
