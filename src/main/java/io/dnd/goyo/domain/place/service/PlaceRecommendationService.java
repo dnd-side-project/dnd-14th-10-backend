@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.service;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
@@ -48,6 +49,7 @@ public class PlaceRecommendationService {
     private final PlaceTagReader placeTagReader;
     private final UserReader userReader;
     private final GeometryUtils geometryUtils;
+    private final FileStorage fileStorage;
 
     public List<PlaceSummaryResponse> getNewPlaces(
             Long userId,
@@ -315,10 +317,11 @@ public class PlaceRecommendationService {
     }
 
     private PlaceSummaryResponse buildPlaceSummary(Place place, Set<Long> wishedPlaceIds) {
+        String imageUrl = fileStorage.generatePublicUrl(place.getRepresentativeImageKey());
         return PlaceSummaryResponse.of(
                 place,
                 place.getPlaceDetail(),
-                place.getRepresentativeImageKey(),
+                imageUrl,
                 wishedPlaceIds.contains(place.getId())
         );
     }
