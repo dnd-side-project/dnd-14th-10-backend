@@ -90,8 +90,7 @@ class UserWithdrawTest {
     }
 
     @Test
-    @DisplayName("detail이 1000자를 초과하면 예외가 발생한다")
-    void detail_500자_초과_예외() {
+    void detail_1000자_초과_예외() {
         // given
         User user = createValidUser();
         String longDetail = "a".repeat(1001);
@@ -103,11 +102,10 @@ class UserWithdrawTest {
     }
 
     @Test
-    @DisplayName("detail이 정확히 500자이면 정상 생성된다")
-    void detail_500자_정상() {
+    void detail_1000자_정상() {
         // given
         User user = createValidUser();
-        String detail = "a".repeat(500);
+        String detail = "a".repeat(1000);
 
         // when
         UserWithdraw withdraw = UserWithdraw.of(user, WithdrawReason.OTHER, detail);
