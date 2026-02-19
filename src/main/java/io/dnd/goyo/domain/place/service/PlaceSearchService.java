@@ -45,7 +45,7 @@ public class PlaceSearchService {
         List<Place> places = placeRepository.findAllByIdWithDetails(placeIds);
         Map<Long, Place> placeMap = toPlaceMap(places);
 
-        Set<Long> wishedPlaceIds = findWishedPlaceIds(userId, placeIds);
+        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
 
         List<PlaceMapItemResponse> responses = toResponses(placeIds, placeMap, wishedPlaceIds);
 
@@ -83,10 +83,4 @@ public class PlaceSearchService {
                 .toList();
     }
 
-    private Set<Long> findWishedPlaceIds(Long userId, List<Long> placeIds) {
-        if (userId == null) {
-            return Set.of();
-        }
-        return new HashSet<>(wishlistReader.getWishedPlaceIds(userId, placeIds));
-    }
 }

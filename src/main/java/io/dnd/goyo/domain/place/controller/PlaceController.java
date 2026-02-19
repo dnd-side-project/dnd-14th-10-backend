@@ -5,6 +5,7 @@ import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceRegisterResponse;
 import io.dnd.goyo.domain.place.service.PlaceSearchService;
 import io.dnd.goyo.domain.place.service.PlaceService;
@@ -23,8 +24,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import java.util.List;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Place", description = "공간 관련 API")
@@ -45,6 +48,16 @@ public class PlaceController {
         Long userId = getUserId(userDetails);
         PlaceFilterResponse response = placeSearchService.getFilteredPlaces(userId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "공간 일괄 조회", description = "ID 목록으로 공간을 일괄 조회합니다.")
+    @GetMapping("/batch")
+    public ResponseEntity<List<PlaceMapItemResponse>> getPlacesByIds(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam List<Long> ids
+    ) {
+        Long userId = getUserId(userDetails);
+        return ResponseEntity.ok(placeService.getPlacesByIds(userId, ids));
     }
 
     @Operation(summary = "공간 제보(등록)", description = "새로운 공간을 제보합니다.")
