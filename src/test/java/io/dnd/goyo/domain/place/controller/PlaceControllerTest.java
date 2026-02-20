@@ -18,7 +18,9 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceImageItem;
 import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
@@ -424,6 +426,69 @@ class PlaceControllerTest {
                     .andExpect(jsonPath("$[1].id").value(2L));
 
             verify(placeService).getPlacesByIds(1L, List.of(1L, 2L));
+        }
+
+        private PlaceMapItemResponse createPlaceMapItemResponse(Long id) {
+            return new PlaceMapItemResponse(
+                    id,
+                    "테스트 카페 " + id,
+                    PlaceCategory.CAFE,
+                    "서울시 강남구",
+                    1168010100L,
+                    List.of(new PlaceImageItem("http://localhost:9000/goyo-local/place/image.jpg", 0, true)),
+                    37.5,
+                    127.0,
+                    Mood.CALM,
+                    SpaceSize.MEDIUM,
+                    5,
+                    false
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/places/search")
+    class SearchPlaces {
+
+        @Test
+        void 필터_검색_성공() throws Exception {
+            // given
+            List<PlaceMapItemResponse> places = List.of(
+                    createPlaceMapItemResponse(1L),
+                    createPlaceMapItemResponse(2L)
+            );
+            PlaceFilterResponse response = new PlaceFilterResponse(places, 2L, false);
+
+            given(placeSearchService.getFilteredPlaces(eq(1L), any(PlaceFilterRequest.class)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/places/search")
+                            .param("category", "CAFE")
+                            .param("size", "10")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.places").isArray())
+                    .andExpect(jsonPath("$.places[0].id").value(1L))
+                    .andExpect(jsonPath("$.places[1].id").value(2L))
+                    .andExpect(jsonPath("$.lastPlaceId").value(2L))
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+
+        @Test
+        void 결과_없으면_빈_배열_반환() throws Exception {
+            // given
+            PlaceFilterResponse response = new PlaceFilterResponse(List.of(), null, false);
+
+            given(placeSearchService.getFilteredPlaces(eq(1L), any(PlaceFilterRequest.class)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/places/search")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.places").isEmpty())
+                    .andExpect(jsonPath("$.hasNext").value(false));
         }
 
         private PlaceMapItemResponse createPlaceMapItemResponse(Long id) {
