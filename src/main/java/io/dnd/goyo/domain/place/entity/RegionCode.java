@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.place.entity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import jakarta.persistence.Embeddable;
+import java.util.Objects;
 
 @Embeddable
 public class RegionCode {
@@ -23,6 +24,18 @@ public class RegionCode {
 
     public Long getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RegionCode other)) return false;
+        return Objects.equals(value, other.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
     }
 
     public int getSiGunGuCode() {
