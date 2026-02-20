@@ -40,7 +40,6 @@ public class SecurityConfig {
                             "/api/places/recommendations/random-theme"
                     ).permitAll()
                     .requestMatchers(HttpMethod.GET,
-                            "/api/places/search",
                             "/api/places/*",
                             "/api/places/*/wish-count",
                             "/api/reviews/*",
