@@ -21,7 +21,7 @@ public class RegionCode {
         this.value = value;
     }
 
-    public Long value() {
+    public Long getValue() {
         return value;
     }
 

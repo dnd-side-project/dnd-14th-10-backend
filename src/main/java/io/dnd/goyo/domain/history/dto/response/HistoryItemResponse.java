@@ -47,7 +47,7 @@ public record HistoryItemResponse(
                 place.getName(),
                 place.getCategory(),
                 place.getAddressDetail(),
-                place.getRegionCode().value(),
+                place.getRegionCode().getValue(),
                 place.getRepresentativeImageKey(),
                 place.getLocation().getY(),
                 place.getLocation().getX(),

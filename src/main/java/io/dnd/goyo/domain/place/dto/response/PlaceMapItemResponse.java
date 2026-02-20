@@ -56,7 +56,7 @@ public record PlaceMapItemResponse(
                 place.getName(),
                 place.getCategory(),
                 place.getAddressDetail(),
-                place.getRegionCode().value(),
+                place.getRegionCode().getValue(),
                 images,
                 place.getLocation().getY(),
                 place.getLocation().getX(),
