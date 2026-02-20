@@ -26,6 +26,8 @@ import io.dnd.goyo.domain.user.enums.UserRole;
 import io.dnd.goyo.domain.user.repository.UserRepository;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
 import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import jakarta.persistence.EntityManager;
@@ -112,6 +114,8 @@ class PlaceRecommendationIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        given(fileStorage.generatePublicUrl(anyString())).willAnswer(inv -> inv.getArgument(0));
+
         user = userRepository.save(User.builder()
                 .name("테스트유저")
                 .nickname("테스트닉네임")

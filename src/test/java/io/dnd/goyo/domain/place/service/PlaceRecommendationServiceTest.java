@@ -12,6 +12,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -40,6 +42,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.PrecisionModel;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.junit.jupiter.api.BeforeEach;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -67,6 +70,14 @@ class PlaceRecommendationServiceTest {
     @Mock
     private GeometryUtils geometryUtils;
 
+    @Mock
+    private FileStorage fileStorage;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(fileStorage.generatePublicUrl(any())).thenReturn("http://localhost:9000/goyo-local/place/image.jpg");
+    }
+
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
     @Test
@@ -87,8 +98,8 @@ class PlaceRecommendationServiceTest {
         )).willReturn(placeIds);
         given(placeRepository.findAllByIdWithDetails(placeIds))
                 .willReturn(List.of(place1, place2));
-        given(wishlistReader.getWishedPlaceIds(userId, placeIds))
-                .willReturn(List.of(10L));
+        given(wishlistReader.getWishedPlaceIdSet(userId, placeIds))
+                .willReturn(Set.of(10L));
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
@@ -159,8 +170,8 @@ class PlaceRecommendationServiceTest {
         )).willReturn(placeIds);
         given(placeRepository.findAllByIdWithDetails(placeIds))
                 .willReturn(List.of(place1, place2));
-        given(wishlistReader.getWishedPlaceIds(userId, placeIds))
-                .willReturn(List.of(10L));
+        given(wishlistReader.getWishedPlaceIdSet(userId, placeIds))
+                .willReturn(Set.of(10L));
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -205,8 +216,8 @@ class PlaceRecommendationServiceTest {
         )).willReturn(orderedIds);
         given(placeRepository.findAllByIdWithDetails(orderedIds))
                 .willReturn(List.of(place1, place2, place3));
-        given(wishlistReader.getWishedPlaceIds(1L, orderedIds))
-                .willReturn(List.of());
+        given(wishlistReader.getWishedPlaceIdSet(1L, orderedIds))
+                .willReturn(Set.of());
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getPopularPlaces(
@@ -231,9 +242,8 @@ class PlaceRecommendationServiceTest {
                 126.978, 37.566, 3000.0, regionCode, "CAFE", 30, 6
         )).willReturn(orderedIds);
         given(placeRepository.findAllByIdWithDetails(orderedIds))
-                .willReturn(List.of(place1, place2, place3));
-        given(wishlistReader.getWishedPlaceIds(1L, orderedIds))
-                .willReturn(List.of());
+                .willReturn(List.of(place1, place2, place3));given(wishlistReader.getWishedPlaceIdSet(1L, orderedIds))
+                .willReturn(Set.of());
 
         // when
         List<PlaceSummaryResponse> result = placeRecommendationService.getNewPlaces(
