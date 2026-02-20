@@ -19,6 +19,8 @@ import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceImageItem;
+import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -76,7 +78,7 @@ class PlaceControllerTest {
                 Map.entry("category", "CAFE"),
                 Map.entry("latitude", 37.5),
                 Map.entry("longitude", 127.0),
-                Map.entry("regionCode", 11111),
+                Map.entry("regionCode", 1111010100L),
                 Map.entry("addressDetail", "청계천로 100"),
                 Map.entry("outletScore", "MANY"),
                 Map.entry("spaceSize", "LARGE"),
@@ -191,8 +193,8 @@ class PlaceControllerTest {
                     .andExpect(jsonPath("$.name").value("테스트 카페"))
                     .andExpect(jsonPath("$.category").value("CAFE"))
                     .andExpect(jsonPath("$.isWished").value(true))
-                    .andExpect(jsonPath("$.images[0]").value("http://localhost:9000/goyo-local/place/image1.jpg"))
-                    .andExpect(jsonPath("$.images[1]").value("http://localhost:9000/goyo-local/place/image2.jpg"));
+                    .andExpect(jsonPath("$.images[0].url").value("http://localhost:9000/goyo-local/place/image1.jpg"))
+                    .andExpect(jsonPath("$.images[1].url").value("http://localhost:9000/goyo-local/place/image2.jpg"));
 
             verify(placeService).getPlaceDetail(1L, placeId);
         }
@@ -241,8 +243,8 @@ class PlaceControllerTest {
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.images").isArray())
-                    .andExpect(jsonPath("$.images[0]").value("http://localhost:9000/goyo-local/place/image1.jpg"))
-                    .andExpect(jsonPath("$.images[1]").value("http://localhost:9000/goyo-local/place/image2.jpg"));
+                    .andExpect(jsonPath("$.images[0].url").value("http://localhost:9000/goyo-local/place/image1.jpg"))
+                    .andExpect(jsonPath("$.images[1].url").value("http://localhost:9000/goyo-local/place/image2.jpg"));
         }
 
         private PlaceDetailResponse createPlaceDetailResponse(Long placeId, boolean isWished) {
@@ -254,8 +256,8 @@ class PlaceControllerTest {
                     37.5,
                     127.0,
                     List.of(
-                            "http://localhost:9000/goyo-local/place/image1.jpg",
-                            "http://localhost:9000/goyo-local/place/image2.jpg"
+                            new PlaceImageItem("http://localhost:9000/goyo-local/place/image1.jpg", 0, true),
+                            new PlaceImageItem("http://localhost:9000/goyo-local/place/image2.jpg", 1, false)
                     ),
                     4.5,
                     10,
@@ -396,6 +398,49 @@ class PlaceControllerTest {
                     .andExpect(status().isForbidden());
 
             verify(placeService).deletePlace(1L, placeId);
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/places/batch")
+    class GetPlacesByIds {
+
+        @Test
+        void 공간_일괄_조회_성공() throws Exception {
+            // given
+            List<PlaceMapItemResponse> responses = List.of(
+                    createPlaceMapItemResponse(1L),
+                    createPlaceMapItemResponse(2L)
+            );
+            given(placeService.getPlacesByIds(1L, List.of(1L, 2L))).willReturn(responses);
+
+            // when & then
+            mockMvc.perform(get("/api/places/batch")
+                            .param("ids", "1", "2")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$").isArray())
+                    .andExpect(jsonPath("$[0].id").value(1L))
+                    .andExpect(jsonPath("$[1].id").value(2L));
+
+            verify(placeService).getPlacesByIds(1L, List.of(1L, 2L));
+        }
+
+        private PlaceMapItemResponse createPlaceMapItemResponse(Long id) {
+            return new PlaceMapItemResponse(
+                    id,
+                    "테스트 카페 " + id,
+                    PlaceCategory.CAFE,
+                    "서울시 강남구",
+                    1168010100L,
+                    List.of(new PlaceImageItem("http://localhost:9000/goyo-local/place/image.jpg", 0, true)),
+                    37.5,
+                    127.0,
+                    Mood.CALM,
+                    SpaceSize.MEDIUM,
+                    5,
+                    false
+            );
         }
     }
 }

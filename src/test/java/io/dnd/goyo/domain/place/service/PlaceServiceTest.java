@@ -18,9 +18,11 @@ import io.dnd.goyo.domain.place.dto.request.PlaceImageRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.entity.PlaceImage;
+import io.dnd.goyo.domain.place.entity.RegionCode;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -33,8 +35,10 @@ import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import java.time.LocalTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -160,7 +164,7 @@ class PlaceServiceTest {
             assertThat(response.crowdStatus()).isEqualTo(CrowdStatus.RELAX);
             assertThat(response.isWished()).isTrue();
             assertThat(response.images()).hasSize(1);
-            assertThat(response.images().getFirst())
+            assertThat(response.images().getFirst().url())
                     .isEqualTo("http://localhost:9000/goyo-local/place/image1.jpg");
 
             verify(placeRepository).findByIdWithDetails(placeId);
@@ -196,8 +200,9 @@ class PlaceServiceTest {
             PlaceDetailResponse response = placeService.getPlaceDetail(1L, placeId);
 
             // then
-            assertThat(response.images())
-                    .containsExactly("http://localhost:9000/goyo-local/place/image1.jpg");
+            assertThat(response.images()).hasSize(1);
+            assertThat(response.images().getFirst().url())
+                    .isEqualTo("http://localhost:9000/goyo-local/place/image1.jpg");
             verify(fileStorage).generatePublicUrl("place/image1.jpg");
         }
 
@@ -368,6 +373,98 @@ class PlaceServiceTest {
 
             verify(place, never()).delete();
             verify(wishlistService, never()).deleteByPlaceId(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("공간 일괄 조회")
+    class GetPlacesByIds {
+
+        @Test
+        void 정상_조회() {
+            // given
+            Long userId = 1L;
+            List<Long> ids = List.of(1L, 2L);
+            Place place1 = createMockPlace(1L);
+            Place place2 = createMockPlace(2L);
+
+            given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1, place2));
+            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of(1L));
+            given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
+
+            // then
+            assertThat(responses).hasSize(2);
+            assertThat(responses.get(0).isWished()).isTrue();
+            assertThat(responses.get(1).isWished()).isFalse();
+            assertThat(responses.get(0).images().getFirst().url())
+                    .isEqualTo("http://localhost:9000/goyo-local/place/image.jpg");
+        }
+
+        @Test
+        void 비로그인이면_모든_공간이_위시_false() {
+            // given
+            Long userId = null;
+            List<Long> ids = List.of(1L, 2L);
+            Place place1 = createMockPlace(1L);
+            Place place2 = createMockPlace(2L);
+
+            given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1, place2));
+            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of());
+            given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
+
+            // then
+            assertThat(responses).allMatch(r -> !r.isWished());
+        }
+
+        @Test
+        void 존재하지_않는_ID는_결과에서_제외() {
+            // given
+            Long userId = 1L;
+            List<Long> ids = List.of(1L, 999L);
+            Place place1 = createMockPlace(1L);
+
+            given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1));
+            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of());
+            given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
+
+            // then
+            assertThat(responses).hasSize(1);
+            assertThat(responses.getFirst().id()).isEqualTo(1L);
+        }
+
+        private Place createMockPlace(Long id) {
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetail.getMood()).willReturn(Mood.CALM);
+            given(placeDetail.getSpaceSize()).willReturn(SpaceSize.MEDIUM);
+            given(placeDetail.getWishCount()).willReturn(5);
+
+            PlaceImage image = mock(PlaceImage.class);
+            given(image.getImageKey()).willReturn("place/image.jpg");
+            given(image.getSequence()).willReturn(0);
+            given(image.isRepresentativeFlag()).willReturn(true);
+
+            Point location = geometryFactory.createPoint(new Coordinate(127.0, 37.5));
+
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(id);
+            given(place.getName()).willReturn("테스트 카페 " + id);
+            given(place.getCategory()).willReturn(PlaceCategory.CAFE);
+            given(place.getAddressDetail()).willReturn("서울시 강남구");
+            given(place.getRegionCode()).willReturn(new RegionCode(1168010100L));
+            given(place.getLocation()).willReturn(location);
+            given(place.getImages()).willReturn(new ArrayList<>(List.of(image)));
+            given(place.getPlaceDetail()).willReturn(placeDetail);
+
+            return place;
         }
     }
 
