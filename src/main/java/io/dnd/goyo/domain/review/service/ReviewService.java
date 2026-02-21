@@ -74,7 +74,7 @@ public class ReviewService {
 
         reviewTagService.registerReviewTags(review, request.tagIds());
 
-        PlaceDetail placeDetail = getPlaceDetail(place.getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(place.getId());
         placeDetail.addReviewScores(ReviewScores.from(
                 request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
@@ -150,7 +150,7 @@ public class ReviewService {
         Review review = getActiveReview(reviewId);
         validateOwner(userId, review);
 
-        PlaceDetail placeDetail = getPlaceDetail(review.getPlace().getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(review.getPlace().getId());
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.update(
@@ -220,7 +220,7 @@ public class ReviewService {
 
         boolean hadImages = !reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId).isEmpty();
 
-        PlaceDetail placeDetail = getPlaceDetail(review.getPlace().getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(review.getPlace().getId());
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.delete();
@@ -248,6 +248,11 @@ public class ReviewService {
 
     private PlaceDetail getPlaceDetail(Long placeId) {
         return placeDetailRepository.findByPlaceId(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+    }
+
+    private PlaceDetail getPlaceDetailForUpdate(Long placeId) {
+        return placeDetailRepository.findByPlaceIdForUpdate(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
     }
 

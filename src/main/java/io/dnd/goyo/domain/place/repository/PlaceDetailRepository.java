@@ -1,8 +1,10 @@
 package io.dnd.goyo.domain.place.repository;
 
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
+import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -10,6 +12,10 @@ import org.springframework.data.repository.query.Param;
 public interface PlaceDetailRepository extends JpaRepository<PlaceDetail, Long> {
 
     Optional<PlaceDetail> findByPlaceId(Long placeId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT pd FROM PlaceDetail pd WHERE pd.place.id = :placeId")
+    Optional<PlaceDetail> findByPlaceIdForUpdate(@Param("placeId") Long placeId);
 
     @Modifying(clearAutomatically = true)
     @Query("UPDATE PlaceDetail pd SET pd.wishCount = pd.wishCount + 1 WHERE pd.place.id = :placeId")

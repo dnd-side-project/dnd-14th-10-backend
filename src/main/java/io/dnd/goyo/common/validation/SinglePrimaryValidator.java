@@ -1,18 +1,17 @@
 package io.dnd.goyo.common.validation;
 
-import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 import java.util.List;
 
-public class SinglePrimaryValidator implements ConstraintValidator<SinglePrimary, List<ReviewImageRequest>> {
+public class SinglePrimaryValidator implements ConstraintValidator<SinglePrimary, List<? extends Primaryable>> {
 
     @Override
-    public boolean isValid(List<ReviewImageRequest> value, ConstraintValidatorContext context) {
+    public boolean isValid(List<? extends Primaryable> value, ConstraintValidatorContext context) {
         if (value == null || value.isEmpty()) {
             return true;
         }
-        long primaryCount = value.stream().filter(ReviewImageRequest::isPrimary).count();
+        long primaryCount = value.stream().filter(Primaryable::isPrimary).count();
         return primaryCount <= 1;
     }
 }
