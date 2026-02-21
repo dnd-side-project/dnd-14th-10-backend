@@ -5,8 +5,21 @@ import org.springframework.data.domain.Sort;
 
 @Getter
 public enum ReviewSortType {
-    LATEST("createdAt", Sort.Direction.DESC),
-    NAME("place.name", Sort.Direction.ASC);
+    LATEST("createdAt", Sort.Direction.DESC) {
+        @Override
+        public Sort toSort() {
+            return Sort.by(getDirection(), getProperty());
+        }
+    },
+    NAME("place.name", Sort.Direction.ASC) {
+        @Override
+        public Sort toSort() {
+            return Sort.by(
+                    new Sort.Order(getDirection(), getProperty()),
+                    new Sort.Order(Sort.Direction.DESC, "createdAt")
+            );
+        }
+    };
 
     private final String property;
     private final Sort.Direction direction;
@@ -16,13 +29,5 @@ public enum ReviewSortType {
         this.direction = direction;
     }
 
-    public Sort toSort() {
-        if (this == NAME) {
-            return Sort.by(
-                    new Sort.Order(direction, property),
-                    new Sort.Order(Sort.Direction.DESC, "createdAt")
-            );
-        }
-        return Sort.by(direction, property);
-    }
+    public abstract Sort toSort();
 }

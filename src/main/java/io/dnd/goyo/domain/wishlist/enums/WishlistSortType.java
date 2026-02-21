@@ -5,9 +5,27 @@ import org.springframework.data.domain.Sort;
 
 @Getter
 public enum WishlistSortType {
-    LATEST("createdAt", Sort.Direction.DESC),
-    NAME("place.name", Sort.Direction.ASC),
-    POPULAR(null, null);
+    LATEST("createdAt", Sort.Direction.DESC) {
+        @Override
+        public Sort toSort() {
+            return Sort.by(getDirection(), getProperty());
+        }
+    },
+    NAME("place.name", Sort.Direction.ASC) {
+        @Override
+        public Sort toSort() {
+            return Sort.by(
+                    new Sort.Order(getDirection(), getProperty()),
+                    new Sort.Order(Sort.Direction.DESC, "createdAt")
+            );
+        }
+    },
+    POPULAR(null, null) {
+        @Override
+        public Sort toSort() {
+            return Sort.unsorted();
+        }
+    };
 
     private final String property;
     private final Sort.Direction direction;
@@ -17,16 +35,5 @@ public enum WishlistSortType {
         this.direction = direction;
     }
 
-    public Sort toSort() {
-        if (this == POPULAR) {
-            return Sort.unsorted();
-        }
-        if (this == NAME) {
-            return Sort.by(
-                    new Sort.Order(direction, property),
-                    new Sort.Order(Sort.Direction.DESC, "createdAt")
-            );
-        }
-        return Sort.by(direction, property);
-    }
+    public abstract Sort toSort();
 }
