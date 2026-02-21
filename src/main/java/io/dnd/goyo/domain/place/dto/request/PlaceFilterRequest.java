@@ -12,6 +12,12 @@ public record PlaceFilterRequest(
         SpaceSize spaceSize,
         List<Mood> moods,
         List<@Min(10000) @Max(99999) Long> regionCodes,
-        Long lastPlaceId,
+        Double lastDistance,
         @Min(1) @Max(50) Integer size
-) {}
+) {
+    private static final int DEFAULT_SIZE = 10;
+
+    public int resolvedSize() {
+        return size != null ? size : DEFAULT_SIZE;
+    }
+}

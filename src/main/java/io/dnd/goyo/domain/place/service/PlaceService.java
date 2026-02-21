@@ -100,20 +100,18 @@ public class PlaceService {
         wishlistService.deleteByPlaceId(placeId);
     }
 
-    public List<PlaceMapItemResponse> getPlacesByIds(Long userId, List<Long> ids) {
+    public List<PlaceMapItemResponse> getPlacesByIds(List<Long> ids) {
         List<Place> places = placeRepository.findAllByIdWithDetails(ids);
-        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, ids);
 
         return places.stream()
-                .map(place -> toMapItemResponse(place, wishedPlaceIds))
+                .map(this::toMapItemResponse)
                 .toList();
     }
 
-    private PlaceMapItemResponse toMapItemResponse(Place place, Set<Long> wishedPlaceIds) {
+    private PlaceMapItemResponse toMapItemResponse(Place place) {
         return PlaceMapItemResponse.of(
                 place,
                 place.getPlaceDetail(),
-                wishedPlaceIds.contains(place.getId()),
                 fileStorage
         );
     }

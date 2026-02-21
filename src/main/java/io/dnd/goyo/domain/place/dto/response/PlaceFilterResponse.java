@@ -4,7 +4,7 @@ import java.util.List;
 
 public record PlaceFilterResponse(
         List<PlaceMapItemResponse> places,
-        Long lastPlaceId,
+        Double lastDistance,
         boolean hasNext
 ) {
     public static PlaceFilterResponse empty() {

@@ -414,7 +414,7 @@ class PlaceControllerTest {
                     createPlaceMapItemResponse(1L),
                     createPlaceMapItemResponse(2L)
             );
-            given(placeService.getPlacesByIds(1L, List.of(1L, 2L))).willReturn(responses);
+            given(placeService.getPlacesByIds(List.of(1L, 2L))).willReturn(responses);
 
             // when & then
             mockMvc.perform(get("/api/places/batch")
@@ -425,7 +425,7 @@ class PlaceControllerTest {
                     .andExpect(jsonPath("$[0].id").value(1L))
                     .andExpect(jsonPath("$[1].id").value(2L));
 
-            verify(placeService).getPlacesByIds(1L, List.of(1L, 2L));
+            verify(placeService).getPlacesByIds(List.of(1L, 2L));
         }
 
         private PlaceMapItemResponse createPlaceMapItemResponse(Long id) {
@@ -440,8 +440,7 @@ class PlaceControllerTest {
                     127.0,
                     Mood.CALM,
                     SpaceSize.MEDIUM,
-                    5,
-                    false
+                    5
             );
         }
     }
@@ -457,21 +456,50 @@ class PlaceControllerTest {
                     createPlaceMapItemResponse(1L),
                     createPlaceMapItemResponse(2L)
             );
-            PlaceFilterResponse response = new PlaceFilterResponse(places, 2L, false);
+            PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
 
-            given(placeSearchService.getFilteredPlaces(eq(1L), any(PlaceFilterRequest.class)))
+            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
                     .willReturn(response);
 
             // when & then
             mockMvc.perform(get("/api/places/search")
                             .param("category", "CAFE")
+                            .param("longitude", "126.9769")
+                            .param("latitude", "37.5720")
                             .param("size", "10")
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.places").isArray())
                     .andExpect(jsonPath("$.places[0].id").value(1L))
                     .andExpect(jsonPath("$.places[1].id").value(2L))
-                    .andExpect(jsonPath("$.lastPlaceId").value(2L))
+                    .andExpect(jsonPath("$.lastDistance").value(500.5))
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+
+        @Test
+        void 좌표_포함_필터_검색_성공() throws Exception {
+            // given
+            List<PlaceMapItemResponse> places = List.of(
+                    createPlaceMapItemResponse(1L),
+                    createPlaceMapItemResponse(2L)
+            );
+            PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
+
+            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/places/search")
+                            .param("category", "CAFE")
+                            .param("longitude", "126.9769")
+                            .param("latitude", "37.5720")
+                            .param("size", "10")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.places").isArray())
+                    .andExpect(jsonPath("$.places[0].id").value(1L))
+                    .andExpect(jsonPath("$.places[1].id").value(2L))
+                    .andExpect(jsonPath("$.lastDistance").value(500.5))
                     .andExpect(jsonPath("$.hasNext").value(false));
         }
 
@@ -480,11 +508,13 @@ class PlaceControllerTest {
             // given
             PlaceFilterResponse response = new PlaceFilterResponse(List.of(), null, false);
 
-            given(placeSearchService.getFilteredPlaces(eq(1L), any(PlaceFilterRequest.class)))
+            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
                     .willReturn(response);
 
             // when & then
             mockMvc.perform(get("/api/places/search")
+                            .param("longitude", "126.9769")
+                            .param("latitude", "37.5720")
                             .with(csrf()))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.places").isEmpty())
@@ -503,8 +533,7 @@ class PlaceControllerTest {
                     127.0,
                     Mood.CALM,
                     SpaceSize.MEDIUM,
-                    5,
-                    false
+                    5
             );
         }
     }

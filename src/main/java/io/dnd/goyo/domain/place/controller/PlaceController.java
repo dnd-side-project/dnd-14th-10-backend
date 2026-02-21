@@ -12,6 +12,7 @@ import io.dnd.goyo.domain.place.service.PlaceService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -39,41 +40,23 @@ public class PlaceController {
     private final PlaceService placeService;
     private final PlaceSearchService placeSearchService;
 
-    @Operation(summary = "공간 필터 검색", description = "카테고리, 분위기, 공간 크기, 행정구역으로 공간을 검색합니다.\n\n※ 필터 조건 변경 시 lastPlaceId를 초기화해야 합니다.\n※ 좌표(longitude, latitude)를 제공하면 거리순 정렬, 미제공 시 최신순 정렬됩니다.")
+    @Operation(summary = "공간 필터 검색", description = "카테고리, 분위기, 공간 크기, 행정구역으로 공간을 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
     @GetMapping("/search")
     public ResponseEntity<PlaceFilterResponse> searchPlaces(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @ParameterObject @Valid @ModelAttribute PlaceFilterRequest request,
-            @RequestParam(required = false) Double longitude,
-            @RequestParam(required = false) Double latitude
-    ) {
-        Long userId = getUserId(userDetails);
-        PlaceFilterResponse response = placeSearchService.getFilteredPlaces(userId, request, longitude, latitude);
-        return ResponseEntity.ok(response);
-    }
-
-    @Operation(summary = "반경 필터 검색", description = "좌표 기준 반경 내에서 필터 조건에 맞는 공간을 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastPlaceId를 초기화해야 합니다.")
-    @GetMapping("/search/nearby")
-    public ResponseEntity<PlaceFilterResponse> searchNearbyPlaces(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
             @ParameterObject @Valid @ModelAttribute PlaceFilterRequest request,
             @RequestParam Double longitude,
-            @RequestParam Double latitude,
-            @RequestParam(defaultValue = "1000.0") Double radiusMeters
+            @RequestParam Double latitude
     ) {
-        Long userId = getUserId(userDetails);
-        PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(userId, request, longitude, latitude, radiusMeters);
+        PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, longitude, latitude);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "공간 일괄 조회", description = "ID 목록으로 공간을 일괄 조회합니다.")
     @GetMapping("/batch")
     public ResponseEntity<List<PlaceMapItemResponse>> getPlacesByIds(
-            @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestParam List<Long> ids
+            @RequestParam @Size(max = 100) List<Long> ids
     ) {
-        Long userId = getUserId(userDetails);
-        return ResponseEntity.ok(placeService.getPlacesByIds(userId, ids));
+        return ResponseEntity.ok(placeService.getPlacesByIds(ids));
     }
 
     @Operation(summary = "공간 제보(등록)", description = "새로운 공간을 제보합니다.")

@@ -383,58 +383,33 @@ class PlaceServiceTest {
         @Test
         void 정상_조회() {
             // given
-            Long userId = 1L;
             List<Long> ids = List.of(1L, 2L);
             Place place1 = createMockPlace(1L);
             Place place2 = createMockPlace(2L);
 
             given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1, place2));
-            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of(1L));
             given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
+            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(ids);
 
             // then
             assertThat(responses).hasSize(2);
-            assertThat(responses.get(0).isWished()).isTrue();
-            assertThat(responses.get(1).isWished()).isFalse();
-            assertThat(responses.get(0).images().getFirst().url())
+            assertThat(responses.getFirst().images().getFirst().url())
                     .isEqualTo("http://localhost:9000/goyo-local/place/image.jpg");
-        }
-
-        @Test
-        void 비로그인이면_모든_공간이_위시_false() {
-            // given
-            Long userId = null;
-            List<Long> ids = List.of(1L, 2L);
-            Place place1 = createMockPlace(1L);
-            Place place2 = createMockPlace(2L);
-
-            given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1, place2));
-            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of());
-            given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
-
-            // when
-            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
-
-            // then
-            assertThat(responses).allMatch(r -> !r.isWished());
         }
 
         @Test
         void 존재하지_않는_ID는_결과에서_제외() {
             // given
-            Long userId = 1L;
             List<Long> ids = List.of(1L, 999L);
             Place place1 = createMockPlace(1L);
 
             given(placeRepository.findAllByIdWithDetails(ids)).willReturn(List.of(place1));
-            given(wishlistReader.getWishedPlaceIdSet(userId, ids)).willReturn(Set.of());
             given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(userId, ids);
+            List<PlaceMapItemResponse> responses = placeService.getPlacesByIds(ids);
 
             // then
             assertThat(responses).hasSize(1);

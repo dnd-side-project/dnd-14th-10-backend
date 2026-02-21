@@ -43,12 +43,9 @@ public record PlaceMapItemResponse(
         SpaceSize spaceSize,
 
         @Schema(description = "찜 수", example = "42")
-        int wishCount,
-
-        @Schema(description = "내가 찜했는지 여부", example = "true")
-        boolean isWished
+        int wishCount
 ) {
-    public static PlaceMapItemResponse of(Place place, PlaceDetail placeDetail, boolean isWished, FileStorage fileStorage) {
+    public static PlaceMapItemResponse of(Place place, PlaceDetail placeDetail, FileStorage fileStorage) {
         List<PlaceImageItem> images = PlaceImageItem.listOf(place.getImages(), fileStorage);
 
         return new PlaceMapItemResponse(
@@ -62,8 +59,7 @@ public record PlaceMapItemResponse(
                 place.getLocation().getX(),
                 placeDetail.getMood(),
                 placeDetail.getSpaceSize(),
-                placeDetail.getWishCount(),
-                isWished
+                placeDetail.getWishCount()
         );
     }
 }
