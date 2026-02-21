@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.dto.PlaceWithDistance;
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
 import io.dnd.goyo.domain.place.entity.Place;
@@ -154,6 +155,113 @@ class PlaceSearchServiceTest {
             assertThat(response.places()).isEmpty();
         }
 
+    }
+
+    @Nested
+    @DisplayName("반경 내 공간 필터 검색")
+    class GetNearbyFilteredPlaces {
+
+        @Test
+        void 반경_검색_성공() {
+            // given
+            NearbyFilterRequest request = new NearbyFilterRequest(
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+            );
+            double longitude = 127.0;
+            double latitude = 37.5;
+
+            List<PlaceWithDistance> placesWithDistance = List.of(
+                    new PlaceWithDistance(1L, 100.5),
+                    new PlaceWithDistance(2L, 200.3)
+            );
+
+            List<Place> places = List.of(
+                    createMockPlace(1L),
+                    createMockPlace(2L)
+            );
+
+            given(placeRepository.findNearbyWithFilters(any(), eq(longitude), eq(latitude), eq(10)))
+                    .willReturn(placesWithDistance);
+            given(placeRepository.findAllByIdWithDetails(anyList()))
+                    .willReturn(places);
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, longitude, latitude);
+
+            // then
+            assertThat(response.places()).hasSize(2);
+            assertThat(response.lastDistance()).isEqualTo(200.3);
+            assertThat(response.hasNext()).isFalse();
+        }
+
+        @Test
+        void 결과_없으면_빈_응답() {
+            // given
+            NearbyFilterRequest request = new NearbyFilterRequest(
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+            );
+
+            given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
+                    .willReturn(List.of());
+
+            // when
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+
+            // then
+            assertThat(response.places()).isEmpty();
+            assertThat(response.lastDistance()).isNull();
+            assertThat(response.hasNext()).isFalse();
+        }
+
+        @Test
+        void hasNext_확인() {
+            // given
+            NearbyFilterRequest request = new NearbyFilterRequest(
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+            );
+
+            List<PlaceWithDistance> placesWithDistance = IntStream.rangeClosed(1, 11)
+                    .mapToObj(i -> new PlaceWithDistance((long) i, i * 100.0))
+                    .toList();
+
+            List<Place> places = IntStream.rangeClosed(1, 10)
+                    .mapToObj(i -> createMockPlace((long) i))
+                    .toList();
+
+            given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
+                    .willReturn(placesWithDistance);
+            given(placeRepository.findAllByIdWithDetails(anyList()))
+                    .willReturn(places);
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+
+            // then
+            assertThat(response.places()).hasSize(10);
+            assertThat(response.lastDistance()).isEqualTo(1000.0);
+            assertThat(response.hasNext()).isTrue();
+        }
+
+        @Test
+        void radius_기본값_적용() {
+            // given
+            NearbyFilterRequest request = new NearbyFilterRequest(
+                    PlaceCategory.CAFE, null, null, null, null, null
+            );
+
+            given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
+                    .willReturn(List.of());
+
+            // when
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+
+            // then
+            assertThat(response.places()).isEmpty();
+        }
     }
 
     private Place createMockPlace(Long id) {

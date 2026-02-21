@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.controller;
 
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
@@ -48,6 +49,17 @@ public class PlaceController {
             @RequestParam Double latitude
     ) {
         PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, longitude, latitude);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "반경 내 공간 필터 검색", description = "현재 위치 기준 반경 내 공간을 필터 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
+    @GetMapping("/search/nearby")
+    public ResponseEntity<PlaceFilterResponse> searchNearbyPlaces(
+            @ParameterObject @Valid @ModelAttribute NearbyFilterRequest request,
+            @RequestParam Double longitude,
+            @RequestParam Double latitude
+    ) {
+        PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, longitude, latitude);
         return ResponseEntity.ok(response);
     }
 

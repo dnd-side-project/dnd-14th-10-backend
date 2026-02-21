@@ -8,6 +8,7 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.dto.PlaceWithDistance;
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.entity.QPlace;
 import io.dnd.goyo.domain.place.entity.QPlaceDetail;
@@ -84,6 +85,73 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
         }
 
         return findPlacesWithDistanceAndCursor(filteredIds, longitude, latitude, request.lastDistance(), size);
+    }
+
+    @Override
+    public List<PlaceWithDistance> findNearbyWithFilters(NearbyFilterRequest request, double longitude, double latitude, int size) {
+        List<Long> nearbyPlaceIds = findNearbyPlaceIds(longitude, latitude, request.resolvedRadius());
+
+        if (nearbyPlaceIds.isEmpty()) {
+            return List.of();
+        }
+
+        QPlace place = QPlace.place;
+        QPlaceDetail placeDetail = QPlaceDetail.placeDetail;
+
+        NumberExpression<Double> moodAvg = placeDetail.totalQuietScore.doubleValue().divide(placeDetail.reviewCount.add(1));
+        NumberExpression<Double> spaceSizeAvg = placeDetail.totalSpaceSizeScore.doubleValue().divide(placeDetail.reviewCount.add(1));
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(place.id.in(nearbyPlaceIds));
+        builder.and(place.status.eq(PlaceStatus.ACTIVE));
+
+        if (request.category() != null) {
+            builder.and(place.category.eq(request.category()));
+        }
+
+        if (request.spaceSize() != null) {
+            builder.and(buildSpaceSizeCondition(spaceSizeAvg, request.spaceSize()));
+        }
+
+        if (request.moods() != null && !request.moods().isEmpty()) {
+            builder.and(buildMoodsCondition(moodAvg, request.moods()));
+        }
+
+        List<Long> filteredIds = queryFactory
+                .select(place.id)
+                .from(place)
+                .join(place.placeDetail, placeDetail)
+                .where(builder)
+                .fetch();
+
+        if (filteredIds.isEmpty()) {
+            return List.of();
+        }
+
+        return findPlacesWithDistanceAndCursor(filteredIds, longitude, latitude, request.lastDistance(), size);
+    }
+
+    private List<Long> findNearbyPlaceIds(double longitude, double latitude, double radiusMeters) {
+        String sql = """
+                SELECT p.id FROM places p
+                WHERE p.status = 'ACTIVE'
+                AND ST_DWithin(
+                    CAST(p.location AS geography),
+                    CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
+                    :radiusMeters
+                )
+                LIMIT 1000
+                """;
+
+        List<?> result = entityManager.createNativeQuery(sql)
+                .setParameter("longitude", longitude)
+                .setParameter("latitude", latitude)
+                .setParameter("radiusMeters", radiusMeters)
+                .getResultList();
+
+        return result.stream()
+                .map(id -> ((Number) id).longValue())
+                .toList();
     }
 
     private List<PlaceWithDistance> findPlacesWithDistanceAndCursor(

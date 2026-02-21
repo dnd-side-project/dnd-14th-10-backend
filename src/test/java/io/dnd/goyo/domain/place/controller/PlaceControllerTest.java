@@ -16,6 +16,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
@@ -513,6 +514,73 @@ class PlaceControllerTest {
 
             // when & then
             mockMvc.perform(get("/api/places/search")
+                            .param("longitude", "126.9769")
+                            .param("latitude", "37.5720")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.places").isEmpty())
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+
+        private PlaceMapItemResponse createPlaceMapItemResponse(Long id) {
+            return new PlaceMapItemResponse(
+                    id,
+                    "테스트 카페 " + id,
+                    PlaceCategory.CAFE,
+                    "서울시 강남구",
+                    1168010100L,
+                    List.of(new PlaceImageItem("http://localhost:9000/goyo-local/place/image.jpg", 0, true)),
+                    37.5,
+                    127.0,
+                    Mood.CALM,
+                    SpaceSize.MEDIUM,
+                    5
+            );
+        }
+    }
+
+    @Nested
+    @DisplayName("GET /api/places/search/nearby")
+    class SearchNearbyPlaces {
+
+        @Test
+        void 반경_검색_성공() throws Exception {
+            // given
+            List<PlaceMapItemResponse> places = List.of(
+                    createPlaceMapItemResponse(1L),
+                    createPlaceMapItemResponse(2L)
+            );
+            PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
+
+            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class), eq(126.9769), eq(37.5720)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/places/search/nearby")
+                            .param("category", "CAFE")
+                            .param("radius", "3000")
+                            .param("longitude", "126.9769")
+                            .param("latitude", "37.5720")
+                            .param("size", "10")
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.places").isArray())
+                    .andExpect(jsonPath("$.places[0].id").value(1L))
+                    .andExpect(jsonPath("$.places[1].id").value(2L))
+                    .andExpect(jsonPath("$.lastDistance").value(500.5))
+                    .andExpect(jsonPath("$.hasNext").value(false));
+        }
+
+        @Test
+        void 결과_없으면_빈_배열_반환() throws Exception {
+            // given
+            PlaceFilterResponse response = new PlaceFilterResponse(List.of(), null, false);
+
+            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class), eq(126.9769), eq(37.5720)))
+                    .willReturn(response);
+
+            // when & then
+            mockMvc.perform(get("/api/places/search/nearby")
                             .param("longitude", "126.9769")
                             .param("latitude", "37.5720")
                             .with(csrf()))

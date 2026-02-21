@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.dto.PlaceWithDistance;
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
@@ -26,6 +27,27 @@ public class PlaceSearchService {
     public PlaceFilterResponse getFilteredPlaces(PlaceFilterRequest request, double longitude, double latitude) {
         int size = request.resolvedSize();
         List<PlaceWithDistance> placesWithDistance = placeRepository.findByFilterWithDistance(request, longitude, latitude, size);
+        boolean hasNext = placesWithDistance.size() > size;
+        if (hasNext) {
+            placesWithDistance = placesWithDistance.subList(0, size);
+        }
+
+        if (placesWithDistance.isEmpty()) {
+            return PlaceFilterResponse.empty();
+        }
+
+        List<Long> placeIds = placesWithDistance.stream()
+                .map(PlaceWithDistance::placeId)
+                .toList();
+        List<PlaceMapItemResponse> responses = buildPlaceResponses(placeIds);
+
+        Double lastDistance = placesWithDistance.getLast().distance();
+        return new PlaceFilterResponse(responses, lastDistance, hasNext);
+    }
+
+    public PlaceFilterResponse getNearbyFilteredPlaces(NearbyFilterRequest request, double longitude, double latitude) {
+        int size = request.resolvedSize();
+        List<PlaceWithDistance> placesWithDistance = placeRepository.findNearbyWithFilters(request, longitude, latitude, size);
         boolean hasNext = placesWithDistance.size() > size;
         if (hasNext) {
             placesWithDistance = placesWithDistance.subList(0, size);
