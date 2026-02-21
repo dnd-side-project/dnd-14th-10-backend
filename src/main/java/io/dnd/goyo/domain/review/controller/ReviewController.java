@@ -40,8 +40,8 @@ public class ReviewController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @Valid @RequestBody ReviewCreateRequest request
     ) {
-        Long reviewId = reviewService.createReview(userDetails.userId(), request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ReviewCreateResponse.from(reviewId));
+        ReviewCreateResponse response = reviewService.createReview(userDetails.userId(), request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Operation(summary = "리뷰 단건 조회", description = "리뷰 상세 정보를 조회합니다.")

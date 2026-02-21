@@ -9,7 +9,9 @@ import io.dnd.goyo.domain.place.entity.ReviewScores;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
 import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
+import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
+import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewImage;
@@ -53,7 +55,7 @@ public class ReviewService {
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional
-    public Long createReview(Long userId, ReviewCreateRequest request) {
+    public ReviewCreateResponse createReview(Long userId, ReviewCreateRequest request) {
         User user = userReader.getUser(userId);
         Place place = placeReader.getPlace(request.placeId());
 
@@ -72,15 +74,26 @@ public class ReviewService {
 
         reviewTagService.registerReviewTags(review, request.tagIds());
 
-        PlaceDetail placeDetail = getPlaceDetail(place.getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(place.getId());
         placeDetail.addReviewScores(ReviewScores.from(
                 request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
 
+        long reviewOrder = placeDetail.getReviewCount();
+
         boolean hasImages = request.images() != null && !request.images().isEmpty();
         eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.REVIEW, 1, hasImages ? 1 : 0));
 
-        return review.getId();
+        String representativeImageUrl = null;
+        if (request.images() != null) {
+            representativeImageUrl = request.images().stream()
+                    .filter(ReviewImageRequest::isPrimary)
+                    .findFirst()
+                    .map(img -> fileStorage.generatePublicUrl(img.imageKey()))
+                    .orElse(null);
+        }
+
+        return ReviewCreateResponse.of(review.getId(), representativeImageUrl, reviewOrder);
     }
 
     public ReviewDetailResponse getReview(Long reviewId) {
@@ -137,7 +150,7 @@ public class ReviewService {
         Review review = getActiveReview(reviewId);
         validateOwner(userId, review);
 
-        PlaceDetail placeDetail = getPlaceDetail(review.getPlace().getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(review.getPlace().getId());
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.update(
@@ -207,7 +220,7 @@ public class ReviewService {
 
         boolean hadImages = !reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId).isEmpty();
 
-        PlaceDetail placeDetail = getPlaceDetail(review.getPlace().getId());
+        PlaceDetail placeDetail = getPlaceDetailForUpdate(review.getPlace().getId());
         placeDetail.removeReviewScores(ReviewScores.from(review));
 
         review.delete();
@@ -235,6 +248,11 @@ public class ReviewService {
 
     private PlaceDetail getPlaceDetail(Long placeId) {
         return placeDetailRepository.findByPlaceId(placeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
+    }
+
+    private PlaceDetail getPlaceDetailForUpdate(Long placeId) {
+        return placeDetailRepository.findByPlaceIdForUpdate(placeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PLACE_NOT_FOUND));
     }
 

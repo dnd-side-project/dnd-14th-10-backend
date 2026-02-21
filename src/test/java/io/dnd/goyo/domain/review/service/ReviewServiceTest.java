@@ -25,6 +25,7 @@ import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
+import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewImage;
@@ -126,10 +127,11 @@ class ReviewServiceTest {
 
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
-            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(placeId)).willReturn(Optional.of(placeDetail));
+            given(placeDetail.getReviewCount()).willReturn(1);
 
             // when
-            reviewService.createReview(userId, request);
+            ReviewCreateResponse response = reviewService.createReview(userId, request);
 
             // then
             verify(reviewRepository).save(any(Review.class));
@@ -137,6 +139,71 @@ class ReviewServiceTest {
             verify(placeDetail).addReviewScores(ReviewScores.from(
                     request.rating().doubleValue(), request.outletScore(),
                     request.crowdStatus(), request.spaceSize(), request.mood()));
+            assertThat(response.representativeImageUrl()).isNull();
+            assertThat(response.reviewOrder()).isEqualTo(1L);
+        }
+
+        @Test
+        void 이미지_포함_리뷰_생성_시_대표_이미지_URL_반환() {
+            // given
+            Long userId = 1L;
+            Long placeId = 10L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(placeId);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewCreateRequest request = new ReviewCreateRequest(
+                    placeId, new BigDecimal("4.0"), List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
+                    OutletScore.MANY, CrowdStatus.NORMAL, "좋은 카페입니다",
+                    List.of(new ReviewImageRequest("img-key-1", 0, true),
+                            new ReviewImageRequest("img-key-2", 1, false)),
+                    null
+            );
+
+            given(userReader.getUser(userId)).willReturn(user);
+            given(placeReader.getPlace(placeId)).willReturn(place);
+            given(placeDetailRepository.findByPlaceIdForUpdate(placeId)).willReturn(Optional.of(placeDetail));
+            given(placeDetail.getReviewCount()).willReturn(3);
+            given(fileStorage.generatePublicUrl("img-key-1")).willReturn("https://cdn.example.com/img-key-1");
+
+            // when
+            ReviewCreateResponse response = reviewService.createReview(userId, request);
+
+            // then
+            assertThat(response.representativeImageUrl()).isEqualTo("https://cdn.example.com/img-key-1");
+            assertThat(response.reviewOrder()).isEqualTo(3L);
+        }
+
+        @Test
+        void 이미지_포함하지만_대표_이미지_없을_시_대표_이미지_URL_null() {
+            // given
+            Long userId = 1L;
+            Long placeId = 10L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(placeId);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewCreateRequest request = new ReviewCreateRequest(
+                    placeId, new BigDecimal("4.0"), List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
+                    OutletScore.MANY, CrowdStatus.NORMAL, "좋은 카페입니다",
+                    List.of(new ReviewImageRequest("img-key-1", 0, false),
+                            new ReviewImageRequest("img-key-2", 1, false)),
+                    null
+            );
+
+            given(userReader.getUser(userId)).willReturn(user);
+            given(placeReader.getPlace(placeId)).willReturn(place);
+            given(placeDetailRepository.findByPlaceIdForUpdate(placeId)).willReturn(Optional.of(placeDetail));
+            given(placeDetail.getReviewCount()).willReturn(2);
+
+            // when
+            ReviewCreateResponse response = reviewService.createReview(userId, request);
+
+            // then
+            assertThat(response.representativeImageUrl()).isNull();
+            assertThat(response.reviewOrder()).isEqualTo(2L);
         }
 
         @Test
@@ -303,7 +370,7 @@ class ReviewServiceTest {
             ReviewUpdateRequest request = createReviewUpdateRequest();
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(10L)).willReturn(Optional.of(placeDetail));
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId)).willReturn(List.of());
 
             // when
@@ -362,7 +429,7 @@ class ReviewServiceTest {
             );
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(10L)).willReturn(Optional.of(placeDetail));
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
                     .willReturn(List.of(oldImage1, oldImage2));
 
@@ -397,7 +464,7 @@ class ReviewServiceTest {
             );
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(10L)).willReturn(Optional.of(placeDetail));
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
                     .willReturn(List.of(oldImage));
             willThrow(new RuntimeException("MinIO 연결 실패"))
@@ -432,7 +499,7 @@ class ReviewServiceTest {
             );
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
-            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(10L)).willReturn(Optional.of(placeDetail));
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId))
                     .willReturn(List.of(oldImage));
             willThrow(new BusinessException(ErrorCode.INVALID_INPUT, "존재하지 않는 태그가 포함되어 있습니다."))
@@ -465,7 +532,7 @@ class ReviewServiceTest {
 
             given(reviewRepository.findById(reviewId)).willReturn(Optional.of(review));
             given(reviewImageRepository.findAllByReviewIdOrderBySequence(reviewId)).willReturn(List.of());
-            given(placeDetailRepository.findByPlaceId(10L)).willReturn(Optional.of(placeDetail));
+            given(placeDetailRepository.findByPlaceIdForUpdate(10L)).willReturn(Optional.of(placeDetail));
 
             // when
             reviewService.deleteReview(userId, reviewId);
