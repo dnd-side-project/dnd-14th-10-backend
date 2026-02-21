@@ -22,6 +22,7 @@ import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.badge.enums.ActivityType;
 import io.dnd.goyo.domain.badge.event.ActivityEvent;
+import io.dnd.goyo.domain.review.enums.ReviewSortType;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +31,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -111,8 +113,9 @@ public class ReviewService {
         ));
     }
 
-    public Page<ReviewDetailResponse> getMyReviews(Long userId, Pageable pageable) {
-        Page<Review> reviewPage = reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable);
+    public Page<ReviewDetailResponse> getMyReviews(Long userId, Pageable pageable, ReviewSortType sortType) {
+        Pageable sorted = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), sortType.toSort());
+        Page<Review> reviewPage = reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, sorted);
 
         List<Long> reviewIds = reviewPage.getContent().stream()
                 .map(Review::getId)

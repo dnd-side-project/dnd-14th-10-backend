@@ -19,6 +19,7 @@ import io.dnd.goyo.domain.wishlist.dto.request.WishlistAddRequest;
 import io.dnd.goyo.domain.wishlist.dto.response.WishCountResponse;
 import io.dnd.goyo.domain.wishlist.dto.response.WishlistItemResponse;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
+import io.dnd.goyo.domain.wishlist.enums.WishlistSortType;
 import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
 import java.util.List;
 import java.util.Optional;
@@ -142,12 +143,13 @@ class WishlistServiceTest {
             given(location.getX()).willReturn(127.0);
 
             PageRequest pageable = PageRequest.of(0, 10);
-            Page<Wishlist> wishlistPage = new PageImpl<>(List.of(wishlist), pageable, 1);
+            PageRequest sorted = pageable.withSort(WishlistSortType.LATEST.toSort());
+            Page<Wishlist> wishlistPage = new PageImpl<>(List.of(wishlist), sorted, 1);
 
-            given(wishlistRepository.findAllByUserId(userId, pageable)).willReturn(wishlistPage);
+            given(wishlistRepository.findAllByUserId(userId, sorted)).willReturn(wishlistPage);
 
             // when
-            Page<WishlistItemResponse> result = wishlistService.getMyWishlists(userId, pageable);
+            Page<WishlistItemResponse> result = wishlistService.getMyWishlists(userId, pageable, WishlistSortType.LATEST);
 
             // then
             assertThat(result.getContent()).hasSize(1);
@@ -159,16 +161,50 @@ class WishlistServiceTest {
             // given
             Long userId = 1L;
             PageRequest pageable = PageRequest.of(0, 10);
-            Page<Wishlist> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+            PageRequest sorted = pageable.withSort(WishlistSortType.LATEST.toSort());
+            Page<Wishlist> emptyPage = new PageImpl<>(List.of(), sorted, 0);
 
-            given(wishlistRepository.findAllByUserId(userId, pageable)).willReturn(emptyPage);
+            given(wishlistRepository.findAllByUserId(userId, sorted)).willReturn(emptyPage);
 
             // when
-            Page<WishlistItemResponse> result = wishlistService.getMyWishlists(userId, pageable);
+            Page<WishlistItemResponse> result = wishlistService.getMyWishlists(userId, pageable, WishlistSortType.LATEST);
 
             // then
             assertThat(result.getContent()).isEmpty();
             assertThat(result.getTotalElements()).isZero();
+        }
+
+        @Test
+        void 인기순_정렬로_찜_목록_조회_성공() {
+            // given
+            Long userId = 1L;
+            Wishlist wishlist = mock(Wishlist.class);
+            Place place = mock(Place.class);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            org.locationtech.jts.geom.Point location = mock(org.locationtech.jts.geom.Point.class);
+
+            given(wishlist.getId()).willReturn(1L);
+            given(wishlist.getPlace()).willReturn(place);
+            given(place.getId()).willReturn(10L);
+            given(place.getName()).willReturn("테스트 카페");
+            given(place.getPlaceDetail()).willReturn(placeDetail);
+            given(place.getLocation()).willReturn(location);
+            given(place.getRegionCode()).willReturn(new io.dnd.goyo.domain.place.entity.RegionCode(11110L));
+            given(location.getY()).willReturn(37.5);
+            given(location.getX()).willReturn(127.0);
+
+            PageRequest pageable = PageRequest.of(0, 10);
+            Page<Wishlist> wishlistPage = new PageImpl<>(List.of(wishlist), pageable, 1);
+
+            given(wishlistRepository.findAllByUserIdOrderByWishCountDesc(userId, pageable)).willReturn(wishlistPage);
+
+            // when
+            Page<WishlistItemResponse> result = wishlistService.getMyWishlists(userId, pageable, WishlistSortType.POPULAR);
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeId()).isEqualTo(10L);
+            verify(wishlistRepository).findAllByUserIdOrderByWishCountDesc(userId, pageable);
         }
     }
 
