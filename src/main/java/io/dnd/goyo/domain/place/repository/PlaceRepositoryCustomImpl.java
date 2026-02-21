@@ -44,7 +44,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
     private static final long REGION_CODE_RANGE = 99999L;
 
     @Override
-    public List<Long> findByFilter(PlaceFilterRequest request, int size) {
+    public List<Long> findByFilter(PlaceFilterRequest request, Double longitude, Double latitude, int size) {
         QPlace place = QPlace.place;
         QPlaceDetail placeDetail = QPlaceDetail.placeDetail;
 
@@ -74,7 +74,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
             builder.and(place.id.lt(request.lastPlaceId()));
         }
 
-        return queryFactory
+        List<Long> filteredIds = queryFactory
                 .select(place.id)
                 .from(place)
                 .join(place.placeDetail, placeDetail)
@@ -82,6 +82,31 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
                 .orderBy(place.id.desc())
                 .limit(size + 1)
                 .fetch();
+
+        if (longitude != null && latitude != null && !filteredIds.isEmpty()) {
+            List<Long> sortedByDistance = findPlaceIdsSortedByDistance(filteredIds, longitude, latitude);
+            return sortedByDistance.stream().limit(size + 1).toList();
+        }
+
+        return filteredIds;
+    }
+
+    private List<Long> findPlaceIdsSortedByDistance(List<Long> placeIds, double longitude, double latitude) {
+        String sql = """
+            SELECT p.id FROM places p
+            WHERE p.id = ANY(:placeIds)
+            ORDER BY p.location <-> ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+            """;
+
+        List<?> result = entityManager.createNativeQuery(sql)
+                .setParameter("placeIds", placeIds.toArray(new Long[0]))
+                .setParameter("longitude", longitude)
+                .setParameter("latitude", latitude)
+                .getResultList();
+
+        return result.stream()
+                .map(id -> ((Number) id).longValue())
+                .toList();
     }
 
     private BooleanExpression buildSpaceSizeCondition(NumberExpression<Double> spaceSizeAvg, SpaceSize spaceSize) {
@@ -162,6 +187,90 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
                 .setParameter("minScore", minScore)
                 .setParameter("maxScore", maxScore)
                 .setParameter("limit", limit)
+                .getResultList();
+
+        return result.stream()
+                .map(id -> ((Number) id).longValue())
+                .toList();
+    }
+
+    @Override
+    public List<Long> findNearbyPlacesWithFilters(
+            PlaceFilterRequest request,
+            double longitude,
+            double latitude,
+            double radiusMeters,
+            int limit
+    ) {
+        List<Long> nearbyPlaceIds = findNearbyPlaceIdsSorted(longitude, latitude, radiusMeters);
+
+        if (nearbyPlaceIds.isEmpty()) {
+            return List.of();
+        }
+
+        QPlace place = QPlace.place;
+        QPlaceDetail placeDetail = QPlaceDetail.placeDetail;
+
+        NumberExpression<Double> moodAvg = placeDetail.totalQuietScore.doubleValue()
+                .divide(placeDetail.reviewCount.add(1));
+        NumberExpression<Double> spaceSizeAvg = placeDetail.totalSpaceSizeScore.doubleValue()
+                .divide(placeDetail.reviewCount.add(1));
+
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(place.id.in(nearbyPlaceIds));
+        builder.and(place.status.eq(PlaceStatus.ACTIVE));
+
+        if (request.category() != null) {
+            builder.and(place.category.eq(request.category()));
+        }
+
+        if (request.spaceSize() != null) {
+            builder.and(buildSpaceSizeCondition(spaceSizeAvg, request.spaceSize()));
+        }
+
+        if (request.moods() != null && !request.moods().isEmpty()) {
+            builder.and(buildMoodsCondition(moodAvg, request.moods()));
+        }
+
+        if (request.lastPlaceId() != null) {
+            builder.and(place.id.lt(request.lastPlaceId()));
+        }
+
+        List<Long> filteredIds = queryFactory
+                .select(place.id)
+                .from(place)
+                .join(place.placeDetail, placeDetail)
+                .where(builder)
+                .orderBy(place.id.desc())
+                .limit(limit + 1)
+                .fetch();
+
+        return filteredIds.stream()
+                .sorted((a, b) -> {
+                    int indexA = nearbyPlaceIds.indexOf(a);
+                    int indexB = nearbyPlaceIds.indexOf(b);
+                    return Integer.compare(indexA, indexB);
+                })
+                .limit(limit)
+                .toList();
+    }
+
+    private List<Long> findNearbyPlaceIdsSorted(double longitude, double latitude, double radiusMeters) {
+        String sql = """
+            SELECT p.id FROM places p
+            WHERE ST_DWithin(
+                CAST(p.location AS geography),
+                CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography),
+                :radiusMeters
+            )
+            AND p.status = 'ACTIVE'
+            ORDER BY p.location <-> ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326)
+            """;
+
+        List<?> result = entityManager.createNativeQuery(sql)
+                .setParameter("longitude", longitude)
+                .setParameter("latitude", latitude)
+                .setParameter("radiusMeters", radiusMeters)
                 .getResultList();
 
         return result.stream()

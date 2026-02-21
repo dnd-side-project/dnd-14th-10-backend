@@ -28,27 +28,17 @@ public class PlaceSearchService {
     private final WishlistReader wishlistReader;
     private final FileStorage fileStorage;
 
-    public PlaceFilterResponse getFilteredPlaces(Long userId, PlaceFilterRequest request) {
+    public PlaceFilterResponse getFilteredPlaces(Long userId, PlaceFilterRequest request, Double longitude, Double latitude) {
         int size = resolveSize(request.size());
-
-        List<Long> placeIds = placeRepository.findByFilter(request, size);
-
-        boolean hasNext = placeIds.size() > size;
-        if (hasNext) {
-            placeIds = placeIds.subList(0, size);
-        }
+        List<Long> placeIds = placeRepository.findByFilter(request, longitude, latitude, size);
+        boolean hasNext = hasNextPage(placeIds, size);
+        placeIds = limitToPageSize(placeIds, size, hasNext);
 
         if (placeIds.isEmpty()) {
-            return new PlaceFilterResponse(List.of(), null, false);
+            return PlaceFilterResponse.empty();
         }
 
-        List<Place> places = placeRepository.findAllByIdWithDetails(placeIds);
-        Map<Long, Place> placeMap = toPlaceMap(places);
-
-        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
-
-        List<PlaceMapItemResponse> responses = toResponses(placeIds, placeMap, wishedPlaceIds);
-
+        List<PlaceMapItemResponse> responses = buildPlaceResponses(userId, placeIds);
         Long lastPlaceId = placeIds.getLast();
 
         return new PlaceFilterResponse(responses, lastPlaceId, hasNext);
@@ -81,6 +71,53 @@ public class PlaceSearchService {
                         fileStorage
                 ))
                 .toList();
+    }
+
+    public PlaceFilterResponse getNearbyFilteredPlaces(
+            Long userId,
+            PlaceFilterRequest request,
+            double longitude,
+            double latitude,
+            double radiusMeters
+    ) {
+        int size = resolveSize(request.size());
+        List<Long> placeIds = fetchNearbyPlaceIds(request, longitude, latitude, radiusMeters, size);
+        boolean hasNext = hasNextPage(placeIds, size);
+        placeIds = limitToPageSize(placeIds, size, hasNext);
+
+        if (placeIds.isEmpty()) {
+            return PlaceFilterResponse.empty();
+        }
+
+        List<PlaceMapItemResponse> responses = buildPlaceResponses(userId, placeIds);
+        Long lastPlaceId = placeIds.getLast();
+
+        return new PlaceFilterResponse(responses, lastPlaceId, hasNext);
+    }
+
+    private List<Long> fetchNearbyPlaceIds(
+            PlaceFilterRequest request,
+            double longitude,
+            double latitude,
+            double radiusMeters,
+            int size
+    ) {
+        return placeRepository.findNearbyPlacesWithFilters(request, longitude, latitude, radiusMeters, size);
+    }
+
+    private boolean hasNextPage(List<Long> placeIds, int size) {
+        return placeIds.size() > size;
+    }
+
+    private List<Long> limitToPageSize(List<Long> placeIds, int size, boolean hasNext) {
+        return hasNext ? placeIds.subList(0, size) : placeIds;
+    }
+
+    private List<PlaceMapItemResponse> buildPlaceResponses(Long userId, List<Long> placeIds) {
+        List<Place> places = placeRepository.findAllByIdWithDetails(placeIds);
+        Map<Long, Place> placeMap = toPlaceMap(places);
+        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
+        return toResponses(placeIds, placeMap, wishedPlaceIds);
     }
 
 }
