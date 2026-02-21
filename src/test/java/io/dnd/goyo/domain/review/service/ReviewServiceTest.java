@@ -25,6 +25,7 @@ import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
+import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewImage;
@@ -127,9 +128,10 @@ class ReviewServiceTest {
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
             given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(reviewRepository.countByPlaceIdAndActiveStatus(placeId)).willReturn(1L);
 
             // when
-            reviewService.createReview(userId, request);
+            ReviewCreateResponse response = reviewService.createReview(userId, request);
 
             // then
             verify(reviewRepository).save(any(Review.class));
@@ -137,6 +139,40 @@ class ReviewServiceTest {
             verify(placeDetail).addReviewScores(ReviewScores.from(
                     request.rating().doubleValue(), request.outletScore(),
                     request.crowdStatus(), request.spaceSize(), request.mood()));
+            assertThat(response.representativeImageUrl()).isNull();
+            assertThat(response.reviewOrder()).isEqualTo(1L);
+        }
+
+        @Test
+        void 이미지_포함_리뷰_생성_시_대표_이미지_URL_반환() {
+            // given
+            Long userId = 1L;
+            Long placeId = 10L;
+            User user = mock(User.class);
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(placeId);
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+
+            ReviewCreateRequest request = new ReviewCreateRequest(
+                    placeId, new BigDecimal("4.0"), List.of(1L, 2L), Mood.CALM, SpaceSize.MEDIUM,
+                    OutletScore.MANY, CrowdStatus.NORMAL, "좋은 카페입니다",
+                    List.of(new ReviewImageRequest("img-key-1", 0, true),
+                            new ReviewImageRequest("img-key-2", 1, false)),
+                    null
+            );
+
+            given(userReader.getUser(userId)).willReturn(user);
+            given(placeReader.getPlace(placeId)).willReturn(place);
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(reviewRepository.countByPlaceIdAndActiveStatus(placeId)).willReturn(3L);
+            given(fileStorage.generatePublicUrl("img-key-1")).willReturn("https://cdn.example.com/img-key-1");
+
+            // when
+            ReviewCreateResponse response = reviewService.createReview(userId, request);
+
+            // then
+            assertThat(response.representativeImageUrl()).isEqualTo("https://cdn.example.com/img-key-1");
+            assertThat(response.reviewOrder()).isEqualTo(3L);
         }
 
         @Test

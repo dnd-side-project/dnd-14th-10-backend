@@ -15,6 +15,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
+import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
 import io.dnd.goyo.domain.review.service.ReviewService;
@@ -89,14 +90,16 @@ class ReviewControllerTest {
     @Test
     void 리뷰_작성_성공_시_201_반환() throws Exception {
         given(reviewService.createReview(eq(1L), any(ReviewCreateRequest.class)))
-                .willReturn(100L);
+                .willReturn(ReviewCreateResponse.of(100L, null, 1L));
 
         mockMvc.perform(post("/api/reviews")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createValidCreateRequest()))
                         .with(csrf()))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.reviewId").value(100));
+                .andExpect(jsonPath("$.reviewId").value(100))
+                .andExpect(jsonPath("$.representativeImageUrl").doesNotExist())
+                .andExpect(jsonPath("$.reviewOrder").value(1));
 
         verify(reviewService).createReview(eq(1L), any(ReviewCreateRequest.class));
     }
