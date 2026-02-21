@@ -43,7 +43,7 @@ public class UserWithdraw extends BaseEntity {
     private String detail;
 
     private UserWithdraw(User user, WithdrawReason reason, String detail) {
-        validate(reason, detail);
+        validate(user, reason, detail);
         this.user = user;
         this.reason = reason;
         this.detail = detail;
@@ -53,7 +53,10 @@ public class UserWithdraw extends BaseEntity {
         return new UserWithdraw(user, reason, detail);
     }
 
-    private static void validate(WithdrawReason reason, String detail) {
+    private static void validate(User user, WithdrawReason reason, String detail) {
+        if (user == null) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT, "탈퇴 회원 정보는 필수입니다.");
+        }
         if (reason == null) {
             throw new BusinessException(ErrorCode.INVALID_INPUT, "탈퇴 사유는 필수입니다.");
         }
