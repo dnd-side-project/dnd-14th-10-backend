@@ -44,22 +44,18 @@ public class PlaceController {
     @Operation(summary = "공간 필터 검색", description = "카테고리, 분위기, 공간 크기, 행정구역으로 공간을 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
     @GetMapping("/search")
     public ResponseEntity<PlaceFilterResponse> searchPlaces(
-            @ParameterObject @Valid @ModelAttribute PlaceFilterRequest request,
-            @RequestParam Double longitude,
-            @RequestParam Double latitude
+            @ParameterObject @Valid @ModelAttribute PlaceFilterRequest request
     ) {
-        PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, longitude, latitude);
+        PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
         return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "반경 내 공간 필터 검색", description = "현재 위치 기준 반경 내 공간을 필터 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
     @GetMapping("/search/nearby")
     public ResponseEntity<PlaceFilterResponse> searchNearbyPlaces(
-            @ParameterObject @Valid @ModelAttribute NearbyFilterRequest request,
-            @RequestParam Double longitude,
-            @RequestParam Double latitude
+            @ParameterObject @Valid @ModelAttribute NearbyFilterRequest request
     ) {
-        PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, longitude, latitude);
+        PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
         return ResponseEntity.ok(response);
     }
 

@@ -57,10 +57,8 @@ class PlaceSearchServiceTest {
         void 필터_검색_성공() {
             // given
             PlaceFilterRequest request = new PlaceFilterRequest(
-                    PlaceCategory.CAFE, null, null, null, null, 10
+                    PlaceCategory.CAFE, null, null, null, null, 10, 127.0, 37.5
             );
-            double longitude = 127.0;
-            double latitude = 37.5;
 
             List<PlaceWithDistance> placesWithDistance = List.of(
                     new PlaceWithDistance(1L, 100.5),
@@ -72,7 +70,7 @@ class PlaceSearchServiceTest {
                     createMockPlace(2L)
             );
 
-            given(placeRepository.findByFilterWithDistance(any(), eq(longitude), eq(latitude), eq(10)))
+            given(placeRepository.findByFilterWithDistance(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(placesWithDistance);
             given(placeRepository.findAllByIdWithDetails(anyList()))
                     .willReturn(places);
@@ -80,7 +78,7 @@ class PlaceSearchServiceTest {
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, longitude, latitude);
+            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
 
             // then
             assertThat(response.places()).hasSize(2);
@@ -92,14 +90,14 @@ class PlaceSearchServiceTest {
         void 결과_없으면_빈_응답() {
             // given
             PlaceFilterRequest request = new PlaceFilterRequest(
-                    PlaceCategory.CAFE, null, null, null, null, 10
+                    PlaceCategory.CAFE, null, null, null, null, 10, 127.0, 37.5
             );
 
             given(placeRepository.findByFilterWithDistance(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(List.of());
 
             // when
-            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
 
             // then
             assertThat(response.places()).isEmpty();
@@ -111,7 +109,7 @@ class PlaceSearchServiceTest {
         void hasNext_확인() {
             // given
             PlaceFilterRequest request = new PlaceFilterRequest(
-                    PlaceCategory.CAFE, null, null, null, null, 10
+                    PlaceCategory.CAFE, null, null, null, null, 10, 127.0, 37.5
             );
 
             List<PlaceWithDistance> placesWithDistance = IntStream.rangeClosed(1, 11)
@@ -130,7 +128,7 @@ class PlaceSearchServiceTest {
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
 
             // then
             assertThat(response.places()).hasSize(10);
@@ -142,14 +140,14 @@ class PlaceSearchServiceTest {
         void size_기본값_적용() {
             // given
             PlaceFilterRequest request = new PlaceFilterRequest(
-                    PlaceCategory.CAFE, null, null, null, null, null
+                    PlaceCategory.CAFE, null, null, null, null, null, 127.0, 37.5
             );
 
             given(placeRepository.findByFilterWithDistance(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(List.of());
 
             // when
-            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
 
             // then
             assertThat(response.places()).isEmpty();
@@ -165,10 +163,8 @@ class PlaceSearchServiceTest {
         void 반경_검색_성공() {
             // given
             NearbyFilterRequest request = new NearbyFilterRequest(
-                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10, 127.0, 37.5
             );
-            double longitude = 127.0;
-            double latitude = 37.5;
 
             List<PlaceWithDistance> placesWithDistance = List.of(
                     new PlaceWithDistance(1L, 100.5),
@@ -180,7 +176,7 @@ class PlaceSearchServiceTest {
                     createMockPlace(2L)
             );
 
-            given(placeRepository.findNearbyWithFilters(any(), eq(longitude), eq(latitude), eq(10)))
+            given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(placesWithDistance);
             given(placeRepository.findAllByIdWithDetails(anyList()))
                     .willReturn(places);
@@ -188,7 +184,7 @@ class PlaceSearchServiceTest {
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, longitude, latitude);
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
 
             // then
             assertThat(response.places()).hasSize(2);
@@ -200,14 +196,14 @@ class PlaceSearchServiceTest {
         void 결과_없으면_빈_응답() {
             // given
             NearbyFilterRequest request = new NearbyFilterRequest(
-                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10, 127.0, 37.5
             );
 
             given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(List.of());
 
             // when
-            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
 
             // then
             assertThat(response.places()).isEmpty();
@@ -219,7 +215,7 @@ class PlaceSearchServiceTest {
         void hasNext_확인() {
             // given
             NearbyFilterRequest request = new NearbyFilterRequest(
-                    PlaceCategory.CAFE, null, null, 3000.0, null, 10
+                    PlaceCategory.CAFE, null, null, 3000.0, null, 10, 127.0, 37.5
             );
 
             List<PlaceWithDistance> placesWithDistance = IntStream.rangeClosed(1, 11)
@@ -238,7 +234,7 @@ class PlaceSearchServiceTest {
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             // when
-            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
 
             // then
             assertThat(response.places()).hasSize(10);
@@ -250,14 +246,14 @@ class PlaceSearchServiceTest {
         void radius_기본값_적용() {
             // given
             NearbyFilterRequest request = new NearbyFilterRequest(
-                    PlaceCategory.CAFE, null, null, null, null, null
+                    PlaceCategory.CAFE, null, null, null, null, null, 127.0, 37.5
             );
 
             given(placeRepository.findNearbyWithFilters(any(), eq(127.0), eq(37.5), eq(10)))
                     .willReturn(List.of());
 
             // when
-            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request, 127.0, 37.5);
+            PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
 
             // then
             assertThat(response.places()).isEmpty();

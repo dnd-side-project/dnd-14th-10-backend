@@ -24,30 +24,19 @@ public class PlaceSearchService {
     private final PlaceRepository placeRepository;
     private final FileStorage fileStorage;
 
-    public PlaceFilterResponse getFilteredPlaces(PlaceFilterRequest request, double longitude, double latitude) {
+    public PlaceFilterResponse getFilteredPlaces(PlaceFilterRequest request) {
         int size = request.resolvedSize();
-        List<PlaceWithDistance> placesWithDistance = placeRepository.findByFilterWithDistance(request, longitude, latitude, size);
-        boolean hasNext = placesWithDistance.size() > size;
-        if (hasNext) {
-            placesWithDistance = placesWithDistance.subList(0, size);
-        }
-
-        if (placesWithDistance.isEmpty()) {
-            return PlaceFilterResponse.empty();
-        }
-
-        List<Long> placeIds = placesWithDistance.stream()
-                .map(PlaceWithDistance::placeId)
-                .toList();
-        List<PlaceMapItemResponse> responses = buildPlaceResponses(placeIds);
-
-        Double lastDistance = placesWithDistance.getLast().distance();
-        return new PlaceFilterResponse(responses, lastDistance, hasNext);
+        List<PlaceWithDistance> placesWithDistance = placeRepository.findByFilterWithDistance(request, request.longitude(), request.latitude(), size);
+        return buildFilterResponse(placesWithDistance, size);
     }
 
-    public PlaceFilterResponse getNearbyFilteredPlaces(NearbyFilterRequest request, double longitude, double latitude) {
+    public PlaceFilterResponse getNearbyFilteredPlaces(NearbyFilterRequest request) {
         int size = request.resolvedSize();
-        List<PlaceWithDistance> placesWithDistance = placeRepository.findNearbyWithFilters(request, longitude, latitude, size);
+        List<PlaceWithDistance> placesWithDistance = placeRepository.findNearbyWithFilters(request, request.longitude(), request.latitude(), size);
+        return buildFilterResponse(placesWithDistance, size);
+    }
+
+    private PlaceFilterResponse buildFilterResponse(List<PlaceWithDistance> placesWithDistance, int size) {
         boolean hasNext = placesWithDistance.size() > size;
         if (hasNext) {
             placesWithDistance = placesWithDistance.subList(0, size);

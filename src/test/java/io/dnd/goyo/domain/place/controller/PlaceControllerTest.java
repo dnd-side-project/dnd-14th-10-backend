@@ -459,34 +459,7 @@ class PlaceControllerTest {
             );
             PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
 
-            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
-                    .willReturn(response);
-
-            // when & then
-            mockMvc.perform(get("/api/places/search")
-                            .param("category", "CAFE")
-                            .param("longitude", "126.9769")
-                            .param("latitude", "37.5720")
-                            .param("size", "10")
-                            .with(csrf()))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.places").isArray())
-                    .andExpect(jsonPath("$.places[0].id").value(1L))
-                    .andExpect(jsonPath("$.places[1].id").value(2L))
-                    .andExpect(jsonPath("$.lastDistance").value(500.5))
-                    .andExpect(jsonPath("$.hasNext").value(false));
-        }
-
-        @Test
-        void 좌표_포함_필터_검색_성공() throws Exception {
-            // given
-            List<PlaceMapItemResponse> places = List.of(
-                    createPlaceMapItemResponse(1L),
-                    createPlaceMapItemResponse(2L)
-            );
-            PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
-
-            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
+            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -509,7 +482,7 @@ class PlaceControllerTest {
             // given
             PlaceFilterResponse response = new PlaceFilterResponse(List.of(), null, false);
 
-            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class), eq(126.9769), eq(37.5720)))
+            given(placeSearchService.getFilteredPlaces(any(PlaceFilterRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -552,7 +525,7 @@ class PlaceControllerTest {
             );
             PlaceFilterResponse response = new PlaceFilterResponse(places, 500.5, false);
 
-            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class), eq(126.9769), eq(37.5720)))
+            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class)))
                     .willReturn(response);
 
             // when & then
@@ -576,7 +549,7 @@ class PlaceControllerTest {
             // given
             PlaceFilterResponse response = new PlaceFilterResponse(List.of(), null, false);
 
-            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class), eq(126.9769), eq(37.5720)))
+            given(placeSearchService.getNearbyFilteredPlaces(any(NearbyFilterRequest.class)))
                     .willReturn(response);
 
             // when & then
