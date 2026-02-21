@@ -11,7 +11,9 @@ import io.dnd.goyo.domain.user.entity.UserWithdraw;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.enums.WithdrawReason;
+import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.domain.user.repository.UserWithdrawRepository;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -27,12 +29,15 @@ public class UserService {
 
     private final UserReader userReader;
     private final UserRepository userRepository;
+    private final UserStatsRepository userStatsRepository;
     private final UserWithdrawRepository userWithdrawRepository;
     private final FileStorage fileStorage;
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userReader.getUser(userId);
-        return UserProfileResponse.from(user);
+        UserStats userStats = userStatsRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
+        return UserProfileResponse.from(user, userStats);
     }
 
     public NicknameCheckResponse checkNickname(String nickname) {

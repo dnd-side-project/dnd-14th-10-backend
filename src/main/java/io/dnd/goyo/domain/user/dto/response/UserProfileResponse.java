@@ -1,6 +1,7 @@
 package io.dnd.goyo.domain.user.dto.response;
 
 import io.dnd.goyo.domain.user.entity.User;
+import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
@@ -29,9 +30,18 @@ public record UserProfileResponse(
         Boolean locationConsent,
 
         @Schema(description = "거주지 행정구역 코드", example = "1168010100")
-        Long regionCode
+        Long regionCode,
+
+        @Schema(description = "리뷰 수", example = "5")
+        int reviewCount,
+
+        @Schema(description = "등록한 공간 수", example = "3")
+        int placeCount,
+
+        @Schema(description = "뱃지 수", example = "2")
+        int badgeCount
 ) {
-    public static UserProfileResponse from(User user) {
+    public static UserProfileResponse from(User user, UserStats userStats) {
         return new UserProfileResponse(
                 user.getId(),
                 user.getName(),
@@ -40,7 +50,10 @@ public record UserProfileResponse(
                 user.getGender(),
                 user.getProfileImg(),
                 user.getLocationConsent(),
-                user.getRegionCode()
+                user.getRegionCode(),
+                userStats.getReviewCount(),
+                userStats.getPlaceCount(),
+                userStats.getBadgeCount()
         );
     }
 }

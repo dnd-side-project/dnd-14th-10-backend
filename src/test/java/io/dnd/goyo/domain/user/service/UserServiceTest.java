@@ -19,10 +19,13 @@ import io.dnd.goyo.domain.user.enums.Provider;
 import io.dnd.goyo.domain.user.enums.UserRole;
 import io.dnd.goyo.domain.user.enums.UserStatus;
 import io.dnd.goyo.domain.user.enums.WithdrawReason;
+import io.dnd.goyo.domain.user.entity.UserStats;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserStatsRepository;
 import io.dnd.goyo.domain.user.repository.UserWithdrawRepository;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserStatsRepository userStatsRepository;
 
     @Mock
     private UserWithdrawRepository userWithdrawRepository;
@@ -70,7 +76,9 @@ class UserServiceTest {
             // given
             Long userId = 1L;
             User user = createValidUser();
+            UserStats userStats = UserStats.of(user);
             given(userReader.getUser(userId)).willReturn(user);
+            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
 
             // when
             UserProfileResponse response = userService.getMyProfile(userId);
@@ -79,6 +87,9 @@ class UserServiceTest {
             assertThat(response.name()).isEqualTo("김고작");
             assertThat(response.nickname()).isEqualTo("고작이");
             assertThat(response.gender()).isEqualTo(Gender.MALE);
+            assertThat(response.reviewCount()).isZero();
+            assertThat(response.placeCount()).isZero();
+            assertThat(response.badgeCount()).isZero();
         }
 
         @Test
@@ -92,6 +103,20 @@ class UserServiceTest {
             assertThatThrownBy(() -> userService.getMyProfile(userId))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
+        }
+
+        @Test
+        void 사용자는_존재하지만_UserStats가_없으면_INTERNAL_SERVER_ERROR() {
+            // given
+            Long userId = 1L;
+            User user = createValidUser();
+            given(userReader.getUser(userId)).willReturn(user);
+            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.getMyProfile(userId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 

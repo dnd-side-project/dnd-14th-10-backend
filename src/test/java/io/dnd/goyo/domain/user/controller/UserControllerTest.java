@@ -67,7 +67,7 @@ class UserControllerTest {
             // given
             UserProfileResponse response = new UserProfileResponse(
                     1L, "김고작", "고작이", LocalDate.of(1995, 3, 15),
-                    Gender.MALE, null, true, 1168010100L
+                    Gender.MALE, null, true, 1168010100L, 5, 3, 2
             );
             given(userService.getMyProfile(1L)).willReturn(response);
 
