@@ -111,6 +111,6 @@ class UserWithdrawTest {
         UserWithdraw withdraw = UserWithdraw.of(user, WithdrawReason.OTHER, detail);
 
         // then
-        assertThat(withdraw.getDetail()).hasSize(500);
+        assertThat(withdraw.getDetail()).hasSize(1000);
     }
 }
