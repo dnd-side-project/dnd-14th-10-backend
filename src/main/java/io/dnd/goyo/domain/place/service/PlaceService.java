@@ -95,6 +95,8 @@ public class PlaceService {
         placeImageService.deleteAllImages(place, placeId);
         place.delete();
         wishlistService.deleteByPlaceId(placeId);
+
+        eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.PLACE, -1, -1));
     }
 
     private void validateOwner(Long userId, Place place) {
