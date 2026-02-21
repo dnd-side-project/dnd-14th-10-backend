@@ -4,11 +4,17 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
+import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
 import io.dnd.goyo.domain.user.entity.User;
+import io.dnd.goyo.domain.user.entity.UserWithdraw;
 import io.dnd.goyo.domain.user.enums.Gender;
 import io.dnd.goyo.domain.user.enums.UserStatus;
+import io.dnd.goyo.domain.user.enums.WithdrawReason;
 import io.dnd.goyo.domain.user.repository.UserRepository;
+import io.dnd.goyo.domain.user.repository.UserWithdrawRepository;
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,6 +26,7 @@ public class UserService {
 
     private final UserReader userReader;
     private final UserRepository userRepository;
+    private final UserWithdrawRepository userWithdrawRepository;
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userReader.getUser(userId);
@@ -74,8 +81,16 @@ public class UserService {
     }
 
     @Transactional
-    public void withdraw(Long userId) {
+    public void withdraw(Long userId, WithdrawReason reason, String detail) {
         User user = userReader.getUser(userId);
+        UserWithdraw userWithdraw = UserWithdraw.of(user, reason, detail);
+        userWithdrawRepository.save(userWithdraw);
         user.withdraw();
+    }
+
+    public List<WithdrawReasonResponse> getWithdrawReasons() {
+        return Arrays.stream(WithdrawReason.values())
+                .map(WithdrawReasonResponse::from)
+                .toList();
     }
 }
