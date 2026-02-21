@@ -129,7 +129,7 @@ public class UserController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody UpdateProfileImageRequest request
     ) {
-        userService.updateProfileImg(userDetails.userId(), request.profileImg());
+        userService.updateProfileImg(userDetails.userId(), request.objectKey());
         return ResponseEntity.noContent().build();
     }
 }

@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.user.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
 import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
@@ -27,6 +28,7 @@ public class UserService {
     private final UserReader userReader;
     private final UserRepository userRepository;
     private final UserWithdrawRepository userWithdrawRepository;
+    private final FileStorage fileStorage;
 
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userReader.getUser(userId);
@@ -75,8 +77,9 @@ public class UserService {
     }
 
     @Transactional
-    public void updateProfileImg(Long userId, String profileImg) {
+    public void updateProfileImg(Long userId, String objectKey) {
         User user = userReader.getUser(userId);
+        String profileImg = objectKey != null ? fileStorage.generatePublicUrl(objectKey) : null;
         user.updateProfileImg(profileImg);
     }
 

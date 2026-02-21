@@ -312,7 +312,7 @@ class UserControllerTest {
         void 프로필_이미지_수정_성공_시_204_반환() throws Exception {
             // given
             String request = objectMapper.writeValueAsString(
-                    Map.of("profileImg", "https://example.com/new.jpg"));
+                    Map.of("objectKey", "user/uuid.jpg"));
 
             // when & then
             mockMvc.perform(patch("/api/users/me/profile-image")
@@ -321,7 +321,7 @@ class UserControllerTest {
                             .with(csrf()))
                     .andExpect(status().isNoContent());
 
-            verify(userService).updateProfileImg(eq(1L), eq("https://example.com/new.jpg"));
+            verify(userService).updateProfileImg(eq(1L), eq("user/uuid.jpg"));
         }
     }
 }
