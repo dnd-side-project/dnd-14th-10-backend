@@ -180,6 +180,9 @@ $RECYCLE.BIN/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
+### IDE Build Output ###
+bin/
+
 ### IntelliJ IDEA ###
 .idea/
 
