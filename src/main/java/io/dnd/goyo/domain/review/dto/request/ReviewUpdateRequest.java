@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.review.dto.request;
 
 import io.dnd.goyo.common.validation.HalfStep;
 import io.dnd.goyo.common.validation.NoDuplicates;
+import io.dnd.goyo.common.validation.SinglePrimary;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -41,7 +42,7 @@ public record ReviewUpdateRequest(
 
         String content,
 
-        @Valid @Size(max = 6, message = "리뷰 이미지는 최대 6개까지 등록할 수 있습니다") List<ReviewImageRequest> images,
+        @Valid @Size(max = 6, message = "리뷰 이미지는 최대 6개까지 등록할 수 있습니다") @SinglePrimary List<ReviewImageRequest> images,
 
         LocalDateTime visitedAt
 ) {

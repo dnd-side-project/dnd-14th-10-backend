@@ -128,7 +128,7 @@ class ReviewServiceTest {
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
             given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
-            given(reviewRepository.countByPlaceIdAndActiveStatus(placeId)).willReturn(1L);
+            given(placeDetail.getReviewCount()).willReturn(1);
 
             // when
             ReviewCreateResponse response = reviewService.createReview(userId, request);
@@ -164,7 +164,7 @@ class ReviewServiceTest {
             given(userReader.getUser(userId)).willReturn(user);
             given(placeReader.getPlace(placeId)).willReturn(place);
             given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
-            given(reviewRepository.countByPlaceIdAndActiveStatus(placeId)).willReturn(3L);
+            given(placeDetail.getReviewCount()).willReturn(3);
             given(fileStorage.generatePublicUrl("img-key-1")).willReturn("https://cdn.example.com/img-key-1");
 
             // when

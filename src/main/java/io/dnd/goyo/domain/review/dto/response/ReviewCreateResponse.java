@@ -1,5 +1,8 @@
 package io.dnd.goyo.domain.review.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ReviewCreateResponse(
         Long reviewId,
         String representativeImageUrl,

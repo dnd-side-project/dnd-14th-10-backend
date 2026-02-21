@@ -79,6 +79,8 @@ public class ReviewService {
                 request.rating().doubleValue(), request.outletScore(),
                 request.crowdStatus(), request.spaceSize(), request.mood()));
 
+        long reviewOrder = placeDetail.getReviewCount();
+
         boolean hasImages = request.images() != null && !request.images().isEmpty();
         eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.REVIEW, 1, hasImages ? 1 : 0));
 
@@ -90,8 +92,6 @@ public class ReviewService {
                     .map(img -> fileStorage.generatePublicUrl(img.imageKey()))
                     .orElse(null);
         }
-
-        long reviewOrder = reviewRepository.countByPlaceIdAndActiveStatus(place.getId());
 
         return ReviewCreateResponse.of(review.getId(), representativeImageUrl, reviewOrder);
     }
