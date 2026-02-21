@@ -45,6 +45,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
 
     private static final long REGION_CODE_MULTIPLIER = 100000L;
     private static final long REGION_CODE_RANGE = 99999L;
+    private static final int MAX_FILTER_RESULTS = 1000;
 
     @Override
     public List<PlaceWithDistance> findByFilterWithDistance(PlaceFilterRequest request, double longitude, double latitude, int size) {
@@ -78,6 +79,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
                 .from(place)
                 .join(place.placeDetail, placeDetail)
                 .where(builder)
+                .limit(MAX_FILTER_RESULTS)
                 .fetch();
 
         if (filteredIds.isEmpty()) {
@@ -164,7 +166,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
         String sql = buildDistanceQuerySql(lastDistance);
 
         var query = entityManager.createNativeQuery(sql)
-                .setParameter("placeIds", placeIds.toArray(new Long[0]))
+                .setParameter("placeIds", placeIds)
                 .setParameter("longitude", longitude)
                 .setParameter("latitude", latitude)
                 .setParameter("limit", size + 1);
@@ -198,7 +200,7 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
                            CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
                        ) as distance
                 FROM places p
-                WHERE p.id = ANY(:placeIds)
+                WHERE p.id IN (:placeIds)
                 %s
                 ORDER BY distance ASC
                 LIMIT :limit
