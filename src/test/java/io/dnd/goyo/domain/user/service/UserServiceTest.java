@@ -104,6 +104,20 @@ class UserServiceTest {
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.USER_NOT_FOUND);
         }
+
+        @Test
+        void 사용자는_존재하지만_UserStats가_없으면_INTERNAL_SERVER_ERROR() {
+            // given
+            Long userId = 1L;
+            User user = createValidUser();
+            given(userReader.getUser(userId)).willReturn(user);
+            given(userStatsRepository.findByUserId(userId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> userService.getMyProfile(userId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Nested

@@ -36,7 +36,7 @@ public class UserService {
     public UserProfileResponse getMyProfile(Long userId) {
         User user = userReader.getUser(userId);
         UserStats userStats = userStatsRepository.findByUserId(userId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR));
         return UserProfileResponse.from(user, userStats);
     }
 
