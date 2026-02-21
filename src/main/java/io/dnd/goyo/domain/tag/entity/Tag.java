@@ -3,11 +3,8 @@ package io.dnd.goyo.domain.tag.entity;
 import io.dnd.goyo.common.entity.BaseEntity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
-import io.dnd.goyo.domain.tag.enums.TagType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -18,7 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "tags", uniqueConstraints = @UniqueConstraint(name = "uk_tags_type_code", columnNames = {"type", "code"}))
+@Table(name = "tags", uniqueConstraints = @UniqueConstraint(name = "uk_tags_code", columnNames = {"code"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Tag extends BaseEntity {
@@ -27,39 +24,27 @@ public class Tag extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 30, nullable = false)
-    private TagType type;
-
     @Column(length = 30)
     private String code;
 
     @Column(length = 30, nullable = false)
     private String name;
 
-    public static Tag of(TagType type, String name) {
-        return new Tag(type, null, name);
+    public static Tag of(String name) {
+        return new Tag(null, name);
     }
 
-    public static Tag of(TagType type, String code, String name) {
-        return new Tag(type, code, name);
+    public static Tag of(String code, String name) {
+        return new Tag(code, name);
     }
 
-    private Tag(TagType type, String code, String name) {
-        validateType(type);
+    private Tag(String code, String name) {
         validateName(name);
-        this.type = type;
         this.code = code;
         this.name = name;
     }
 
     private static final int NAME_MAX_LENGTH = 30;
-
-    private static void validateType(TagType type) {
-        if (type == null) {
-            throw new BusinessException(ErrorCode.INVALID_INPUT, "태그 타입은 필수입니다.");
-        }
-    }
 
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
