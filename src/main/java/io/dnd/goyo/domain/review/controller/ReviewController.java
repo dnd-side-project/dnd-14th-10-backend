@@ -4,8 +4,11 @@ import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewRatingStatsResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewTagCountResponse;
 import io.dnd.goyo.domain.review.service.ReviewService;
 import io.dnd.goyo.security.CustomUserDetails;
+import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -57,6 +60,18 @@ public class ReviewController {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         return ResponseEntity.ok(reviewService.getReviewsByPlace(placeId, pageable));
+    }
+
+    @Operation(summary = "공간별 리뷰 태그 통계", description = "공간에 달린 리뷰의 태그별 개수를 조회합니다.")
+    @GetMapping("/places/{placeId}/reviews/tag-stats")
+    public ResponseEntity<List<ReviewTagCountResponse>> getReviewTagStats(@PathVariable Long placeId) {
+        return ResponseEntity.ok(reviewService.getReviewTagStatsByPlace(placeId));
+    }
+
+    @Operation(summary = "공간별 리뷰 별점 통계", description = "공간의 리뷰 평균 별점과 리뷰 수를 조회합니다.")
+    @GetMapping("/places/{placeId}/reviews/rating-stats")
+    public ResponseEntity<ReviewRatingStatsResponse> getReviewRatingStats(@PathVariable Long placeId) {
+        return ResponseEntity.ok(reviewService.getReviewRatingStatsByPlace(placeId));
     }
 
     @Operation(summary = "내 리뷰 목록 조회", description = "로그인한 사용자가 작성한 리뷰 목록을 페이지네이션으로 조회합니다.")

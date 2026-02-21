@@ -8,6 +8,8 @@ import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.entity.ReviewScores;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
 import io.dnd.goyo.domain.place.service.PlaceReader;
+import io.dnd.goyo.domain.review.dto.response.ReviewRatingStatsResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewTagCountResponse;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
@@ -226,6 +228,17 @@ public class ReviewService {
         review.delete();
 
         eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.REVIEW, -1, hadImages ? -1 : 0));
+    }
+
+    public List<ReviewTagCountResponse> getReviewTagStatsByPlace(Long placeId) {
+        return reviewTagRepository.countTagsByPlaceId(placeId).stream()
+                .map(dto -> new ReviewTagCountResponse(dto.tagId(), dto.code(), dto.name(), dto.count()))
+                .toList();
+    }
+
+    public ReviewRatingStatsResponse getReviewRatingStatsByPlace(Long placeId) {
+        PlaceDetail placeDetail = getPlaceDetail(placeId);
+        return new ReviewRatingStatsResponse(placeDetail.getAverageRating(), placeDetail.getReviewCount());
     }
 
     private Review getActiveReview(Long reviewId) {
