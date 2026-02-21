@@ -1,5 +1,7 @@
 package io.dnd.goyo.domain.user.controller;
 
+import io.dnd.goyo.common.exception.BusinessException;
+import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.common.image.ImageType;
 import io.dnd.goyo.common.image.ImageUploadService;
 import io.dnd.goyo.common.image.dto.request.PresignedUrlRequest;
@@ -27,6 +29,9 @@ public class UserImageController {
     @Operation(summary = "프로필 이미지 업로드용 Presigned URL 발급")
     @PostMapping("/presigned-url")
     public ResponseEntity<PresignedUrlResponse> getPresignedUrls(@Valid @RequestBody PresignedUrlRequest request) {
+        if (request.filenames().size() > 1) {
+            throw new BusinessException(ErrorCode.USER_IMAGE_LIMIT_EXCEEDED);
+        }
         List<PresignedUrlItem> items = imageUploadService.createPresignedUrls(ImageType.USER, request.filenames());
         return ResponseEntity.ok(PresignedUrlResponse.from(items));
     }

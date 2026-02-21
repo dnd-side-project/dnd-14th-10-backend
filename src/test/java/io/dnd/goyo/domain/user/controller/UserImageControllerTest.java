@@ -15,6 +15,8 @@ import io.dnd.goyo.common.image.dto.request.PresignedUrlRequest;
 import io.dnd.goyo.common.image.dto.response.PresignedUrlResponse.PresignedUrlItem;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -38,55 +40,79 @@ class UserImageControllerTest {
     @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-    @Test
-    @WithMockUser
-    void 프로필_이미지_Presigned_URL_발급_요청_성공() throws Exception {
-        // given
-        List<String> filenames = List.of("profile.jpg");
-        PresignedUrlRequest request = new PresignedUrlRequest(filenames);
+    @Nested
+    @DisplayName("POST /api/users/images/presigned-url")
+    class GetPresignedUrl {
 
-        PresignedUrlItem item = PresignedUrlItem.of("profile.jpg", "http://minio/bucket/user/uuid.jpg", "user/uuid.jpg");
-        List<PresignedUrlItem> responseItems = List.of(item);
+        @Test
+        @WithMockUser
+        @DisplayName("프로필 이미지 Presigned URL 발급 요청 성공")
+        void 프로필_이미지_Presigned_URL_발급_요청_성공() throws Exception {
+            // given
+            List<String> filenames = List.of("profile.jpg");
+            PresignedUrlRequest request = new PresignedUrlRequest(filenames);
 
-        given(imageUploadService.createPresignedUrls(eq(ImageType.USER), any()))
-                .willReturn(responseItems);
+            PresignedUrlItem item = PresignedUrlItem.of("profile.jpg", "http://minio/bucket/user/uuid.jpg", "user/uuid.jpg");
+            List<PresignedUrlItem> responseItems = List.of(item);
 
-        // when & then
-        mockMvc.perform(post("/api/users/images/presigned-url")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.urls[0].filename").value("profile.jpg"))
-                .andExpect(jsonPath("$.urls[0].url").value("http://minio/bucket/user/uuid.jpg"))
-                .andExpect(jsonPath("$.urls[0].objectKey").value("user/uuid.jpg"));
-    }
+            given(imageUploadService.createPresignedUrls(eq(ImageType.USER), any()))
+                    .willReturn(responseItems);
 
-    @Test
-    @WithMockUser
-    void 파일명_목록_누락_시_400_에러() throws Exception {
-        // given
-        PresignedUrlRequest request = new PresignedUrlRequest(null);
+            // when & then
+            mockMvc.perform(post("/api/users/images/presigned-url")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.urls[0].filename").value("profile.jpg"))
+                    .andExpect(jsonPath("$.urls[0].url").value("http://minio/bucket/user/uuid.jpg"))
+                    .andExpect(jsonPath("$.urls[0].objectKey").value("user/uuid.jpg"));
+        }
 
-        // when & then
-        mockMvc.perform(post("/api/users/images/presigned-url")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
-                .andExpect(status().isBadRequest());
-    }
+        @Test
+        @WithMockUser
+        @DisplayName("파일명 목록 누락 시 400 에러")
+        void 파일명_목록_누락_시_400_에러() throws Exception {
+            // given
+            PresignedUrlRequest request = new PresignedUrlRequest(null);
 
-    @Test
-    @WithMockUser
-    void 파일명_목록이_비어있으면_400_에러() throws Exception {
-        // given
-        PresignedUrlRequest request = new PresignedUrlRequest(List.of());
+            // when & then
+            mockMvc.perform(post("/api/users/images/presigned-url")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
+        }
 
-        // when & then
-        mockMvc.perform(post("/api/users/images/presigned-url")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request))
-                        .with(csrf()))
-                .andExpect(status().isBadRequest());
+        @Test
+        @WithMockUser
+        @DisplayName("파일명 목록이 비어있으면 400 에러")
+        void 파일명_목록이_비어있으면_400_에러() throws Exception {
+            // given
+            PresignedUrlRequest request = new PresignedUrlRequest(List.of());
+
+            // when & then
+            mockMvc.perform(post("/api/users/images/presigned-url")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        @WithMockUser
+        @DisplayName("파일명 2개 이상이면 400 에러")
+        void 파일명_2개_이상이면_400_에러() throws Exception {
+            // given
+            PresignedUrlRequest request = new PresignedUrlRequest(List.of("a.jpg", "b.jpg"));
+
+            // when & then
+            mockMvc.perform(post("/api/users/images/presigned-url")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request))
+                            .with(csrf()))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.code").value("USER_003"));
+        }
     }
 }
