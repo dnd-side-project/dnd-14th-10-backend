@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.user.dto.response.NicknameCheckResponse;
 import io.dnd.goyo.domain.user.dto.response.UserProfileResponse;
 import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
@@ -44,6 +45,9 @@ class UserServiceTest {
 
     @Mock
     private UserWithdrawRepository userWithdrawRepository;
+
+    @Mock
+    private FileStorage fileStorage;
 
     private static User createValidUser() {
         return User.builder()
@@ -255,12 +259,15 @@ class UserServiceTest {
             Long userId = 1L;
             User user = createValidUser();
             given(userReader.getUser(userId)).willReturn(user);
+            given(fileStorage.generatePublicUrl("user/uuid.jpg"))
+                    .willReturn("https://cdn.example.com/user/uuid.jpg");
 
             // when
-            userService.updateProfileImg(userId, "https://example.com/new-profile.jpg");
+            userService.updateProfileImg(userId, "user/uuid.jpg");
 
             // then
-            assertThat(user.getProfileImg()).isEqualTo("https://example.com/new-profile.jpg");
+            assertThat(user.getProfileImg()).isEqualTo("https://cdn.example.com/user/uuid.jpg");
+            verify(fileStorage).generatePublicUrl("user/uuid.jpg");
         }
 
         @Test
