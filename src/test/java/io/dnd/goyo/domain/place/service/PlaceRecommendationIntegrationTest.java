@@ -17,7 +17,6 @@ import io.dnd.goyo.domain.review.enums.ReviewStatus;
 import io.dnd.goyo.domain.review.repository.ReviewRepository;
 import io.dnd.goyo.domain.review.repository.ReviewTagRepository;
 import io.dnd.goyo.domain.tag.entity.Tag;
-import io.dnd.goyo.domain.tag.enums.TagType;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
 import io.dnd.goyo.domain.user.entity.User;
 import io.dnd.goyo.domain.user.enums.Gender;
@@ -365,7 +364,7 @@ class PlaceRecommendationIntegrationTest {
 
             Tag quiet = saveTag("조용한");
             Tag emotional = saveTag("감성적인");
-            Tag reviewTag = tagRepository.save(Tag.of(TagType.REVIEW, "작업하기 좋은"));
+            Tag reviewTag = tagRepository.save(Tag.of("작업하기 좋은"));
 
             Place myPlace = savePlaceWithTags("내 찜", 126.9769, 37.5759, quiet);
             Place groupFavorite = savePlaceWithTags("그룹 선호", 126.9800, 37.5770, emotional);
@@ -504,7 +503,7 @@ class PlaceRecommendationIntegrationTest {
     }
 
     private Tag saveTag(String name) {
-        return tagRepository.save(Tag.of(TagType.PLACE, name));
+        return tagRepository.save(Tag.of(name));
     }
 
     private Place savePlaceWithTags(String name, double longitude, double latitude, Tag... tags) {

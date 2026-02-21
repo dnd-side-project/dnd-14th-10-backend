@@ -6,7 +6,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import io.dnd.goyo.domain.tag.dto.response.TagResponse;
-import io.dnd.goyo.domain.tag.enums.TagType;
 import io.dnd.goyo.domain.tag.service.TagService;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
 import java.util.List;
@@ -31,15 +30,14 @@ class TagControllerTest {
 
     @Test
     @WithMockUser
-    void REVIEW_타입_태그_목록_조회_성공() throws Exception {
+    void 태그_목록_조회_성공() throws Exception {
         List<TagResponse> tags = List.of(
-                new TagResponse(1L, "CLEAN", "청결해요", TagType.REVIEW),
-                new TagResponse(2L, "FOCUS", "집중하기 좋아요", TagType.REVIEW)
+                new TagResponse(1L, "CLEAN", "청결해요"),
+                new TagResponse(2L, "FOCUS", "집중하기 좋아요")
         );
-        given(tagService.getTagsByType(TagType.REVIEW)).willReturn(tags);
+        given(tagService.getTags()).willReturn(tags);
 
-        mockMvc.perform(get("/api/tags")
-                        .param("type", "REVIEW"))
+        mockMvc.perform(get("/api/tags"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].id").value(1))

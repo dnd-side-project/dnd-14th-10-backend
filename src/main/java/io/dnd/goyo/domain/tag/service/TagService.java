@@ -1,7 +1,6 @@
 package io.dnd.goyo.domain.tag.service;
 
 import io.dnd.goyo.domain.tag.dto.response.TagResponse;
-import io.dnd.goyo.domain.tag.enums.TagType;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +14,8 @@ public class TagService {
 
     private final TagRepository tagRepository;
 
-    public List<TagResponse> getTagsByType(TagType type) {
-        return tagRepository.findAllByType(type).stream()
+    public List<TagResponse> getTags() {
+        return tagRepository.findAll().stream()
                 .map(TagResponse::from)
                 .toList();
     }
