@@ -573,10 +573,12 @@ class ReviewServiceTest {
         void 태그_통계_조회_성공() {
             // given
             Long placeId = 10L;
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
             List<ReviewTagCountDto> dtos = List.of(
                     new ReviewTagCountDto(1L, "QUIET", "조용한", 5),
                     new ReviewTagCountDto(2L, "COZY", "아늑한", 3)
             );
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
             given(reviewTagRepository.countTagsByPlaceId(placeId)).willReturn(dtos);
 
             // when
@@ -596,6 +598,8 @@ class ReviewServiceTest {
         void 리뷰가_없는_공간은_빈_리스트_반환() {
             // given
             Long placeId = 10L;
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
             given(reviewTagRepository.countTagsByPlaceId(placeId)).willReturn(List.of());
 
             // when
@@ -603,6 +607,18 @@ class ReviewServiceTest {
 
             // then
             assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 존재하지_않는_공간_태그_통계_조회_시_예외() {
+            // given
+            Long placeId = 999L;
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.getReviewTagStatsByPlace(placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
         }
     }
 

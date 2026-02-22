@@ -231,6 +231,7 @@ public class ReviewService {
     }
 
     public List<ReviewTagCountResponse> getReviewTagStatsByPlace(Long placeId) {
+        getPlaceDetail(placeId);
         return reviewTagRepository.countTagsByPlaceId(placeId).stream()
                 .map(dto -> new ReviewTagCountResponse(dto.tagId(), dto.code(), dto.name(), dto.count()))
                 .toList();
