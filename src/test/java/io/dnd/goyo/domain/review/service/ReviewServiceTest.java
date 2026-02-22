@@ -22,11 +22,14 @@ import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
 import io.dnd.goyo.domain.place.service.PlaceReader;
+import io.dnd.goyo.domain.review.dto.ReviewTagCountDto;
 import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewImageRequest;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewRatingStatsResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewTagCountResponse;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewImage;
 import io.dnd.goyo.domain.review.enums.ReviewSortType;
@@ -562,6 +565,97 @@ class ReviewServiceTest {
             assertThatThrownBy(() -> reviewService.deleteReview(otherUserId, reviewId))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.REVIEW_NOT_OWNER);
+        }
+    }
+
+    @Nested
+    @DisplayName("리뷰 태그 통계 조회")
+    class GetReviewTagStats {
+
+        @Test
+        void 태그_통계_조회_성공() {
+            // given
+            Long placeId = 10L;
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            List<ReviewTagCountDto> dtos = List.of(
+                    new ReviewTagCountDto(1L, "QUIET", "조용한", 5),
+                    new ReviewTagCountDto(2L, "COZY", "아늑한", 3)
+            );
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(reviewTagRepository.countTagsByPlaceId(placeId)).willReturn(dtos);
+
+            // when
+            List<ReviewTagCountResponse> result = reviewService.getReviewTagStatsByPlace(placeId);
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result.get(0).tagId()).isEqualTo(1L);
+            assertThat(result.get(0).code()).isEqualTo("QUIET");
+            assertThat(result.get(0).name()).isEqualTo("조용한");
+            assertThat(result.get(0).count()).isEqualTo(5);
+            assertThat(result.get(1).tagId()).isEqualTo(2L);
+            assertThat(result.get(1).count()).isEqualTo(3);
+        }
+
+        @Test
+        void 리뷰가_없는_공간은_빈_리스트_반환() {
+            // given
+            Long placeId = 10L;
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+            given(reviewTagRepository.countTagsByPlaceId(placeId)).willReturn(List.of());
+
+            // when
+            List<ReviewTagCountResponse> result = reviewService.getReviewTagStatsByPlace(placeId);
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        void 존재하지_않는_공간_태그_통계_조회_시_예외() {
+            // given
+            Long placeId = 999L;
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.getReviewTagStatsByPlace(placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
+        }
+    }
+
+    @Nested
+    @DisplayName("리뷰 별점 통계 조회")
+    class GetReviewRatingStats {
+
+        @Test
+        void 별점_통계_조회_성공() {
+            // given
+            Long placeId = 10L;
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetail.getAverageRating()).willReturn(4.2);
+            given(placeDetail.getReviewCount()).willReturn(7);
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.of(placeDetail));
+
+            // when
+            ReviewRatingStatsResponse result = reviewService.getReviewRatingStatsByPlace(placeId);
+
+            // then
+            assertThat(result.averageRating()).isEqualTo(4.2);
+            assertThat(result.reviewCount()).isEqualTo(7);
+        }
+
+        @Test
+        void 존재하지_않는_공간_조회_시_예외() {
+            // given
+            Long placeId = 999L;
+            given(placeDetailRepository.findByPlaceId(placeId)).willReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> reviewService.getReviewRatingStatsByPlace(placeId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PLACE_NOT_FOUND);
         }
     }
 }

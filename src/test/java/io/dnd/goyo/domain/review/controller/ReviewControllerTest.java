@@ -18,6 +18,8 @@ import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewRatingStatsResponse;
+import io.dnd.goyo.domain.review.dto.response.ReviewTagCountResponse;
 import io.dnd.goyo.domain.review.enums.ReviewSortType;
 import io.dnd.goyo.domain.review.service.ReviewService;
 import io.dnd.goyo.security.CustomUserDetails;
@@ -247,5 +249,34 @@ class ReviewControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .with(csrf()))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 리뷰_태그_통계_조회_성공_시_200_반환() throws Exception {
+        List<ReviewTagCountResponse> response = List.of(
+                new ReviewTagCountResponse(1L, "QUIET", "조용한", 5),
+                new ReviewTagCountResponse(2L, "COZY", "아늑한", 3)
+        );
+        given(reviewService.getReviewTagStatsByPlace(10L)).willReturn(response);
+
+        mockMvc.perform(get("/api/places/10/reviews/tag-stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].tagId").value(1))
+                .andExpect(jsonPath("$[0].code").value("QUIET"))
+                .andExpect(jsonPath("$[0].name").value("조용한"))
+                .andExpect(jsonPath("$[0].count").value(5))
+                .andExpect(jsonPath("$[1].tagId").value(2))
+                .andExpect(jsonPath("$[1].count").value(3));
+    }
+
+    @Test
+    void 리뷰_별점_통계_조회_성공_시_200_반환() throws Exception {
+        ReviewRatingStatsResponse response = new ReviewRatingStatsResponse(4.2, 7);
+        given(reviewService.getReviewRatingStatsByPlace(10L)).willReturn(response);
+
+        mockMvc.perform(get("/api/places/10/reviews/rating-stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.averageRating").value(4.2))
+                .andExpect(jsonPath("$.reviewCount").value(7));
     }
 }
