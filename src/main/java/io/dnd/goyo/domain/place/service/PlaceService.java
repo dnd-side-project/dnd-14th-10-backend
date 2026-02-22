@@ -7,6 +7,7 @@ import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
@@ -15,6 +16,8 @@ import io.dnd.goyo.domain.badge.enums.ActivityType;
 import io.dnd.goyo.domain.badge.event.ActivityEvent;
 import io.dnd.goyo.domain.history.event.PlaceViewedEvent;
 import io.dnd.goyo.domain.user.entity.User;
+import java.util.List;
+import java.util.Set;
 import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistService;
@@ -97,6 +100,22 @@ public class PlaceService {
         wishlistService.deleteByPlaceId(placeId);
 
         eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.PLACE, -1, -1));
+    }
+
+    public List<PlaceMapItemResponse> getPlacesByIds(List<Long> ids) {
+        List<Place> places = placeRepository.findAllByIdWithDetails(ids);
+
+        return places.stream()
+                .map(this::toMapItemResponse)
+                .toList();
+    }
+
+    private PlaceMapItemResponse toMapItemResponse(Place place) {
+        return PlaceMapItemResponse.of(
+                place,
+                place.getPlaceDetail(),
+                fileStorage
+        );
     }
 
     private void validateOwner(Long userId, Place place) {

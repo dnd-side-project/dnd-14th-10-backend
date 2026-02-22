@@ -53,7 +53,7 @@ public record PlaceSummaryResponse(
                 place.getName(),
                 place.getCategory(),
                 place.getAddressDetail(),
-                place.getRegionCode().value(),
+                place.getRegionCode().getValue(),
                 representativeImageUrl,
                 place.getLocation().getY(),
                 place.getLocation().getX(),

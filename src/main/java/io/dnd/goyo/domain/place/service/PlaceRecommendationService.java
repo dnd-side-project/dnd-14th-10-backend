@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.place.service;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.response.PlaceSummaryResponse;
 import io.dnd.goyo.domain.place.dto.response.ThemeRecommendationResponse;
@@ -48,6 +49,7 @@ public class PlaceRecommendationService {
     private final PlaceTagReader placeTagReader;
     private final UserReader userReader;
     private final GeometryUtils geometryUtils;
+    private final FileStorage fileStorage;
 
     public List<PlaceSummaryResponse> getNewPlaces(
             Long userId,
@@ -65,7 +67,7 @@ public class PlaceRecommendationService {
         }
 
         Map<Long, Place> placeMap = findPlacesMap(placeIds);
-        Set<Long> wishedPlaceIds = findWishedPlaceIds(userId, placeIds);
+        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId,placeIds);
 
         return createPlaceSummaries(placeIds, placeMap, wishedPlaceIds);
     }
@@ -84,7 +86,7 @@ public class PlaceRecommendationService {
         }
 
         Map<Long, Place> placeMap = findPlacesMap(placeIds);
-        Set<Long> wishedPlaceIds = findWishedPlaceIds(userId, placeIds);
+        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId,placeIds);
 
         return createPlaceSummaries(placeIds, placeMap, wishedPlaceIds);
     }
@@ -125,7 +127,7 @@ public class PlaceRecommendationService {
                 latitude
         );
 
-        Set<Long> wishedSet = findWishedPlaceIds(userId, scoredPlaceIds);
+        Set<Long> wishedSet = wishlistReader.getWishedPlaceIdSet(userId,scoredPlaceIds);
 
         return createPlaceSummaries(scoredPlaceIds, candidatePlaceMap, wishedSet);
     }
@@ -307,18 +309,12 @@ public class PlaceRecommendationService {
                 .toList();
     }
 
-    private Set<Long> findWishedPlaceIds(Long userId, List<Long> placeIds) {
-        if (userId == null) {
-            return Set.of();
-        }
-        return new HashSet<>(wishlistReader.getWishedPlaceIds(userId, placeIds));
-    }
-
     private PlaceSummaryResponse buildPlaceSummary(Place place, Set<Long> wishedPlaceIds) {
+        String imageUrl = fileStorage.generatePublicUrl(place.getRepresentativeImageKey());
         return PlaceSummaryResponse.of(
                 place,
                 place.getPlaceDetail(),
-                place.getRepresentativeImageKey(),
+                imageUrl,
                 wishedPlaceIds.contains(place.getId())
         );
     }
