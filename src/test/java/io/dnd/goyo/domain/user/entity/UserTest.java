@@ -71,15 +71,15 @@ class UserTest {
         }
 
         @Test
-        void 닉네임이_30자를_초과하면_예외_발생() {
+        void 닉네임이_10자를_초과하면_예외_발생() {
             // given
             User.UserBuilder builder = createValidUserBuilder()
-                    .nickname("a".repeat(31));
+                    .nickname("a".repeat(11));
 
             // when & then
             assertThatThrownBy(builder::build)
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("닉네임은 30자 이내여야 합니다");
+                    .hasMessageContaining("닉네임은 10자 이내여야 합니다");
         }
 
         @Test
@@ -198,14 +198,14 @@ class UserTest {
         }
 
         @Test
-        void 닉네임이_30자를_초과하면_예외_발생() {
+        void 닉네임이_10자를_초과하면_예외_발생() {
             // given
             User user = createValidUserBuilder().build();
 
             // when & then
-            assertThatThrownBy(() -> user.updateNickname("a".repeat(31)))
+            assertThatThrownBy(() -> user.updateNickname("a".repeat(11)))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("닉네임은 30자 이내여야 합니다");
+                    .hasMessageContaining("닉네임은 10자 이내여야 합니다");
         }
     }
 
