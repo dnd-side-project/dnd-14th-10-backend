@@ -3,18 +3,39 @@ package io.dnd.goyo.domain.place.entity;
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import jakarta.persistence.Embeddable;
+import java.util.Objects;
 
 @Embeddable
-public record RegionCode(
-        Long value
-) {
+public class RegionCode {
+
     private static final int SI_GUN_GU_CODE_LENGTH = 5;
     private static final int LEGAL_DONG_CODE_LENGTH = 10;
 
-    public RegionCode {
+    private Long value;
+
+    protected RegionCode() {}
+
+    public RegionCode(Long value) {
         validateIsNotNull(value);
         validateIsPositive(value);
         validateCodeLength(value);
+        this.value = value;
+    }
+
+    public Long getValue() {
+        return value;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof RegionCode other)) return false;
+        return Objects.equals(value, other.value);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(value);
     }
 
     public int getSiGunGuCode() {

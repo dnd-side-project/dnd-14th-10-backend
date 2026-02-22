@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.dnd.goyo.domain.wishlist.dto.request.WishlistAddRequest;
 import io.dnd.goyo.domain.wishlist.dto.response.WishCountResponse;
 import io.dnd.goyo.domain.wishlist.dto.response.WishlistItemResponse;
+import io.dnd.goyo.domain.wishlist.enums.WishlistSortType;
 import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
@@ -90,7 +91,7 @@ class WishlistControllerTest {
         );
         Page<WishlistItemResponse> page = new PageImpl<>(List.of(response));
 
-        given(wishlistService.getMyWishlists(eq(1L), any(Pageable.class))).willReturn(page);
+        given(wishlistService.getMyWishlists(eq(1L), any(Pageable.class), any(WishlistSortType.class))).willReturn(page);
 
         mockMvc.perform(get("/api/wishlists/me"))
                 .andExpect(status().isOk())

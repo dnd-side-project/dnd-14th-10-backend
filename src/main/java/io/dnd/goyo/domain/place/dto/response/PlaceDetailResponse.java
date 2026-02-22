@@ -3,7 +3,6 @@ package io.dnd.goyo.domain.place.dto.response;
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
-import io.dnd.goyo.domain.place.entity.PlaceImage;
 import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
@@ -11,7 +10,6 @@ import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalTime;
-import java.util.Comparator;
 import java.util.List;
 import org.locationtech.jts.geom.Point;
 
@@ -34,8 +32,8 @@ public record PlaceDetailResponse(
         @Schema(description = "경도", example = "127.123456")
         double longitude,
 
-        @Schema(description = "이미지 URL 목록")
-        List<String> images,
+        @Schema(description = "이미지 목록 (순서 기준 정렬)")
+        List<PlaceImageItem> images,
 
         @Schema(description = "평균 별점", example = "4.5")
         double averageRating,
@@ -73,14 +71,7 @@ public record PlaceDetailResponse(
     public static PlaceDetailResponse from(Place place, boolean isWished, FileStorage fileStorage) {
         PlaceDetail detail = place.getPlaceDetail();
         Point location = place.getLocation();
-        List<PlaceImage> images = place.getImages();
-        List<String> imageUrls = images == null
-                ? List.of()
-                : images.stream()
-                        .sorted(Comparator.comparingInt(PlaceImage::getSequence))
-                        .map(PlaceImage::getImageKey)
-                        .map(fileStorage::generatePublicUrl)
-                        .toList();
+        List<PlaceImageItem> images = PlaceImageItem.listOf(place.getImages(), fileStorage);
 
         return new PlaceDetailResponse(
                 place.getId(),
@@ -89,7 +80,7 @@ public record PlaceDetailResponse(
                 place.getAddressDetail(),
                 location.getY(),
                 location.getX(),
-                imageUrls,
+                images,
                 detail.getAverageRating(),
                 detail.getReviewCount(),
                 detail.getSpaceSize(),

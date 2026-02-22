@@ -61,7 +61,7 @@ class RegionCodeTest {
             RegionCode regionCode = new RegionCode(code);
 
             // then
-            assertThat(regionCode.value()).isEqualTo(code);
+            assertThat(regionCode.getValue()).isEqualTo(code);
         }
 
         @ParameterizedTest
@@ -71,7 +71,7 @@ class RegionCodeTest {
             RegionCode regionCode = new RegionCode(code);
 
             // then
-            assertThat(regionCode.value()).isEqualTo(code);
+            assertThat(regionCode.getValue()).isEqualTo(code);
         }
     }
 

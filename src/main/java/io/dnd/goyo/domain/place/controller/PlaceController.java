@@ -1,13 +1,20 @@
 package io.dnd.goyo.domain.place.controller;
 
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
+import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceRegisterResponse;
+import io.dnd.goyo.domain.place.service.PlaceSearchService;
 import io.dnd.goyo.domain.place.service.PlaceService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Size;
+import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,11 +22,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import java.util.List;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Place", description = "공간 관련 API")
@@ -29,6 +39,33 @@ import org.springframework.web.bind.annotation.RestController;
 public class PlaceController {
 
     private final PlaceService placeService;
+    private final PlaceSearchService placeSearchService;
+
+    @Operation(summary = "공간 필터 검색", description = "카테고리, 분위기, 공간 크기, 행정구역으로 공간을 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<PlaceFilterResponse> searchPlaces(
+            @ParameterObject @Valid @ModelAttribute PlaceFilterRequest request
+    ) {
+        PlaceFilterResponse response = placeSearchService.getFilteredPlaces(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "반경 내 공간 필터 검색", description = "현재 위치 기준 반경 내 공간을 필터 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
+    @GetMapping("/search/nearby")
+    public ResponseEntity<PlaceFilterResponse> searchNearbyPlaces(
+            @ParameterObject @Valid @ModelAttribute NearbyFilterRequest request
+    ) {
+        PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "공간 일괄 조회", description = "ID 목록으로 공간을 일괄 조회합니다.")
+    @GetMapping("/batch")
+    public ResponseEntity<List<PlaceMapItemResponse>> getPlacesByIds(
+            @RequestParam @Size(max = 100) List<Long> ids
+    ) {
+        return ResponseEntity.ok(placeService.getPlacesByIds(ids));
+    }
 
     @Operation(summary = "공간 제보(등록)", description = "새로운 공간을 제보합니다.")
     @PostMapping

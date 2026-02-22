@@ -41,6 +41,11 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
     Page<Wishlist> findAllByUserId(Long userId, Pageable pageable);
 
+    @EntityGraph(attributePaths = {"place", "place.placeDetail", "place.images"})
+    @Query(value = "SELECT w FROM Wishlist w JOIN w.place p JOIN p.placeDetail pd WHERE w.user.id = :userId ORDER BY pd.wishCount DESC, w.createdAt DESC",
+           countQuery = "SELECT COUNT(w) FROM Wishlist w WHERE w.user.id = :userId")
+    Page<Wishlist> findAllByUserIdOrderByWishCountDesc(@Param("userId") Long userId, Pageable pageable);
+
     @Query(value = """
             SELECT pt.tag_id AS tagId, COUNT(DISTINCT w.user_id) AS popularity
             FROM wishlists w

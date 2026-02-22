@@ -32,6 +32,7 @@ import io.dnd.goyo.domain.review.dto.response.ReviewRatingStatsResponse;
 import io.dnd.goyo.domain.review.dto.response.ReviewTagCountResponse;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewImage;
+import io.dnd.goyo.domain.review.enums.ReviewSortType;
 import io.dnd.goyo.domain.review.enums.ReviewStatus;
 import io.dnd.goyo.domain.review.repository.ReviewImageRepository;
 import io.dnd.goyo.domain.review.repository.ReviewRepository;
@@ -302,15 +303,16 @@ class ReviewServiceTest {
             given(place.getId()).willReturn(10L);
             Review review = createReview(user, place);
             PageRequest pageable = PageRequest.of(0, 10);
-            Page<Review> reviewPage = new PageImpl<>(List.of(review), pageable, 1);
+            PageRequest sorted = PageRequest.of(0, 10, ReviewSortType.LATEST.toSort());
+            Page<Review> reviewPage = new PageImpl<>(List.of(review), sorted, 1);
 
-            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable))
+            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, sorted))
                     .willReturn(reviewPage);
             given(reviewTagRepository.findAllByReviewIdIn(List.of(1L))).willReturn(List.of());
             given(reviewImageRepository.findAllByReviewIdInOrderBySequence(List.of(1L))).willReturn(List.of());
 
             // when
-            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable);
+            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable, ReviewSortType.LATEST);
 
             // then
             assertThat(result.getContent()).hasSize(1);
@@ -323,15 +325,16 @@ class ReviewServiceTest {
             // given
             Long userId = 1L;
             PageRequest pageable = PageRequest.of(0, 10);
-            Page<Review> emptyPage = new PageImpl<>(List.of(), pageable, 0);
+            PageRequest sorted = PageRequest.of(0, 10, ReviewSortType.LATEST.toSort());
+            Page<Review> emptyPage = new PageImpl<>(List.of(), sorted, 0);
 
-            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, pageable))
+            given(reviewRepository.findAllByUserIdAndStatus(userId, ReviewStatus.ACTIVE, sorted))
                     .willReturn(emptyPage);
             given(reviewTagRepository.findAllByReviewIdIn(List.of())).willReturn(List.of());
             given(reviewImageRepository.findAllByReviewIdInOrderBySequence(List.of())).willReturn(List.of());
 
             // when
-            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable);
+            Page<ReviewDetailResponse> result = reviewService.getMyReviews(userId, pageable, ReviewSortType.LATEST);
 
             // then
             assertThat(result.getContent()).isEmpty();

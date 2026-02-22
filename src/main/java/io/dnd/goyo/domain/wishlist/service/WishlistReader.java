@@ -8,8 +8,10 @@ import io.dnd.goyo.domain.wishlist.dto.TagWithCreatedAtDto;
 import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,13 @@ public class WishlistReader {
 
     public boolean isWished(Long userId, Long placeId) {
         return wishlistRepository.existsByUserIdAndPlaceId(userId, placeId);
+    }
+
+    public Set<Long> getWishedPlaceIdSet(Long userId, List<Long> placeIds) {
+        if (userId == null) {
+            return Set.of();
+        }
+        return new HashSet<>(getWishedPlaceIds(userId, placeIds));
     }
 
     public List<Long> getWishedPlaceIds(Long userId, List<Long> placeIds) {

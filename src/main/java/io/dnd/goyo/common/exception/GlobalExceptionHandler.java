@@ -5,6 +5,8 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -58,18 +60,26 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException e) {
-        List<ErrorResponse.FieldError> fieldErrors = e.getBindingResult()
-            .getFieldErrors()
+        return ResponseEntity
+            .status(ErrorCode.INVALID_INPUT.getStatus())
+            .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, extractFieldErrors(e.getBindingResult())));
+    }
+
+    @ExceptionHandler(BindException.class)
+    public ResponseEntity<ErrorResponse> handleBindException(BindException e) {
+        return ResponseEntity
+            .status(ErrorCode.INVALID_INPUT.getStatus())
+            .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, extractFieldErrors(e.getBindingResult())));
+    }
+
+    private List<ErrorResponse.FieldError> extractFieldErrors(BindingResult bindingResult) {
+        return bindingResult.getFieldErrors()
             .stream()
             .map(error -> new ErrorResponse.FieldError(
                 error.getField(),
-                error.getDefaultMessage() != null ? error.getDefaultMessage() : "입력값이 올바르지 않습니다"
+                "typeMismatch".equals(error.getCode()) ? "입력값이 올바르지 않습니다" : error.getDefaultMessage()
             ))
             .toList();
-
-        return ResponseEntity
-            .status(ErrorCode.INVALID_INPUT.getStatus())
-            .body(ErrorResponse.of(ErrorCode.INVALID_INPUT, fieldErrors));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)

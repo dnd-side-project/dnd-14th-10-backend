@@ -1,8 +1,15 @@
 package io.dnd.goyo.domain.place.repository;
 
+import io.dnd.goyo.domain.place.dto.PlaceWithDistance;
+import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
+import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import java.util.List;
 
 public interface PlaceRepositoryCustom {
+
+    List<PlaceWithDistance> findByFilterWithDistance(PlaceFilterRequest request, double longitude, double latitude, int size);
+
+    List<PlaceWithDistance> findNearbyWithFilters(NearbyFilterRequest request, double longitude, double latitude, int size);
 
     List<Long> findByThemeScore(
             double longitude,
