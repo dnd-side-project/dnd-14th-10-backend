@@ -78,6 +78,7 @@ class PlaceControllerTest {
                 Map.entry("spaceSize", "LARGE"),
                 Map.entry("crowdStatus", "RELAX"),
                 Map.entry("mood", "CALM"),
+                Map.entry("tagIds", List.of(1L, 2L, 3L)),
                 Map.entry("images", List.of(
                         Map.of("imageKey", "place/uuid.jpg", "sequence", 0, "isRepresentative", true),
                         Map.of("imageKey", "place/uuid2.jpg", "sequence", 1, "isRepresentative", false)
@@ -275,6 +276,7 @@ class PlaceControllerTest {
         private Map<String, Object> createValidUpdateRequest() {
             return Map.of(
                     "name", "수정된 카페",
+                    "tagIds", List.of(1L, 2L, 3L),
                     "images", List.of(
                             Map.of("imageKey", "place/uuid.jpg", "sequence", 0, "isRepresentative", true)
                     )
@@ -335,6 +337,7 @@ class PlaceControllerTest {
             Long placeId = 1L;
             Map<String, Object> request = new HashMap<>();
             request.put("name", "수정된 카페");
+            request.put("tagIds", List.of(1L, 2L, 3L));
             request.put("images", List.of());
 
             // when & then

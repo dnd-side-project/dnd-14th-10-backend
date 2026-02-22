@@ -4,6 +4,7 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.review.entity.Review;
 import io.dnd.goyo.domain.review.entity.ReviewTag;
+import io.dnd.goyo.domain.review.entity.ReviewTags;
 import io.dnd.goyo.domain.review.repository.ReviewTagRepository;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
@@ -22,21 +23,15 @@ public class ReviewTagService {
 
     @Transactional
     public void registerReviewTags(Review review, List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
-            return;
-        }
+        ReviewTags reviewTags = ReviewTags.from(tagIds);
 
-        List<Long> uniqueTagIds = tagIds.stream()
-                .distinct()
-                .toList();
+        List<Tag> tags = findAndValidateTags(reviewTags.tagIds());
 
-        List<Tag> tags = findAndValidateTags(uniqueTagIds);
-
-        List<ReviewTag> reviewTags = tags.stream()
+        List<ReviewTag> reviewTagList = tags.stream()
                 .map(tag -> ReviewTag.of(review, tag))
                 .toList();
 
-        reviewTagRepository.saveAll(reviewTags);
+        reviewTagRepository.saveAll(reviewTagList);
     }
 
     @Transactional

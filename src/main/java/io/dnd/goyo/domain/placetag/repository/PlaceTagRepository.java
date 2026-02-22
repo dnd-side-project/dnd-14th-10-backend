@@ -38,6 +38,6 @@ public interface PlaceTagRepository extends JpaRepository<PlaceTag, Long> {
     List<Long> findTagIdsByPlaceId(@Param("placeId") Long placeId);
 
     @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM PlaceTag pt WHERE pt.place.id = :placeId AND pt.tag.id IN :tagIds")
-    void deleteByPlaceIdAndTagIdIn(@Param("placeId") Long placeId, @Param("tagIds") List<Long> tagIds);
+    @Query("DELETE FROM PlaceTag pt WHERE pt.place.id = :placeId")
+    void deleteAllByPlaceId(@Param("placeId") Long placeId);
 }
