@@ -39,11 +39,13 @@ public class SecurityConfig {
                             "/api/places/recommendations/new",
                             "/api/places/recommendations/random-theme"
                     ).permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/reviews/me").authenticated()
                     .requestMatchers(HttpMethod.GET,
                             "/api/places/*",
                             "/api/places/*/wish-count",
                             "/api/reviews/*",
-                            "/api/places/*/reviews"
+                            "/api/places/*/reviews",
+                            "/api/users/nickname/check"
                     ).permitAll()
                     .anyRequest().authenticated()
             )
