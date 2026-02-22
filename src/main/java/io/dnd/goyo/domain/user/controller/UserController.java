@@ -13,6 +13,7 @@ import io.dnd.goyo.domain.user.dto.response.WithdrawReasonResponse;
 import io.dnd.goyo.domain.user.service.UserService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -39,6 +40,7 @@ public class UserController {
     private final UserService userService;
 
     @Operation(summary = "마이페이지 프로필 조회", description = "현재 로그인한 유저의 프로필 정보를 조회합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/me")
     public ResponseEntity<UserProfileResponse> getMyProfile(
             @AuthenticationPrincipal CustomUserDetails userDetails
@@ -48,6 +50,7 @@ public class UserController {
     }
 
     @Operation(summary = "회원 탈퇴", description = "탈퇴 사유와 함께 현재 로그인한 유저의 계정을 탈퇴 처리합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/me/withdraw")
     public ResponseEntity<Void> withdraw(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -58,6 +61,7 @@ public class UserController {
     }
 
     @Operation(summary = "탈퇴 사유 목록 조회", description = "회원 탈퇴 시 선택 가능한 사유 목록을 조회합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/withdraw-reasons")
     public ResponseEntity<List<WithdrawReasonResponse>> getWithdrawReasons() {
         List<WithdrawReasonResponse> response = userService.getWithdrawReasons();
@@ -74,6 +78,7 @@ public class UserController {
     }
 
     @Operation(summary = "닉네임 수정", description = "현재 로그인한 유저의 닉네임을 수정합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/nickname")
     public ResponseEntity<Void> updateNickname(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -84,6 +89,7 @@ public class UserController {
     }
 
     @Operation(summary = "성별 수정", description = "현재 로그인한 유저의 성별을 수정합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/gender")
     public ResponseEntity<Void> updateGender(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -94,6 +100,7 @@ public class UserController {
     }
 
     @Operation(summary = "생년월일 수정", description = "현재 로그인한 유저의 생년월일을 수정합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/birth")
     public ResponseEntity<Void> updateBirth(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -104,6 +111,7 @@ public class UserController {
     }
 
     @Operation(summary = "거주지 수정", description = "현재 로그인한 유저의 거주지를 수정합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/region")
     public ResponseEntity<Void> updateRegion(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -114,6 +122,7 @@ public class UserController {
     }
 
     @Operation(summary = "위치정보 동의 수정", description = "현재 로그인한 유저의 위치정보 동의 여부를 수정합니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/location-consent")
     public ResponseEntity<Void> updateLocationConsent(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -124,6 +133,7 @@ public class UserController {
     }
 
     @Operation(summary = "프로필 이미지 수정", description = "현재 로그인한 유저의 프로필 이미지를 수정합니다. null 전송 시 이미지가 삭제됩니다")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/me/profile-image")
     public ResponseEntity<Void> updateProfileImage(
             @AuthenticationPrincipal CustomUserDetails userDetails,

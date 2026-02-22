@@ -12,6 +12,7 @@ import io.dnd.goyo.security.CustomUserDetails;
 import java.util.List;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +41,7 @@ public class ReviewController {
     private final ReviewService reviewService;
 
     @Operation(summary = "리뷰 작성", description = "공간에 대한 리뷰를 작성합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/reviews")
     public ResponseEntity<ReviewCreateResponse> createReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -65,18 +67,21 @@ public class ReviewController {
     }
 
     @Operation(summary = "공간별 리뷰 태그 통계", description = "공간에 달린 리뷰의 태그별 개수를 조회합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/places/{placeId}/reviews/tag-stats")
     public ResponseEntity<List<ReviewTagCountResponse>> getReviewTagStats(@PathVariable Long placeId) {
         return ResponseEntity.ok(reviewService.getReviewTagStatsByPlace(placeId));
     }
 
     @Operation(summary = "공간별 리뷰 별점 통계", description = "공간의 리뷰 평균 별점과 리뷰 수를 조회합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/places/{placeId}/reviews/rating-stats")
     public ResponseEntity<ReviewRatingStatsResponse> getReviewRatingStats(@PathVariable Long placeId) {
         return ResponseEntity.ok(reviewService.getReviewRatingStatsByPlace(placeId));
     }
 
     @Operation(summary = "내 리뷰 목록 조회", description = "로그인한 사용자가 작성한 리뷰 목록을 페이지네이션으로 조회합니다. 정렬은 sortType 파라미터를 사용하세요 (Pageable의 sort 무시).")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/reviews/me")
     public ResponseEntity<Page<ReviewDetailResponse>> getMyReviews(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -89,6 +94,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 수정", description = "본인이 작성한 리뷰를 수정합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> updateReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -100,6 +106,7 @@ public class ReviewController {
     }
 
     @Operation(summary = "리뷰 삭제", description = "본인이 작성한 리뷰를 삭제합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/reviews/{reviewId}")
     public ResponseEntity<Void> deleteReview(
             @AuthenticationPrincipal CustomUserDetails userDetails,

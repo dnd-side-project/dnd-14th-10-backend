@@ -9,6 +9,7 @@ import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class WishlistController {
     private final WishlistService wishlistService;
 
     @Operation(summary = "찜 추가", description = "공간을 찜 목록에 추가합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping("/wishlists")
     public ResponseEntity<WishlistAddResponse> addWishlist(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -46,6 +48,7 @@ public class WishlistController {
     }
 
     @Operation(summary = "내 찜 목록 조회", description = "로그인한 사용자의 찜 목록을 페이지네이션으로 조회합니다. 정렬은 sortType 파라미터를 사용하세요 (Pageable의 sort 무시).")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/wishlists/me")
     public ResponseEntity<Page<WishlistItemResponse>> getMyWishlists(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -58,6 +61,7 @@ public class WishlistController {
     }
 
     @Operation(summary = "찜 삭제", description = "공간을 찜 목록에서 삭제합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/wishlists/places/{placeId}")
     public ResponseEntity<Void> removeWishlist(
             @AuthenticationPrincipal CustomUserDetails userDetails,

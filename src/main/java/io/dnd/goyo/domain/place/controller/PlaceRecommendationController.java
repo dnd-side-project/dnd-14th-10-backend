@@ -6,6 +6,7 @@ import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.service.PlaceRecommendationService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class PlaceRecommendationController {
     }
 
     @Operation(summary = "비슷한 성향 공간 조회", description = "유저와 비슷한 성향의 공간을 추천합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/similar")
     public ResponseEntity<List<PlaceSummaryResponse>> getSimilarPlaces(
             @AuthenticationPrincipal CustomUserDetails userDetails,

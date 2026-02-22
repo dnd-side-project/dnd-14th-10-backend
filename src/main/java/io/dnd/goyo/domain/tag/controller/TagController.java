@@ -3,6 +3,7 @@ package io.dnd.goyo.domain.tag.controller;
 import io.dnd.goyo.domain.tag.dto.response.TagResponse;
 import io.dnd.goyo.domain.tag.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Tag(name = "Tag", description = "태그 관련 API")
+@SecurityRequirement(name = "bearerAuth")
 @RestController
 @RequestMapping("/api/tags")
 @RequiredArgsConstructor

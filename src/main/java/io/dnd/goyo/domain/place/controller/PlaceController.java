@@ -12,6 +12,7 @@ import io.dnd.goyo.domain.place.service.PlaceSearchService;
 import io.dnd.goyo.domain.place.service.PlaceService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
@@ -51,6 +52,7 @@ public class PlaceController {
     }
 
     @Operation(summary = "반경 내 공간 필터 검색", description = "현재 위치 기준 반경 내 공간을 필터 검색합니다. (거리순 정렬)\n\n※ 필터 조건 변경 시 lastDistance를 초기화해야 합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @GetMapping("/search/nearby")
     public ResponseEntity<PlaceFilterResponse> searchNearbyPlaces(
             @ParameterObject @Valid @ModelAttribute NearbyFilterRequest request
@@ -68,6 +70,7 @@ public class PlaceController {
     }
 
     @Operation(summary = "공간 제보(등록)", description = "새로운 공간을 제보합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @PostMapping
     public ResponseEntity<PlaceRegisterResponse> registerPlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -89,6 +92,7 @@ public class PlaceController {
     }
 
     @Operation(summary = "공간 수정", description = "등록한 공간 정보를 수정합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @PatchMapping("/{placeId}")
     public ResponseEntity<Void> updatePlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,
@@ -100,6 +104,7 @@ public class PlaceController {
     }
 
     @Operation(summary = "공간 삭제", description = "등록한 공간을 삭제합니다.")
+    @SecurityRequirement(name = "bearerAuth")
     @DeleteMapping("/{placeId}")
     public ResponseEntity<Void> deletePlace(
             @AuthenticationPrincipal CustomUserDetails userDetails,
