@@ -11,6 +11,7 @@ import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.user.entity.User;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.dnd.goyo.common.validation.NoDuplicates;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -80,6 +81,7 @@ public record PlaceRegisterRequest(
         @Schema(description = "태그 ID 리스트", example = "[1, 5, 12]")
         @NotNull(message = "태그는 필수입니다")
         @Size(min = 2, max = 5, message = "태그는 2~5개 선택해야 합니다")
+        @NoDuplicates(message = "태그 ID는 중복될 수 없습니다")
         List<Long> tagIds,
 
         @Schema(description = "업로드된 사진 리스트")
