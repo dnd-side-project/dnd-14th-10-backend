@@ -2,6 +2,7 @@ package io.dnd.goyo.common.storage;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.config.MinioProperties;
 import io.minio.BucketExistsArgs;
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MakeBucketArgs;
@@ -17,7 +18,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Slf4j
@@ -26,34 +26,26 @@ import org.springframework.stereotype.Service;
 public class MinioStorage implements FileStorage {
 
     private final MinioClient minioClient;
-
-    @Value("${minio.bucket}")
-    private String bucket;
-
-    @Value("${minio.presigned-url-expiry-minutes}")
-    private int expiryMinutes;
-
-    @Value("${minio.public-url-base}")
-    private String publicUrlBase;
+    private final MinioProperties minioProperties;
 
     @PostConstruct
     public void init() {
         try {
-            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
+            boolean found = minioClient.bucketExists(BucketExistsArgs.builder().bucket(minioProperties.bucket()).build());
             if (!found) {
                 try {
-                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
-                    log.info("MinIO 버킷 생성 완료: {}", bucket);
+                    minioClient.makeBucket(MakeBucketArgs.builder().bucket(minioProperties.bucket()).build());
+                    log.info("MinIO 버킷 생성 완료: {}", minioProperties.bucket());
                 } catch (ErrorResponseException e) {
                     String code = e.errorResponse().code();
                     if ("BucketAlreadyOwnedByYou".equals(code) || "BucketAlreadyExists".equals(code)) {
-                        log.info("MinIO 버킷 이미 존재함 (Race Condition 무시): {}", bucket);
+                        log.info("MinIO 버킷 이미 존재함 (Race Condition 무시): {}", minioProperties.bucket());
                     } else {
                         throw e;
                     }
                 }
             } else {
-                log.info("MinIO 버킷 이미 존재함: {}", bucket);
+                log.info("MinIO 버킷 이미 존재함: {}", minioProperties.bucket());
             }
         } catch (Exception e) {
             log.error("MinIO 초기화 실패: {}", e.getMessage());
@@ -63,7 +55,7 @@ public class MinioStorage implements FileStorage {
 
     @Override
     public String generatePublicUrl(String objectKey) {
-        return publicUrlBase + "/" + objectKey;
+        return minioProperties.publicUrlBase() + "/" + objectKey;
     }
 
     @Override
@@ -78,7 +70,7 @@ public class MinioStorage implements FileStorage {
 
         Iterable<Result<DeleteError>> results = minioClient.removeObjects(
                 RemoveObjectsArgs.builder()
-                        .bucket(bucket)
+                        .bucket(minioProperties.bucket())
                         .objects(deleteObjects)
                         .build()
         );
@@ -96,14 +88,15 @@ public class MinioStorage implements FileStorage {
     @Override
     public String generatePresignedUrl(String objectKey) {
         try {
-            return minioClient.getPresignedObjectUrl(
+            String presignedUrl = minioClient.getPresignedObjectUrl(
                     GetPresignedObjectUrlArgs.builder()
                             .method(Method.PUT)
-                            .bucket(bucket)
+                            .bucket(minioProperties.bucket())
                             .object(objectKey)
-                            .expiry(expiryMinutes, TimeUnit.MINUTES)
+                            .expiry(minioProperties.presignedUrlExpiryMinutes(), TimeUnit.MINUTES)
                             .build()
             );
+            return presignedUrl.replace(minioProperties.endpoint(), minioProperties.externalEndpoint());
         } catch (Exception e) {
             log.error("Presigned URL 생성 실패: {}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR, "이미지 업로드 URL 생성에 실패했습니다.");
