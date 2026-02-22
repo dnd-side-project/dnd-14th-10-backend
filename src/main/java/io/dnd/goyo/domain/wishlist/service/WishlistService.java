@@ -12,9 +12,11 @@ import io.dnd.goyo.domain.wishlist.dto.request.WishlistAddRequest;
 import io.dnd.goyo.domain.wishlist.dto.response.WishCountResponse;
 import io.dnd.goyo.domain.wishlist.dto.response.WishlistItemResponse;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
+import io.dnd.goyo.domain.wishlist.enums.WishlistSortType;
 import io.dnd.goyo.domain.wishlist.repository.WishlistRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,8 +54,14 @@ public class WishlistService {
         return wishlist.getId();
     }
 
-    public Page<WishlistItemResponse> getMyWishlists(Long userId, Pageable pageable) {
-        Page<Wishlist> wishlistPage = wishlistRepository.findAllByUserId(userId, pageable);
+    public Page<WishlistItemResponse> getMyWishlists(Long userId, Pageable pageable, WishlistSortType sortType) {
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Wishlist> wishlistPage;
+        if (sortType == WishlistSortType.POPULAR) {
+            wishlistPage = wishlistRepository.findAllByUserIdOrderByWishCountDesc(userId, pageRequest);
+        } else {
+            wishlistPage = wishlistRepository.findAllByUserId(userId, pageRequest.withSort(sortType.toSort()));
+        }
         return wishlistPage.map(WishlistItemResponse::from);
     }
 

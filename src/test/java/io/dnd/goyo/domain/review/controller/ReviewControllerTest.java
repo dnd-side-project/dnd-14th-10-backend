@@ -18,6 +18,7 @@ import io.dnd.goyo.domain.review.dto.request.ReviewCreateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewCreateResponse;
 import io.dnd.goyo.domain.review.dto.request.ReviewUpdateRequest;
 import io.dnd.goyo.domain.review.dto.response.ReviewDetailResponse;
+import io.dnd.goyo.domain.review.enums.ReviewSortType;
 import io.dnd.goyo.domain.review.service.ReviewService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.dnd.goyo.security.jwt.JwtTokenProvider;
@@ -194,7 +195,7 @@ class ReviewControllerTest {
         );
         Page<ReviewDetailResponse> page = new PageImpl<>(List.of(response));
 
-        given(reviewService.getMyReviews(eq(1L), any(Pageable.class))).willReturn(page);
+        given(reviewService.getMyReviews(eq(1L), any(Pageable.class), any(ReviewSortType.class))).willReturn(page);
 
         mockMvc.perform(get("/api/reviews/me"))
                 .andExpect(status().isOk())
