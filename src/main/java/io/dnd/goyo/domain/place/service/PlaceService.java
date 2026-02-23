@@ -127,6 +127,7 @@ public class PlaceService {
         Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
 
         List<MyPlaceResponse> responses = placeIds.stream()
+                .filter(placeMap::containsKey)
                 .map(id -> MyPlaceResponse.from(placeMap.get(id), wishedPlaceIds.contains(id), fileStorage))
                 .toList();
 
