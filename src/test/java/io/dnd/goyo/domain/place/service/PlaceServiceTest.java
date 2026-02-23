@@ -19,6 +19,7 @@ import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceImageRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
+import io.dnd.goyo.domain.place.dto.response.MyPlaceResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.entity.Place;
@@ -29,6 +30,8 @@ import io.dnd.goyo.domain.place.enums.CrowdStatus;
 import io.dnd.goyo.domain.place.enums.Mood;
 import io.dnd.goyo.domain.place.enums.OutletScore;
 import io.dnd.goyo.domain.place.enums.PlaceCategory;
+import io.dnd.goyo.domain.place.enums.PlaceSortType;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
@@ -53,6 +56,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 @ExtendWith(MockitoExtension.class)
 class PlaceServiceTest {
@@ -442,6 +448,96 @@ class PlaceServiceTest {
             given(place.getRegionCode()).willReturn(new RegionCode(1168010100L));
             given(place.getLocation()).willReturn(location);
             given(place.getImages()).willReturn(new ArrayList<>(List.of(image)));
+            given(place.getPlaceDetail()).willReturn(placeDetail);
+
+            return place;
+        }
+    }
+
+    @Nested
+    @DisplayName("내 등록 공간 조회")
+    class GetMyPlaces {
+
+        @Test
+        void 최신순_정렬로_내_공간_목록_조회_성공() {
+            // given
+            Long userId = 1L;
+            Place place = createMockPlace(1L, "place/image.jpg");
+            PageRequest pageable = PageRequest.of(0, 10);
+            PageRequest sorted = pageable.withSort(PlaceSortType.LATEST.toSort());
+            Page<Place> placePage = new PageImpl<>(List.of(place), sorted, 1);
+
+            given(placeRepository.findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
+                    .willReturn(placePage);
+            given(wishlistReader.getWishedPlaceIdSet(userId, List.of(1L))).willReturn(Set.of(1L));
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            Page<MyPlaceResponse> result = placeService.getMyPlaces(userId, pageable, PlaceSortType.LATEST);
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).placeId()).isEqualTo(1L);
+            assertThat(result.getContent().get(0).wished()).isTrue();
+            assertThat(result.getContent().get(0).representativeImageUrl())
+                    .isEqualTo("http://localhost:9000/goyo-local/place/image.jpg");
+            verify(placeRepository).findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted);
+        }
+
+        @Test
+        void 인기순_정렬로_내_공간_목록_조회_성공() {
+            // given
+            Long userId = 1L;
+            Place place = createMockPlace(1L, "place/image.jpg");
+            PageRequest pageable = PageRequest.of(0, 10);
+            Page<Place> placePage = new PageImpl<>(List.of(place), pageable, 1);
+
+            given(placeRepository.findAllByUserIdOrderByWishCountDesc(userId, pageable))
+                    .willReturn(placePage);
+            given(wishlistReader.getWishedPlaceIdSet(userId, List.of(1L))).willReturn(Set.of());
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
+
+            // when
+            Page<MyPlaceResponse> result = placeService.getMyPlaces(userId, pageable, PlaceSortType.POPULAR);
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).wished()).isFalse();
+            verify(placeRepository).findAllByUserIdOrderByWishCountDesc(userId, pageable);
+        }
+
+        @Test
+        void 공간_목록이_비어있으면_빈_페이지_반환() {
+            // given
+            Long userId = 1L;
+            PageRequest pageable = PageRequest.of(0, 10);
+            PageRequest sorted = pageable.withSort(PlaceSortType.LATEST.toSort());
+            Page<Place> emptyPage = new PageImpl<>(List.of(), sorted, 0);
+
+            given(placeRepository.findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
+                    .willReturn(emptyPage);
+            given(wishlistReader.getWishedPlaceIdSet(userId, List.of())).willReturn(Set.of());
+
+            // when
+            Page<MyPlaceResponse> result = placeService.getMyPlaces(userId, pageable, PlaceSortType.LATEST);
+
+            // then
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalElements()).isZero();
+        }
+
+        private Place createMockPlace(Long id, String imageKey) {
+            PlaceDetail placeDetail = mock(PlaceDetail.class);
+            given(placeDetail.getMood()).willReturn(Mood.CALM);
+            given(placeDetail.getSpaceSize()).willReturn(SpaceSize.MEDIUM);
+            given(placeDetail.getWishCount()).willReturn(5);
+
+            Place place = mock(Place.class);
+            given(place.getId()).willReturn(id);
+            given(place.getName()).willReturn("테스트 카페 " + id);
+            given(place.getRepresentativeImageKey()).willReturn(imageKey);
             given(place.getPlaceDetail()).willReturn(placeDetail);
 
             return place;
