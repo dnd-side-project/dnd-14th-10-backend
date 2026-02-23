@@ -4,19 +4,25 @@ import io.dnd.goyo.domain.place.dto.request.NearbyFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceFilterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
+import io.dnd.goyo.domain.place.dto.response.MyPlaceResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceFilterResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceRegisterResponse;
+import io.dnd.goyo.domain.place.enums.PlaceSortType;
 import io.dnd.goyo.domain.place.service.PlaceSearchService;
 import io.dnd.goyo.domain.place.service.PlaceService;
 import io.dnd.goyo.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Size;
 import org.springdoc.core.annotations.ParameterObject;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -57,6 +63,18 @@ public class PlaceController {
     ) {
         PlaceFilterResponse response = placeSearchService.getNearbyFilteredPlaces(request);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "내 등록 공간 조회", description = "로그인한 사용자가 등록한 공간 목록을 페이지네이션으로 조회합니다. 정렬은 sortType 파라미터를 사용하세요.")
+    @GetMapping("/me")
+    public ResponseEntity<Page<MyPlaceResponse>> getMyPlaces(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @Parameter(description = "페이지 번호(page)와 크기(size)만 사용. sort는 sortType 파라미터로 대체됩니다.")
+            @PageableDefault(size = 10) Pageable pageable,
+            @Parameter(description = "정렬 조건: LATEST(최신순), NAME(이름순), POPULAR(인기순)")
+            @RequestParam(defaultValue = "LATEST") PlaceSortType sortType
+    ) {
+        return ResponseEntity.ok(placeService.getMyPlaces(userDetails.userId(), pageable, sortType));
     }
 
     @Operation(summary = "공간 일괄 조회", description = "ID 목록으로 공간을 일괄 조회합니다.")

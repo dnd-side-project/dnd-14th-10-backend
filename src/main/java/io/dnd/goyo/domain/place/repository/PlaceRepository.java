@@ -1,8 +1,12 @@
 package io.dnd.goyo.domain.place.repository;
 
 import io.dnd.goyo.domain.place.entity.Place;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -75,4 +79,12 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
             @Param("priorRating") double priorRating,
             @Param("limit") int limit
     );
+
+    @EntityGraph(attributePaths = {"placeDetail", "images"})
+    Page<Place> findAllByUserIdAndStatus(@Param("userId") Long userId, PlaceStatus status, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"placeDetail", "images"})
+    @Query(value = "SELECT p FROM Place p JOIN p.placeDetail pd WHERE p.user.id = :userId AND p.status = 'ACTIVE' ORDER BY pd.wishCount DESC, p.createdAt DESC",
+           countQuery = "SELECT COUNT(p) FROM Place p WHERE p.user.id = :userId AND p.status = 'ACTIVE'")
+    Page<Place> findAllByUserIdOrderByWishCountDesc(@Param("userId") Long userId, Pageable pageable);
 }
