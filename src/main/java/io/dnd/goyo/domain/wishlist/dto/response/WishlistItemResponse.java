@@ -1,9 +1,9 @@
 package io.dnd.goyo.domain.wishlist.dto.response;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.enums.Mood;
-import io.dnd.goyo.domain.place.enums.PlaceCategory;
 import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.wishlist.entity.Wishlist;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,27 +17,21 @@ public record WishlistItemResponse(
         Long placeId,
         @Schema(description = "공간 이름", example = "고작 아지트")
         String placeName,
-        @Schema(description = "카테고리", example = "CAFE")
-        PlaceCategory category,
-        @Schema(description = "상세 주소", example = "청계천로 101")
-        String addressDetail,
-        @Schema(description = "행정구역 코드", example = "1168010100")
-        Long regionCode,
-        @Schema(description = "대표 이미지 키")
-        String representativeImageKey,
-        @Schema(description = "위도", example = "37.5665")
-        double latitude,
-        @Schema(description = "경도", example = "126.9780")
-        double longitude,
+        @Schema(description = "대표 이미지 URL")
+        String representativeImageUrl,
         @Schema(description = "분위기", example = "CALM")
         Mood mood,
         @Schema(description = "공간 크기", example = "MEDIUM")
         SpaceSize spaceSize,
+        @Schema(description = "찜 수", example = "42")
+        int wishCount,
+        @Schema(description = "찜 여부", example = "true")
+        boolean wished,
         @Schema(description = "찜한 시각")
         LocalDateTime wishedAt
 ) {
 
-    public static WishlistItemResponse from(Wishlist wishlist) {
+    public static WishlistItemResponse from(Wishlist wishlist, FileStorage fileStorage) {
         Place place = wishlist.getPlace();
         PlaceDetail placeDetail = place.getPlaceDetail();
 
@@ -45,14 +39,11 @@ public record WishlistItemResponse(
                 wishlist.getId(),
                 place.getId(),
                 place.getName(),
-                place.getCategory(),
-                place.getAddressDetail(),
-                place.getRegionCode().getValue(),
-                place.getRepresentativeImageKey(),
-                place.getLocation().getY(),
-                place.getLocation().getX(),
-                placeDetail != null ? placeDetail.getMood() : null,
-                placeDetail != null ? placeDetail.getSpaceSize() : null,
+                fileStorage.generatePublicUrl(place.getRepresentativeImageKey()),
+                placeDetail.getMood(),
+                placeDetail.getSpaceSize(),
+                placeDetail.getWishCount(),
+                true,
                 wishlist.getCreatedAt()
         );
     }

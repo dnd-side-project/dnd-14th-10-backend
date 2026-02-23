@@ -9,8 +9,11 @@ import static org.mockito.Mockito.verify;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
 import io.dnd.goyo.domain.place.service.PlaceReader;
 import io.dnd.goyo.domain.user.entity.User;
@@ -54,6 +57,9 @@ class WishlistServiceTest {
 
     @Mock
     private WishlistReader wishlistReader;
+
+    @Mock
+    private FileStorage fileStorage;
 
     @Nested
     @DisplayName("찜 추가")
@@ -130,17 +136,18 @@ class WishlistServiceTest {
             Wishlist wishlist = mock(Wishlist.class);
             Place place = mock(Place.class);
             PlaceDetail placeDetail = mock(PlaceDetail.class);
-            org.locationtech.jts.geom.Point location = mock(org.locationtech.jts.geom.Point.class);
 
             given(wishlist.getId()).willReturn(1L);
             given(wishlist.getPlace()).willReturn(place);
             given(place.getId()).willReturn(10L);
             given(place.getName()).willReturn("테스트 카페");
+            given(place.getRepresentativeImageKey()).willReturn("place/image.jpg");
             given(place.getPlaceDetail()).willReturn(placeDetail);
-            given(place.getLocation()).willReturn(location);
-            given(place.getRegionCode()).willReturn(new io.dnd.goyo.domain.place.entity.RegionCode(11110L));
-            given(location.getY()).willReturn(37.5);
-            given(location.getX()).willReturn(127.0);
+            given(placeDetail.getMood()).willReturn(Mood.CALM);
+            given(placeDetail.getSpaceSize()).willReturn(SpaceSize.MEDIUM);
+            given(placeDetail.getWishCount()).willReturn(5);
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             PageRequest pageable = PageRequest.of(0, 10);
             PageRequest sorted = pageable.withSort(WishlistSortType.LATEST.toSort());
@@ -153,7 +160,9 @@ class WishlistServiceTest {
 
             // then
             assertThat(result.getContent()).hasSize(1);
-            assertThat(result.getContent().get(0).placeId()).isEqualTo(10L);
+            assertThat(result.getContent().getFirst().placeId()).isEqualTo(10L);
+            assertThat(result.getContent().getFirst().representativeImageUrl())
+                    .isEqualTo("http://localhost:9000/goyo-local/place/image.jpg");
         }
 
         @Test
@@ -181,17 +190,18 @@ class WishlistServiceTest {
             Wishlist wishlist = mock(Wishlist.class);
             Place place = mock(Place.class);
             PlaceDetail placeDetail = mock(PlaceDetail.class);
-            org.locationtech.jts.geom.Point location = mock(org.locationtech.jts.geom.Point.class);
 
             given(wishlist.getId()).willReturn(1L);
             given(wishlist.getPlace()).willReturn(place);
             given(place.getId()).willReturn(10L);
             given(place.getName()).willReturn("테스트 카페");
+            given(place.getRepresentativeImageKey()).willReturn("place/image.jpg");
             given(place.getPlaceDetail()).willReturn(placeDetail);
-            given(place.getLocation()).willReturn(location);
-            given(place.getRegionCode()).willReturn(new io.dnd.goyo.domain.place.entity.RegionCode(11110L));
-            given(location.getY()).willReturn(37.5);
-            given(location.getX()).willReturn(127.0);
+            given(placeDetail.getMood()).willReturn(Mood.CALM);
+            given(placeDetail.getSpaceSize()).willReturn(SpaceSize.MEDIUM);
+            given(placeDetail.getWishCount()).willReturn(5);
+            given(fileStorage.generatePublicUrl("place/image.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
 
             PageRequest pageable = PageRequest.of(0, 10);
             Page<Wishlist> wishlistPage = new PageImpl<>(List.of(wishlist), pageable, 1);
