@@ -2,6 +2,7 @@ package io.dnd.goyo.domain.wishlist.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
 import io.dnd.goyo.domain.place.repository.PlaceDetailRepository;
@@ -31,6 +32,7 @@ public class WishlistService {
     private final UserReader userReader;
     private final PlaceReader placeReader;
     private final WishlistReader wishlistReader;
+    private final FileStorage fileStorage;
 
     @Transactional
     public void deleteByPlaceId(Long placeId) {
@@ -62,7 +64,7 @@ public class WishlistService {
         } else {
             wishlistPage = wishlistRepository.findAllByUserId(userId, pageRequest.withSort(sortType.toSort()));
         }
-        return wishlistPage.map(WishlistItemResponse::from);
+        return wishlistPage.map(wishlist -> WishlistItemResponse.from(wishlist, fileStorage));
     }
 
     @Transactional

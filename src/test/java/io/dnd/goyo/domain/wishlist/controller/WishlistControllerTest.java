@@ -13,6 +13,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.dnd.goyo.domain.place.enums.Mood;
+import io.dnd.goyo.domain.place.enums.SpaceSize;
 import io.dnd.goyo.domain.wishlist.dto.request.WishlistAddRequest;
 import io.dnd.goyo.domain.wishlist.dto.response.WishCountResponse;
 import io.dnd.goyo.domain.wishlist.dto.response.WishlistItemResponse;
@@ -86,8 +88,8 @@ class WishlistControllerTest {
     @Test
     void 내_찜_목록_조회_성공_시_200_반환() throws Exception {
         WishlistItemResponse response = new WishlistItemResponse(
-                1L, 10L, "테스트 카페", null, "서울시 강남구",
-                11110L, "image.jpg", 37.5, 127.0, null, null, null
+                1L, 10L, "테스트 카페", "http://localhost:9000/goyo-local/place/image.jpg",
+                Mood.CALM, SpaceSize.MEDIUM, 5, true, null
         );
         Page<WishlistItemResponse> page = new PageImpl<>(List.of(response));
 

@@ -6,10 +6,13 @@ import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
 import io.dnd.goyo.domain.place.dto.request.PlaceUpdateRequest;
+import io.dnd.goyo.domain.place.dto.response.MyPlaceResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceDetailResponse;
 import io.dnd.goyo.domain.place.dto.response.PlaceMapItemResponse;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
+import io.dnd.goyo.domain.place.enums.PlaceSortType;
+import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import io.dnd.goyo.domain.place.repository.PlaceRepository;
 import io.dnd.goyo.domain.placetag.service.PlaceTagService;
 import io.dnd.goyo.domain.badge.enums.ActivityType;
@@ -17,7 +20,13 @@ import io.dnd.goyo.domain.badge.event.ActivityEvent;
 import io.dnd.goyo.domain.history.event.PlaceViewedEvent;
 import io.dnd.goyo.domain.user.entity.User;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import io.dnd.goyo.domain.user.service.UserReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistReader;
 import io.dnd.goyo.domain.wishlist.service.WishlistService;
@@ -100,6 +109,29 @@ public class PlaceService {
         wishlistService.deleteByPlaceId(placeId);
 
         eventPublisher.publishEvent(new ActivityEvent(userId, ActivityType.PLACE, -1, -1));
+    }
+
+    public Page<MyPlaceResponse> getMyPlaces(Long userId, Pageable pageable, PlaceSortType sortType) {
+        PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        Page<Long> idPage;
+        if (sortType == PlaceSortType.POPULAR) {
+            idPage = placeRepository.findIdsByUserIdOrderByWishCountDesc(userId, pageRequest);
+        } else {
+            idPage = placeRepository.findIdsByUserIdAndStatus(userId, PlaceStatus.ACTIVE, pageRequest.withSort(sortType.toSort()));
+        }
+
+        List<Long> placeIds = idPage.getContent();
+        List<Place> places = placeRepository.findAllByIdWithDetails(placeIds);
+
+        Map<Long, Place> placeMap = places.stream().collect(Collectors.toMap(Place::getId, p -> p));
+        Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
+
+        List<MyPlaceResponse> responses = placeIds.stream()
+                .filter(placeMap::containsKey)
+                .map(id -> MyPlaceResponse.from(placeMap.get(id), wishedPlaceIds.contains(id), fileStorage))
+                .toList();
+
+        return new PageImpl<>(responses, pageRequest, idPage.getTotalElements());
     }
 
     public List<PlaceMapItemResponse> getPlacesByIds(List<Long> ids) {
