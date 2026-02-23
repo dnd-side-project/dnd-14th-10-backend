@@ -1,11 +1,8 @@
 package io.dnd.goyo.domain.placetag.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -16,6 +13,7 @@ import io.dnd.goyo.domain.placetag.repository.PlaceTagRepository;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
 import java.util.List;
+import java.util.stream.LongStream;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -38,6 +36,43 @@ class PlaceTagServiceTest {
     private TagRepository tagRepository;
 
     @Nested
+    @DisplayName("태그 등록 시")
+    class RegisterPlaceTags {
+
+        private Place place;
+
+        @BeforeEach
+        void setUp() {
+            place = mock(Place.class);
+        }
+
+        @Test
+        void 정상적으로_태그가_등록된다() {
+            // given
+            List<Long> tagIds = createTagIds(3);
+            given(tagRepository.findAllById(tagIds)).willReturn(createTags(3));
+
+            // when
+            placeTagService.registerPlaceTags(place, tagIds);
+
+            // then
+            verify(placeTagRepository).saveAll(anyList());
+        }
+
+        @Test
+        void 존재하지_않는_태그_포함_시_예외_발생() {
+            // given
+            List<Long> tagIds = createTagIds(3);
+            given(tagRepository.findAllById(tagIds)).willReturn(createTags(2));
+
+            // when & then
+            assertThatThrownBy(() -> placeTagService.registerPlaceTags(place, tagIds))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("존재하지 않는 태그");
+        }
+    }
+
+    @Nested
     @DisplayName("태그 교체 시")
     class ReplacePlaceTags {
 
@@ -47,87 +82,52 @@ class PlaceTagServiceTest {
         @BeforeEach
         void setUp() {
             place = mock(Place.class);
-            lenient().when(place.getId()).thenReturn(placeId);
+            given(place.getId()).willReturn(placeId);
         }
 
         @Test
-        void 태그_목록이_null이면_아무_작업도_하지_않는다() {
-            // when
-            placeTagService.replacePlaceTags(place, null);
-
-            // then
-            verify(placeTagRepository, never()).findTagIdsByPlaceId(any());
-        }
-
-        @Test
-        void 새_태그만_추가되는_경우() {
+        void 기존_태그_삭제_후_새_태그가_등록된다() {
             // given
-            given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L));
-            Tag newTag = createTag();
-            given(tagRepository.findAllById(anyList())).willReturn(List.of(newTag));
+            List<Long> tagIds = createTagIds(3);
+            given(tagRepository.findAllById(tagIds)).willReturn(createTags(3));
 
             // when
-            placeTagService.replacePlaceTags(place, List.of(1L, 2L, 3L));
+            placeTagService.replacePlaceTags(place, tagIds);
 
             // then
-            verify(placeTagRepository, never()).deleteByPlaceIdAndTagIdIn(any(), any());
+            verify(placeTagRepository).deleteAllByPlaceId(placeId);
             verify(placeTagRepository).saveAll(anyList());
-        }
-
-        @Test
-        void 기존_태그만_삭제되는_경우() {
-            // given
-            given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L, 3L));
-
-            // when
-            placeTagService.replacePlaceTags(place, List.of(1L, 2L));
-
-            // then
-            verify(placeTagRepository).deleteByPlaceIdAndTagIdIn(eq(placeId), anyList());
-            verify(placeTagRepository, never()).saveAll(any());
-        }
-
-        @Test
-        void 태그_추가와_삭제가_동시에_일어나는_경우() {
-            // given
-            given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L));
-            Tag newTag = createTag();
-            given(tagRepository.findAllById(anyList())).willReturn(List.of(newTag));
-
-            // when
-            placeTagService.replacePlaceTags(place, List.of(2L, 3L));
-
-            // then
-            verify(placeTagRepository).deleteByPlaceIdAndTagIdIn(eq(placeId), anyList());
-            verify(placeTagRepository).saveAll(anyList());
-        }
-
-        @Test
-        void 동일한_태그로_업데이트_시_변경_없음() {
-            // given
-            given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L, 2L));
-
-            // when
-            placeTagService.replacePlaceTags(place, List.of(1L, 2L));
-
-            // then
-            verify(placeTagRepository, never()).deleteByPlaceIdAndTagIdIn(any(), any());
-            verify(placeTagRepository, never()).saveAll(any());
         }
 
         @Test
         void 존재하지_않는_태그_포함_시_예외_발생() {
             // given
-            given(placeTagRepository.findTagIdsByPlaceId(placeId)).willReturn(List.of(1L));
-            given(tagRepository.findAllById(anyList())).willReturn(List.of());
+            List<Long> tagIds = createTagIds(3);
+            given(tagRepository.findAllById(tagIds)).willReturn(createTags(2));
 
             // when & then
-            assertThatThrownBy(() -> placeTagService.replacePlaceTags(place, List.of(1L, 999L)))
-                    .isInstanceOf(BusinessException.class);
+            assertThatThrownBy(() -> placeTagService.replacePlaceTags(place, tagIds))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("존재하지 않는 태그");
         }
 
-        private Tag createTag() {
-            return mock(Tag.class);
+        @Test
+        void 태그_목록이_null이면_예외_발생() {
+            // when & then
+            assertThatThrownBy(() -> placeTagService.replacePlaceTags(place, null))
+                    .isInstanceOf(BusinessException.class);
         }
+    }
+
+    private List<Long> createTagIds(int count) {
+        return LongStream.rangeClosed(1, count)
+                .boxed()
+                .toList();
+    }
+
+    private List<Tag> createTags(int count) {
+        return LongStream.rangeClosed(1, count)
+                .mapToObj(i -> mock(Tag.class))
+                .toList();
     }
 }

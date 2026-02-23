@@ -4,12 +4,11 @@ import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.placetag.entity.PlaceTag;
+import io.dnd.goyo.domain.placetag.entity.PlaceTags;
 import io.dnd.goyo.domain.placetag.repository.PlaceTagRepository;
 import io.dnd.goyo.domain.tag.entity.Tag;
 import io.dnd.goyo.domain.tag.repository.TagRepository;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,56 +23,21 @@ public class PlaceTagService {
 
     @Transactional
     public void registerPlaceTags(Place place, List<Long> tagIds) {
-        if (tagIds == null || tagIds.isEmpty()) {
-            return;
-        }
+        PlaceTags placeTags = PlaceTags.from(tagIds);
 
-        List<Long> uniqueTagIds = tagIds.stream()
-                .distinct()
-                .toList();
+        List<Tag> tags = findAndValidateTags(placeTags.tagIds());
 
-        List<Tag> tags = findAndValidateTags(uniqueTagIds);
-
-        List<PlaceTag> placeTags = tags.stream()
+        List<PlaceTag> placeTagList = tags.stream()
                 .map(tag -> PlaceTag.of(place, tag))
                 .toList();
 
-        placeTagRepository.saveAll(placeTags);
+        placeTagRepository.saveAll(placeTagList);
     }
 
     @Transactional
     public void replacePlaceTags(Place place, List<Long> tagIds) {
-        if (tagIds == null) {
-            return;
-        }
-
-        Set<Long> newTagIds = new HashSet<>(tagIds);
-        Set<Long> existingTagIds = new HashSet<>(placeTagRepository.findTagIdsByPlaceId(place.getId()));
-
-        Set<Long> toRemove = new HashSet<>(existingTagIds);
-        toRemove.removeAll(newTagIds);
-
-        Set<Long> toAdd = new HashSet<>(newTagIds);
-        toAdd.removeAll(existingTagIds);
-
-        deleteTags(place.getId(), toRemove);
-        addTags(place, toAdd);
-    }
-
-    private void deleteTags(Long placeId, Set<Long> tagIdsToRemove) {
-        if (!tagIdsToRemove.isEmpty()) {
-            placeTagRepository.deleteByPlaceIdAndTagIdIn(placeId, List.copyOf(tagIdsToRemove));
-        }
-    }
-
-    private void addTags(Place place, Set<Long> tagIdsToAdd) {
-        if (!tagIdsToAdd.isEmpty()) {
-            List<Tag> tags = findAndValidateTags(List.copyOf(tagIdsToAdd));
-            List<PlaceTag> placeTags = tags.stream()
-                    .map(tag -> PlaceTag.of(place, tag))
-                    .toList();
-            placeTagRepository.saveAll(placeTags);
-        }
+        placeTagRepository.deleteAllByPlaceId(place.getId());
+        registerPlaceTags(place, tagIds);
     }
 
     private List<Tag> findAndValidateTags(List<Long> tagIds) {

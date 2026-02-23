@@ -117,7 +117,7 @@ public class User extends BaseEntity {
     }
 
     private static final int NAME_MAX_LENGTH = 30;
-    private static final int NICKNAME_MAX_LENGTH = 30;
+    private static final int NICKNAME_MAX_LENGTH = 10;
 
     private static void validateName(String name) {
         if (name == null || name.isBlank()) {
