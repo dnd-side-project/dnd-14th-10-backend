@@ -80,11 +80,11 @@ public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceReposi
             @Param("limit") int limit
     );
 
-    @EntityGraph(attributePaths = {"placeDetail", "images"})
-    Page<Place> findAllByUserIdAndStatus(@Param("userId") Long userId, PlaceStatus status, Pageable pageable);
+    @Query(value = "SELECT p.id FROM Place p WHERE p.user.id = :userId AND p.status = :status",
+           countQuery = "SELECT COUNT(p) FROM Place p WHERE p.user.id = :userId AND p.status = :status")
+    Page<Long> findIdsByUserIdAndStatus(@Param("userId") Long userId, @Param("status") PlaceStatus status, Pageable pageable);
 
-    @EntityGraph(attributePaths = {"placeDetail", "images"})
-    @Query(value = "SELECT p FROM Place p JOIN p.placeDetail pd WHERE p.user.id = :userId AND p.status = 'ACTIVE' ORDER BY pd.wishCount DESC, p.createdAt DESC",
+    @Query(value = "SELECT p.id FROM Place p JOIN p.placeDetail pd WHERE p.user.id = :userId AND p.status = 'ACTIVE' ORDER BY pd.wishCount DESC, p.createdAt DESC",
            countQuery = "SELECT COUNT(p) FROM Place p WHERE p.user.id = :userId AND p.status = 'ACTIVE'")
-    Page<Place> findAllByUserIdOrderByWishCountDesc(@Param("userId") Long userId, Pageable pageable);
+    Page<Long> findIdsByUserIdOrderByWishCountDesc(@Param("userId") Long userId, Pageable pageable);
 }

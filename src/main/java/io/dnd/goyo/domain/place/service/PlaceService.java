@@ -20,7 +20,10 @@ import io.dnd.goyo.domain.badge.event.ActivityEvent;
 import io.dnd.goyo.domain.history.event.PlaceViewedEvent;
 import io.dnd.goyo.domain.user.entity.User;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -110,18 +113,24 @@ public class PlaceService {
 
     public Page<MyPlaceResponse> getMyPlaces(Long userId, Pageable pageable, PlaceSortType sortType) {
         PageRequest pageRequest = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        Page<Place> placePage;
+        Page<Long> idPage;
         if (sortType == PlaceSortType.POPULAR) {
-            placePage = placeRepository.findAllByUserIdOrderByWishCountDesc(userId, pageRequest);
+            idPage = placeRepository.findIdsByUserIdOrderByWishCountDesc(userId, pageRequest);
         } else {
-            placePage = placeRepository.findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, pageRequest.withSort(sortType.toSort()));
+            idPage = placeRepository.findIdsByUserIdAndStatus(userId, PlaceStatus.ACTIVE, pageRequest.withSort(sortType.toSort()));
         }
 
-        List<Long> placeIds = placePage.map(Place::getId).toList();
+        List<Long> placeIds = idPage.getContent();
+        List<Place> places = placeRepository.findAllByIdWithDetails(placeIds);
+
+        Map<Long, Place> placeMap = places.stream().collect(Collectors.toMap(Place::getId, p -> p));
         Set<Long> wishedPlaceIds = wishlistReader.getWishedPlaceIdSet(userId, placeIds);
 
-        return placePage.map(place ->
-                MyPlaceResponse.from(place, wishedPlaceIds.contains(place.getId()), fileStorage));
+        List<MyPlaceResponse> responses = placeIds.stream()
+                .map(id -> MyPlaceResponse.from(placeMap.get(id), wishedPlaceIds.contains(id), fileStorage))
+                .toList();
+
+        return new PageImpl<>(responses, pageRequest, idPage.getTotalElements());
     }
 
     public List<PlaceMapItemResponse> getPlacesByIds(List<Long> ids) {

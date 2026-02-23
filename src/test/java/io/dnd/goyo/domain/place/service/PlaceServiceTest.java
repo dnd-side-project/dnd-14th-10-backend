@@ -465,10 +465,11 @@ class PlaceServiceTest {
             Place place = createMockPlace(1L, "place/image.jpg");
             PageRequest pageable = PageRequest.of(0, 10);
             PageRequest sorted = pageable.withSort(PlaceSortType.LATEST.toSort());
-            Page<Place> placePage = new PageImpl<>(List.of(place), sorted, 1);
+            Page<Long> idPage = new PageImpl<>(List.of(1L), sorted, 1);
 
-            given(placeRepository.findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
-                    .willReturn(placePage);
+            given(placeRepository.findIdsByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
+                    .willReturn(idPage);
+            given(placeRepository.findAllByIdWithDetails(List.of(1L))).willReturn(List.of(place));
             given(wishlistReader.getWishedPlaceIdSet(userId, List.of(1L))).willReturn(Set.of(1L));
             given(fileStorage.generatePublicUrl("place/image.jpg"))
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
@@ -482,7 +483,7 @@ class PlaceServiceTest {
             assertThat(result.getContent().get(0).wished()).isTrue();
             assertThat(result.getContent().get(0).representativeImageUrl())
                     .isEqualTo("http://localhost:9000/goyo-local/place/image.jpg");
-            verify(placeRepository).findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted);
+            verify(placeRepository).findIdsByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted);
         }
 
         @Test
@@ -491,10 +492,11 @@ class PlaceServiceTest {
             Long userId = 1L;
             Place place = createMockPlace(1L, "place/image.jpg");
             PageRequest pageable = PageRequest.of(0, 10);
-            Page<Place> placePage = new PageImpl<>(List.of(place), pageable, 1);
+            Page<Long> idPage = new PageImpl<>(List.of(1L), pageable, 1);
 
-            given(placeRepository.findAllByUserIdOrderByWishCountDesc(userId, pageable))
-                    .willReturn(placePage);
+            given(placeRepository.findIdsByUserIdOrderByWishCountDesc(userId, pageable))
+                    .willReturn(idPage);
+            given(placeRepository.findAllByIdWithDetails(List.of(1L))).willReturn(List.of(place));
             given(wishlistReader.getWishedPlaceIdSet(userId, List.of(1L))).willReturn(Set.of());
             given(fileStorage.generatePublicUrl("place/image.jpg"))
                     .willReturn("http://localhost:9000/goyo-local/place/image.jpg");
@@ -505,7 +507,7 @@ class PlaceServiceTest {
             // then
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).wished()).isFalse();
-            verify(placeRepository).findAllByUserIdOrderByWishCountDesc(userId, pageable);
+            verify(placeRepository).findIdsByUserIdOrderByWishCountDesc(userId, pageable);
         }
 
         @Test
@@ -514,10 +516,11 @@ class PlaceServiceTest {
             Long userId = 1L;
             PageRequest pageable = PageRequest.of(0, 10);
             PageRequest sorted = pageable.withSort(PlaceSortType.LATEST.toSort());
-            Page<Place> emptyPage = new PageImpl<>(List.of(), sorted, 0);
+            Page<Long> emptyPage = new PageImpl<>(List.of(), sorted, 0);
 
-            given(placeRepository.findAllByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
+            given(placeRepository.findIdsByUserIdAndStatus(userId, PlaceStatus.ACTIVE, sorted))
                     .willReturn(emptyPage);
+            given(placeRepository.findAllByIdWithDetails(List.of())).willReturn(List.of());
             given(wishlistReader.getWishedPlaceIdSet(userId, List.of())).willReturn(Set.of());
 
             // when
