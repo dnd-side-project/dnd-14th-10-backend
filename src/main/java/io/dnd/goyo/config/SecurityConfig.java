@@ -45,6 +45,8 @@ public class SecurityConfig {
                             "/api/places/*/wish-count",
                             "/api/reviews/*",
                             "/api/places/*/reviews",
+                            "/api/places/*/reviews/tag-stats",
+                            "/api/places/*/reviews/rating-stats",
                             "/api/users/nickname/check"
                     ).permitAll()
                     .anyRequest().authenticated()
