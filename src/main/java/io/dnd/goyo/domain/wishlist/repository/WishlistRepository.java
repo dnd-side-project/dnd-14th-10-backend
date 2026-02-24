@@ -18,7 +18,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     boolean existsByUserIdAndPlaceId(Long userId, Long placeId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Wishlist w WHERE w.place.id = :placeId")
     void deleteAllByPlaceId(@Param("placeId") Long placeId);
 
