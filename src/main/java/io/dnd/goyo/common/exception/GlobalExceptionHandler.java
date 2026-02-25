@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
         ErrorCode errorCode = e.getErrorCode();
         return ResponseEntity
             .status(errorCode.getStatus())
-            .body(new ErrorResponse(errorCode.getCode(), e.getMessage(), null));
+            .body(new ErrorResponse(errorCode.getCode(), e.getMessage(), null, null));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
@@ -108,6 +108,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(ErrorCode.INVALID_INPUT.getStatus())
             .body(ErrorResponse.of(ErrorCode.INVALID_INPUT));
+    }
+
+    @ExceptionHandler(DuplicatePlaceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicatePlaceException(DuplicatePlaceException e) {
+        record DuplicatePlaceData(Long existingPlaceId, String existingPlaceName) {}
+        return ResponseEntity
+            .status(ErrorCode.PLACE_DUPLICATE.getStatus())
+            .body(ErrorResponse.of(ErrorCode.PLACE_DUPLICATE,
+                    new DuplicatePlaceData(e.getExistingPlaceId(), e.getExistingPlaceName())));
     }
 
     @ExceptionHandler(Exception.class)
