@@ -1,7 +1,6 @@
 package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
-import io.dnd.goyo.common.exception.DuplicatePlaceException;
 import io.dnd.goyo.common.exception.ErrorCode;
 import io.dnd.goyo.domain.place.dto.DuplicatePlaceInfo;
 import io.dnd.goyo.common.storage.FileStorage;
@@ -165,7 +164,7 @@ public class PlaceService {
     private void checkDuplicatePlace(String name, Long regionCode, String addressDetail) {
         placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
                 .ifPresent(info -> {
-                    throw new DuplicatePlaceException(info.existingPlaceId(), info.existingPlaceName());
+                    throw new BusinessException(ErrorCode.PLACE_DUPLICATE, info);
                 });
     }
 
@@ -175,7 +174,7 @@ public class PlaceService {
         } catch (DataIntegrityViolationException e) {
             DuplicatePlaceInfo info = placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
                     .orElseThrow(() -> e);
-            throw new DuplicatePlaceException(info.existingPlaceId(), info.existingPlaceName());
+            throw new BusinessException(ErrorCode.PLACE_DUPLICATE, info);
         }
     }
 }
