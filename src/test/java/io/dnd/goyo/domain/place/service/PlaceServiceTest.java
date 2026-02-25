@@ -214,6 +214,28 @@ class PlaceServiceTest {
             verify(fileStorage).generatePublicUrl("place/image1.jpg");
         }
 
+        @Test
+        void 공간_상세_조회_시_태그ID_목록_포함() {
+            // given
+            Long userId = 1L;
+            Long placeId = 1L;
+            Place place = createMockPlace(placeId);
+            List<Long> tagIds = List.of(1L, 2L, 3L);
+
+            given(placeRepository.findByIdWithDetails(placeId)).willReturn(Optional.of(place));
+            given(wishlistReader.isWished(userId, placeId)).willReturn(false);
+            given(placeTagService.getTagIds(placeId)).willReturn(tagIds);
+            given(fileStorage.generatePublicUrl("place/image1.jpg"))
+                    .willReturn("http://localhost:9000/goyo-local/place/image1.jpg");
+
+            // when
+            PlaceDetailResponse response = placeService.getPlaceDetail(userId, placeId);
+
+            // then
+            assertThat(response.tagIds()).containsExactly(1L, 2L, 3L);
+            verify(placeTagService).getTagIds(placeId);
+        }
+
         private Place createMockPlace(Long placeId) {
             PlaceDetail placeDetail = mock(PlaceDetail.class);
             given(placeDetail.getAverageRating()).willReturn(4.5);

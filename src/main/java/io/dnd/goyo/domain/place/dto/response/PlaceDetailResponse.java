@@ -65,10 +65,13 @@ public record PlaceDetailResponse(
         @Schema(description = "화장실 정보", example = "내부")
         String restroomInfo,
 
+        @Schema(description = "태그 ID 목록", example = "[1, 2, 3]")
+        List<Long> tagIds,
+
         @Schema(description = "위시 여부", example = "true")
         boolean isWished
 ) {
-    public static PlaceDetailResponse from(Place place, boolean isWished, FileStorage fileStorage) {
+    public static PlaceDetailResponse from(Place place, boolean isWished, List<Long> tagIds, FileStorage fileStorage) {
         PlaceDetail detail = place.getPlaceDetail();
         Point location = place.getLocation();
         List<PlaceImageItem> images = PlaceImageItem.listOf(place.getImages(), fileStorage);
@@ -91,6 +94,7 @@ public record PlaceDetailResponse(
                 place.getCloseTime(),
                 place.getFloorInfo(),
                 place.getRestroomInfo(),
+                tagIds,
                 isWished
         );
     }

@@ -92,6 +92,34 @@ class BadgeServiceTest {
     }
 
     @Test
+    @DisplayName("UserBadge 없어도 카운트가 임계값 이상이면 achieved true")
+    void UserBadge_없어도_카운트가_임계값_이상이면_achieved_true() {
+        // given
+        Long userId = 1L;
+        User user = mock(User.class);
+        UserStats userStats = UserStats.of(user);
+        userStats.incrementPlaceCount(); // placeCount = 1, PLACE_1 threshold = 1
+
+        given(userStatsRepository.findByUserId(userId)).willReturn(Optional.of(userStats));
+        given(userBadgeRepository.findAllByUserId(userId)).willReturn(List.of());
+
+        // when
+        BadgeProgressResponse response = badgeService.getBadgeProgress(userId);
+
+        // then
+        CategoryProgress placeCategory = response.categories().stream()
+                .filter(c -> c.activityType() == ActivityType.PLACE)
+                .findFirst().orElseThrow();
+
+        assertThat(placeCategory.currentCount()).isEqualTo(1);
+        // PLACE_1: threshold 1, currentCount 1 → UserBadge 없어도 achieved = true
+        assertThat(placeCategory.badges().get(0).achieved()).isTrue();
+        assertThat(placeCategory.badges().get(0).achievedAt()).isNull();
+        // PLACE_7: threshold 7, currentCount 1 → achieved = false
+        assertThat(placeCategory.badges().get(1).achieved()).isFalse();
+    }
+
+    @Test
     @DisplayName("UserStats가 없으면 예외 발생")
     void UserStats가_없으면_예외_발생() {
         // given

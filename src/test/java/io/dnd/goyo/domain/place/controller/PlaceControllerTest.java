@@ -273,6 +273,7 @@ class PlaceControllerTest {
                     LocalTime.of(22, 0),
                     1,
                     "내부/남녀공용",
+                    List.of(1L, 2L),
                     isWished
             );
         }

@@ -85,7 +85,9 @@ public class PlaceService {
             eventPublisher.publishEvent(new PlaceViewedEvent(userId, placeId));
         }
 
-        return PlaceDetailResponse.from(place, isWished, fileStorage);
+        List<Long> tagIds = placeTagService.getTagIds(placeId);
+
+        return PlaceDetailResponse.from(place, isWished, tagIds, fileStorage);
     }
 
     @Transactional
