@@ -119,7 +119,7 @@ class PlaceServiceTest {
             // then
             verify(userReader).getUser(userId);
             verify(geometryUtils).createPoint(request.longitude(), request.latitude());
-            verify(placeRepository).saveAndFlush(any(Place.class));
+            verify(placeRepository).save(any(Place.class));
             verify(placeDetailService).registerPlaceDetail(any(PlaceDetail.class));
             verify(placeTagService).registerPlaceTags(any(Place.class), eq(request.tagIds()));
         }
@@ -137,7 +137,7 @@ class PlaceServiceTest {
             assertThatThrownBy(() -> placeService.registerPlace(userId, request))
                     .isInstanceOf(BusinessException.class);
 
-            verify(placeRepository, never()).saveAndFlush(any(Place.class));
+            verify(placeRepository, never()).save(any(Place.class));
         }
     }
 
