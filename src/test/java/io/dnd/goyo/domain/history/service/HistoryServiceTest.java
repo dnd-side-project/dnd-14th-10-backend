@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.history.dto.response.HistoryItemResponse;
 import io.dnd.goyo.domain.history.entity.History;
 import io.dnd.goyo.domain.history.repository.HistoryRepository;
@@ -39,6 +40,9 @@ class HistoryServiceTest {
 
     @Mock
     private HistoryRepository historyRepository;
+
+    @Mock
+    private FileStorage fileStorage;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
 
@@ -96,7 +100,8 @@ class HistoryServiceTest {
             given(place.getCategory()).willReturn(PlaceCategory.CAFE);
             given(place.getAddressDetail()).willReturn("서울시 강남구");
             given(place.getRegionCode()).willReturn(new RegionCode(1168010100L));
-            given(place.getRepresentativeImageKey()).willReturn("image.jpg");
+            given(place.getRepresentativeImageKey()).willReturn("place/image.jpg");
+            given(fileStorage.generatePublicUrl("place/image.jpg")).willReturn("http://localhost:9000/goyo-local/place/image.jpg");
             given(place.getLocation()).willReturn(location);
             given(place.getPlaceDetail()).willReturn(placeDetail);
 

@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.history.dto.response;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.history.entity.History;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.entity.PlaceDetail;
@@ -23,8 +24,8 @@ public record HistoryItemResponse(
         String addressDetail,
         @Schema(description = "행정구역 코드", example = "1168010100")
         Long regionCode,
-        @Schema(description = "대표 이미지 키")
-        String representativeImageKey,
+        @Schema(description = "대표 이미지 URL")
+        String representativeImageUrl,
         @Schema(description = "위도", example = "37.5665")
         double latitude,
         @Schema(description = "경도", example = "126.9780")
@@ -33,11 +34,13 @@ public record HistoryItemResponse(
         Mood mood,
         @Schema(description = "공간 크기", example = "MEDIUM")
         SpaceSize spaceSize,
+        @Schema(description = "찜 수", example = "42")
+        int wishCount,
         @Schema(description = "조회 시각")
         LocalDateTime viewedAt
 ) {
 
-    public static HistoryItemResponse from(History history) {
+    public static HistoryItemResponse from(History history, FileStorage fileStorage) {
         Place place = history.getPlace();
         PlaceDetail placeDetail = place.getPlaceDetail();
 
@@ -48,11 +51,12 @@ public record HistoryItemResponse(
                 place.getCategory(),
                 place.getAddressDetail(),
                 place.getRegionCode().getValue(),
-                place.getRepresentativeImageKey(),
+                fileStorage.generatePublicUrl(place.getRepresentativeImageKey()),
                 place.getLocation().getY(),
                 place.getLocation().getX(),
                 placeDetail != null ? placeDetail.getMood() : null,
                 placeDetail != null ? placeDetail.getSpaceSize() : null,
+                placeDetail != null ? placeDetail.getWishCount() : 0,
                 history.getViewedAt()
         );
     }
