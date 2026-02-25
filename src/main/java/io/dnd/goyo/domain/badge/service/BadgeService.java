@@ -55,11 +55,12 @@ public class BadgeService {
         List<BadgeProgress> badges = BadgeCode.getByActivityType(activityType).stream()
                 .map(badgeCode -> {
                     UserBadge userBadge = achievedBadgeMap.get(badgeCode.getCode());
+                    boolean achieved = userBadge != null || currentCount >= badgeCode.getThreshold();
                     return new BadgeProgress(
                             badgeCode.getCode(),
                             badgeCode.getDisplayName(),
                             badgeCode.getThreshold(),
-                            userBadge != null,
+                            achieved,
                             userBadge != null ? userBadge.getCreatedAt() : null
                     );
                 })

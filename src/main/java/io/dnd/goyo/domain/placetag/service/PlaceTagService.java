@@ -40,6 +40,10 @@ public class PlaceTagService {
         registerPlaceTags(place, tagIds);
     }
 
+    public List<Long> getTagIds(Long placeId) {
+        return placeTagRepository.findTagIdsByPlaceId(placeId);
+    }
+
     private List<Tag> findAndValidateTags(List<Long> tagIds) {
         List<Tag> tags = tagRepository.findAllById(tagIds);
         if (tags.size() != tagIds.size()) {
