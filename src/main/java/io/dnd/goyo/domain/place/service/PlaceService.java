@@ -35,6 +35,7 @@ import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,17 +57,14 @@ public class PlaceService {
 
     @Transactional
     public Long registerPlace(Long userId, PlaceRegisterRequest request) {
-        placeRepository.findDuplicatePlace(request.name(), request.regionCode(), request.addressDetail())
-                .ifPresent(info -> {
-                    throw new DuplicatePlaceException(info.existingPlaceId(), info.existingPlaceName());
-                });
+        checkDuplicatePlace(request.name(), request.regionCode(), request.addressDetail());
 
         User user = userReader.getUser(userId);
         Point location = geometryUtils.createPoint(request.longitude(), request.latitude());
 
         Place place = request.toPlaceEntity(user, location);
         place.addImages(request.toImageEntities());
-        placeRepository.save(place);
+        savePlace(place, request.name(), request.regionCode(), request.addressDetail());
 
         PlaceDetail placeDetail = request.toPlaceDetailEntity(place);
         placeDetailService.registerPlaceDetail(placeDetail);
@@ -161,6 +159,23 @@ public class PlaceService {
         boolean isOwner = place.getUser().getId().equals(userId);
         if (!isOwner) {
             throw new BusinessException(ErrorCode.PLACE_NOT_OWNER);
+        }
+    }
+
+    private void checkDuplicatePlace(String name, Long regionCode, String addressDetail) {
+        placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
+                .ifPresent(info -> {
+                    throw new DuplicatePlaceException(info.existingPlaceId(), info.existingPlaceName());
+                });
+    }
+
+    private void savePlace(Place place, String name, Long regionCode, String addressDetail) {
+        try {
+            placeRepository.saveAndFlush(place);
+        } catch (DataIntegrityViolationException e) {
+            DuplicatePlaceInfo info = placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
+                    .orElseThrow(() -> e);
+            throw new DuplicatePlaceException(info.existingPlaceId(), info.existingPlaceName());
         }
     }
 }
