@@ -12,7 +12,7 @@ public interface HistoryRepository extends JpaRepository<History, Long> {
 
     Optional<History> findByUserIdAndPlaceId(Long userId, Long placeId);
 
-    @Query(value = "SELECT h FROM History h JOIN FETCH h.place p JOIN FETCH p.placeDetail WHERE h.user.id = :userId AND p.status = 'ACTIVE'",
-           countQuery = "SELECT COUNT(h) FROM History h JOIN h.place p WHERE h.user.id = :userId AND p.status = 'ACTIVE'")
+    @Query(value = "SELECT h FROM History h JOIN FETCH h.place p LEFT JOIN FETCH p.placeDetail WHERE h.user.id = :userId AND p.status <> 'DELETED'",
+           countQuery = "SELECT COUNT(h) FROM History h JOIN h.place p WHERE h.user.id = :userId AND p.status <> 'DELETED'")
     Page<History> findAllByUserId(@Param("userId") Long userId, Pageable pageable);
 }
