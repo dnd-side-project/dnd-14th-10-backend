@@ -54,6 +54,8 @@ public class PlaceService {
 
     @Transactional
     public Long registerPlace(Long userId, PlaceRegisterRequest request) {
+        checkDuplicatePlace(request.name(), request.regionCode(), request.addressDetail());
+
         User user = userReader.getUser(userId);
         Point location = geometryUtils.createPoint(request.longitude(), request.latitude());
 
@@ -155,5 +157,12 @@ public class PlaceService {
         if (!isOwner) {
             throw new BusinessException(ErrorCode.PLACE_NOT_OWNER);
         }
+    }
+
+    private void checkDuplicatePlace(String name, Long regionCode, String addressDetail) {
+        placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
+                .ifPresent(info -> {
+                    throw new BusinessException(ErrorCode.PLACE_DUPLICATE, info);
+                });
     }
 }

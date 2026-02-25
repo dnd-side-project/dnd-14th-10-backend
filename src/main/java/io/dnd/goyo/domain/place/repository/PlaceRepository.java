@@ -1,17 +1,24 @@
 package io.dnd.goyo.domain.place.repository;
 
+import io.dnd.goyo.domain.place.dto.DuplicatePlaceInfo;
 import io.dnd.goyo.domain.place.entity.Place;
 import io.dnd.goyo.domain.place.enums.PlaceStatus;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PlaceRepository extends JpaRepository<Place, Long>, PlaceRepositoryCustom {
+
+    @Query("SELECT new io.dnd.goyo.domain.place.dto.DuplicatePlaceInfo(p.id, p.name) FROM Place p " +
+            "WHERE p.name = :name AND p.regionCode.value = :regionCode AND p.addressDetail = :addressDetail " +
+            "AND p.status <> 'DELETED'")
+    Optional<DuplicatePlaceInfo> findDuplicatePlace(@Param("name") String name,
+            @Param("regionCode") Long regionCode,
+            @Param("addressDetail") String addressDetail);
 
     @Query("SELECT DISTINCT p FROM Place p " +
             "JOIN FETCH p.placeDetail " +
