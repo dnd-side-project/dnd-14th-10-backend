@@ -1,5 +1,6 @@
 package io.dnd.goyo.domain.history.service;
 
+import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.domain.history.dto.response.HistoryItemResponse;
 import io.dnd.goyo.domain.history.repository.HistoryRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,9 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class HistoryService {
 
     private final HistoryRepository historyRepository;
+    private final FileStorage fileStorage;
 
     public Page<HistoryItemResponse> getMyHistories(Long userId, Pageable pageable) {
         return historyRepository.findAllByUserId(userId, pageable)
-                .map(HistoryItemResponse::from);
+                .map(history -> HistoryItemResponse.from(history, fileStorage));
     }
 }

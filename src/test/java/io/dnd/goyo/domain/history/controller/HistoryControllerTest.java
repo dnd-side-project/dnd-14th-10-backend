@@ -55,7 +55,7 @@ class HistoryControllerTest {
     void 내_조회_기록_조회_성공_시_200_반환() throws Exception {
         HistoryItemResponse response = new HistoryItemResponse(
                 1L, 10L, "테스트 카페", null, "서울시 강남구",
-                11110L, "image.jpg", 37.5, 127.0, null, null, LocalDateTime.now()
+                11110L, "http://localhost:9000/goyo-local/place/image.jpg", 37.5, 127.0, null, null, 0, LocalDateTime.now()
         );
         Page<HistoryItemResponse> page = new PageImpl<>(List.of(response));
 
