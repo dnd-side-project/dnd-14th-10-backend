@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReviewImageRepository extends JpaRepository<ReviewImage, Long> {
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM ReviewImage ri WHERE ri.review.id = :reviewId")
     void deleteAllByReviewId(@Param("reviewId") Long reviewId);
 

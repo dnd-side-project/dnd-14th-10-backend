@@ -17,11 +17,11 @@ public interface PlaceDetailRepository extends JpaRepository<PlaceDetail, Long> 
     @Query("SELECT pd FROM PlaceDetail pd WHERE pd.place.id = :placeId")
     Optional<PlaceDetail> findByPlaceIdForUpdate(@Param("placeId") Long placeId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE PlaceDetail pd SET pd.wishCount = pd.wishCount + 1 WHERE pd.place.id = :placeId")
     void incrementWishCount(@Param("placeId") Long placeId);
 
-    @Modifying(clearAutomatically = true)
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE PlaceDetail pd SET pd.wishCount = pd.wishCount - 1 WHERE pd.place.id = :placeId AND pd.wishCount > 0")
     void decrementWishCount(@Param("placeId") Long placeId);
 }
