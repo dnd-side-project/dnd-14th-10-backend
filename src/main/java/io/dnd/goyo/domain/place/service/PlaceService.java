@@ -2,7 +2,6 @@ package io.dnd.goyo.domain.place.service;
 
 import io.dnd.goyo.common.exception.BusinessException;
 import io.dnd.goyo.common.exception.ErrorCode;
-import io.dnd.goyo.domain.place.dto.DuplicatePlaceInfo;
 import io.dnd.goyo.common.storage.FileStorage;
 import io.dnd.goyo.common.util.GeometryUtils;
 import io.dnd.goyo.domain.place.dto.request.PlaceRegisterRequest;
@@ -34,7 +33,6 @@ import io.dnd.goyo.domain.wishlist.service.WishlistService;
 import lombok.RequiredArgsConstructor;
 import org.locationtech.jts.geom.Point;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +61,7 @@ public class PlaceService {
 
         Place place = request.toPlaceEntity(user, location);
         place.addImages(request.toImageEntities());
-        savePlace(place, request.name(), request.regionCode(), request.addressDetail());
+        placeRepository.save(place);
 
         PlaceDetail placeDetail = request.toPlaceDetailEntity(place);
         placeDetailService.registerPlaceDetail(placeDetail);
@@ -166,15 +164,5 @@ public class PlaceService {
                 .ifPresent(info -> {
                     throw new BusinessException(ErrorCode.PLACE_DUPLICATE, info);
                 });
-    }
-
-    private void savePlace(Place place, String name, Long regionCode, String addressDetail) {
-        try {
-            placeRepository.saveAndFlush(place);
-        } catch (DataIntegrityViolationException e) {
-            DuplicatePlaceInfo info = placeRepository.findDuplicatePlace(name, regionCode, addressDetail)
-                    .orElseThrow(() -> e);
-            throw new BusinessException(ErrorCode.PLACE_DUPLICATE, info);
-        }
     }
 }
