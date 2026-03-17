@@ -190,15 +190,12 @@ public class PlaceRepositoryCustomImpl implements PlaceRepositoryCustom {
     @NotNull
     private static String buildDistanceQuerySql(Double lastDistance) {
         String distanceCondition = lastDistance != null
-                ? "AND ST_Distance(CAST(p.location AS geography), CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)) > :lastDistance"
+                ? "AND CAST(p.location AS geography) <-> CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography) > :lastDistance"
                 : "";
 
         return String.format("""
                 SELECT p.id,
-                       ST_Distance(
-                           CAST(p.location AS geography),
-                           CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography)
-                       ) as distance
+                       CAST(p.location AS geography) <-> CAST(ST_SetSRID(ST_MakePoint(:longitude, :latitude), 4326) AS geography) as distance
                 FROM places p
                 WHERE p.id IN (:placeIds)
                 %s
